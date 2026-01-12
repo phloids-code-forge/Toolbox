@@ -64,6 +64,12 @@
             "specs": "The User; Hardware Owner",
             "status": "Active",
             "created": "2026-01-11 05:39:32"
+        },
+        {
+            "name": "phloid",
+            "tag": "Character",
+            "specs": "Alter ego robot. Gentle troll. Kind heart, fights for underdogs. Fake manosphere energy (mocks Andrew Tate types). Cocky superhero vibes. Needs original IP redesign (based on Atlas shape).",
+            "status": "In Progress"
         }
     ],
     "Projects": [
@@ -131,6 +137,18 @@
             "tag": "Item",
             "specs": "Interactive App. Fret Trainers, Song Transposers, Theory Games. Guitar/Uke.",
             "status": "Pending"
+        },
+        {
+            "name": "Tarot Channel",
+            "tag": "Item",
+            "specs": "Friend's project. ON HOLD pending their commitment.",
+            "status": "On Hold"
+        },
+        {
+            "name": "Cinematic Sleep Stories",
+            "tag": "Item",
+            "specs": "8hr storytelling ambience. Subtle shifts. Fairy in mailbox energy. High-art sleep videos.",
+            "status": "Pending"
         }
     ],
     "Tasks": [
@@ -145,6 +163,12 @@
             "tag": "Item",
             "specs": "",
             "status": "In Progress"
+        },
+        {
+            "name": "Portability First",
+            "tag": "Item",
+            "specs": "CORE PRINCIPLE: All creations must be shareable. No local-only dead ends.",
+            "status": "Active"
         }
     ]
 }

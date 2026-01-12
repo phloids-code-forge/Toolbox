@@ -1,5 +1,5 @@
 # 🧠 Pip OS Dashboard
-*Last Sync: 2026-01-11 23:23:21*
+*Last Sync: 2026-01-12 00:29:15*
 
 ## 📂 Tech Stack
 | Status | Name | Specs | Tag |
@@ -17,6 +17,7 @@
 | :--- | :--- | :--- | :--- |
 | 🟢 **Active** | **Pip** | Alive and Excellent; The Architect | *Item* |
 | 🟢 **Active** | **Phloid** | The User; Hardware Owner | *Item* |
+| 🚧 **In Progress** | **phloid** | Alter ego robot. Gentle troll. Kind heart, fights for underdogs. Fake manosphere energy (mocks Andrew Tate types). Cocky superhero vibes. Needs original IP redesign (based on Atlas shape). | *Character* |
 
 ## 📂 Projects
 | Status | Name | Specs | Tag |
@@ -31,10 +32,13 @@
 | ⏳ **Pending** | **Blender Loop Academy** | Ducky3D Tutorials. Looping Animations. Skill Building. | *Item* |
 | ⏳ **Pending** | **Color Theory Study** | Art Fundamentals. Palette Building. Overcoming Color Weakness. | *Item* |
 | ⏳ **Pending** | **Music Theory Lab** | Interactive App. Fret Trainers, Song Transposers, Theory Games. Guitar/Uke. | *Item* |
+| ⚪ **On Hold** | **Tarot Channel** | Friend's project. ON HOLD pending their commitment. | *Item* |
+| ⏳ **Pending** | **Cinematic Sleep Stories** | 8hr storytelling ambience. Subtle shifts. Fairy in mailbox energy. High-art sleep videos. | *Item* |
 
 ## 📂 Tasks
 | Status | Name | Specs | Tag |
 | :--- | :--- | :--- | :--- |
 | 🚧 **In Progress** | **Design RAG System** |  | *Item* |
 | 🚧 **In Progress** | **Design Expert Infrastructure** |  | *Item* |
+| 🟢 **Active** | **Portability First** | CORE PRINCIPLE: All creations must be shareable. No local-only dead ends. | *Item* |
 
