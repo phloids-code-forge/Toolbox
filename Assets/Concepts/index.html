@@ -1,0 +1,160 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PiPos Concept Art Gallery</title>
+    <style>
+        :root {
+            --bg: #121212;
+            --card: #1e1e1e;
+            --text: #e0e0e0;
+            --accent: #3f51b5;
+        }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+        h1 { border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
+        h2 { margin-top: 40px; color: #888; }
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: var(--card);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+        .card:hover { transform: scale(1.02); }
+        .card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+        .card .info { padding: 10px; font-size: 0.9em; }
+        .filename { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        /* Lightbox */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            border: 2px solid var(--text);
+            border-radius: 4px;
+        }
+        .lightbox:target { display: flex; }
+    </style>
+</head>
+<body>
+    <h1>PiPos Concept Art</h1>
+
+    <!-- DYNAMIC CONTENT START -->
+    <h2>Keepers</h2><div class='gallery'>
+            <div class='card' onclick="showImage('Keepers/phloid_definitive.png')">
+                <img src="Keepers/phloid_definitive.png" loading="lazy">
+                <div class='info'>
+                    <div class='filename'>phloid_definitive.png</div>
+                </div>
+            </div>
+            
+            <div class='card' onclick="showImage('Keepers/phloid_definitive_v6.png')">
+                <img src="Keepers/phloid_definitive_v6.png" loading="lazy">
+                <div class='info'>
+                    <div class='filename'>phloid_definitive_v6.png</div>
+                </div>
+            </div>
+            
+            <div class='card' onclick="showImage('Keepers/phloid_definitive_v7.png')">
+                <img src="Keepers/phloid_definitive_v7.png" loading="lazy">
+                <div class='info'>
+                    <div class='filename'>phloid_definitive_v7.png</div>
+                </div>
+            </div>
+            
+            <div class='card' onclick="showImage('Keepers/phloid_sheet_expressions.png')">
+                <img src="Keepers/phloid_sheet_expressions.png" loading="lazy">
+                <div class='info'>
+                    <div class='filename'>phloid_sheet_expressions.png</div>
+                </div>
+            </div>
+            
+            <div class='card' onclick="showImage('Keepers/phloid_sheet_turnaround.png')">
+                <img src="Keepers/phloid_sheet_turnaround.png" loading="lazy">
+                <div class='info'>
+                    <div class='filename'>phloid_sheet_turnaround.png</div>
+                </div>
+            </div>
+            
+            <div class='card' onclick="showImage('Keepers/phloid_v8_mechanism_detail.png')">
+                <img src="Keepers/phloid_v8_mechanism_detail.png" loading="lazy">
+                <div class='info'>
+                    <div class='filename'>phloid_v8_mechanism_detail.png</div>
+                </div>
+            </div>
+            
+            <div class='card' onclick="showImage('Keepers/phloid_v8_turnaround.png')">
+                <img src="Keepers/phloid_v8_turnaround.png" loading="lazy">
+                <div class='info'>
+                    <div class='filename'>phloid_v8_turnaround.png</div>
+                </div>
+            </div>
+            
+            <div class='card' onclick="showImage('Keepers/phloid_v9_mechanism_consistent.png')">
+                <img src="Keepers/phloid_v9_mechanism_consistent.png" loading="lazy">
+                <div class='info'>
+                    <div class='filename'>phloid_v9_mechanism_consistent.png</div>
+                </div>
+            </div>
+            </div><h2>Sessions\2026-01-12</h2><div class='gallery'>
+            <div class='card' onclick="showImage('Sessions/2026-01-12/phloid_v5_ears_grey.png')">
+                <img src="Sessions/2026-01-12/phloid_v5_ears_grey.png" loading="lazy">
+                <div class='info'>
+                    <div class='filename'>phloid_v5_ears_grey.png</div>
+                </div>
+            </div>
+            
+            <div class='card' onclick="showImage('Sessions/2026-01-12/phloid_v6_grey.png')">
+                <img src="Sessions/2026-01-12/phloid_v6_grey.png" loading="lazy">
+                <div class='info'>
+                    <div class='filename'>phloid_v6_grey.png</div>
+                </div>
+            </div>
+            
+            <div class='card' onclick="showImage('Sessions/2026-01-12/phloid_v7_sleek.png')">
+                <img src="Sessions/2026-01-12/phloid_v7_sleek.png" loading="lazy">
+                <div class='info'>
+                    <div class='filename'>phloid_v7_sleek.png</div>
+                </div>
+            </div>
+            </div>
+    <!-- DYNAMIC CONTENT END -->
+
+    <div id="lightbox" class="lightbox" onclick="this.style.display='none'">
+        <img id="lb_img" src="">
+    </div>
+
+    <script>
+        function showImage(src) {
+            document.getElementById('lb_img').src = src;
+            document.getElementById('lightbox').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>

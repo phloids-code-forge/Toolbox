@@ -14,11 +14,16 @@
   - Single blue eye (glowing)
   - Compact robot body
 - **Redesign Goal:** Create legally distinct original IP
-- **Specifics (V2):**
-  - **Silhouette:** "Cute version of a tough robot."
-  - **Proportions:** Larger chest, thin hips (heroic taper), but compact/cute scale.
-  - **Joints:** Black.
-  - **Lines:** Clean, minimal.
+- **Specifics (V9 - CONSISTENT MECHANISM):**
+  - **Base:** "Tough Cute" with **Sleek Ear Panels**.
+  - **Eye Mechanism:** **Retractable "Brow" Panel**.
+    - **Rule:** The Angry state MUST use the **exact same panel geometry** as the Neutral state, just mechanically lowered/rotated. No shape-shifting.
+  - **Head Seams:** Smooth back, consistent side seams.
+  - **Feet:** Over-sized, chunky robot boots.
+  - **Emotion:** 
+    - **Neutral:** Blue Eye. Brow retracted (seam visible).
+    - **Angry:** **RED EYE**. Brow shutter lowers (mechanical angle).
+  - **Reference:** `Assets/Concepts/Keepers/phloid_visual_target_v9.png`
 
 ---
 
