@@ -1,0 +1,35 @@
+# PiPos .gitignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Secrets
+.env
+config.local.json
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Obsidian (sync handles these, but exclude from git)
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+
+# Logs
+logs/
+*.log
+
+# Temporary
+*.tmp
+*.bak

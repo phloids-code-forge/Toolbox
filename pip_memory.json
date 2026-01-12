@@ -1,0 +1,150 @@
+{
+    "Tech Stack": [
+        {
+            "name": "NVIDIA 5090 eGPU",
+            "tag": "Item",
+            "specs": "24 GB VRAM",
+            "status": "Wishlist",
+            "created": "2026-01-11 05:31:09"
+        },
+        {
+            "name": "Asus ProArt PX13",
+            "tag": "Item",
+            "specs": "RTX 4060, 32GB RAM",
+            "status": "Active",
+            "created": "2026-01-11 05:35:55"
+        },
+        {
+            "name": "Samsung S23 Ultra",
+            "tag": "Item",
+            "specs": "512GB, Black",
+            "status": "Active",
+            "created": "2026-01-11 05:35:55"
+        },
+        {
+            "name": "Samsung Tab S9 Ultra",
+            "tag": "Item",
+            "specs": "Primary Art Tool",
+            "status": "Active",
+            "created": "2026-01-11 05:35:55"
+        },
+        {
+            "name": "TourBox Neo",
+            "tag": "Item",
+            "specs": "Creative Console",
+            "status": "Active",
+            "created": "2026-01-11 05:35:55"
+        },
+        {
+            "name": "Focusrite Scarlett 4i4",
+            "tag": "Item",
+            "specs": "Audio Interface",
+            "status": "Active",
+            "created": "2026-01-11 05:35:55"
+        },
+        {
+            "name": "Samsung Watch 8 Pro",
+            "tag": "Item",
+            "specs": "Wearable",
+            "status": "Active",
+            "created": "2026-01-11 05:36:16"
+        }
+    ],
+    "Characters": [
+        {
+            "name": "Pip",
+            "tag": "Item",
+            "specs": "Alive and Excellent; The Architect",
+            "status": "Active",
+            "created": "2026-01-11 05:39:32"
+        },
+        {
+            "name": "Phloid",
+            "tag": "Item",
+            "specs": "The User; Hardware Owner",
+            "status": "Active",
+            "created": "2026-01-11 05:39:32"
+        }
+    ],
+    "Projects": [
+        {
+            "name": "250 Box",
+            "tag": "Item",
+            "specs": "Main Focus. Migration & Vibe Check.",
+            "status": "In Progress",
+            "created": "2026-01-11 05:39:32"
+        },
+        {
+            "name": "NotionLink",
+            "tag": "Item",
+            "specs": "Archived. Replaced by local pip_memory.json + cns.py.",
+            "status": "Archive",
+            "created": "2026-01-11 05:39:32"
+        },
+        {
+            "name": "Tech Stack",
+            "tag": "Item",
+            "specs": "Hardware/Software DB Setup.",
+            "status": "Done",
+            "created": "2026-01-11 05:39:32"
+        },
+        {
+            "name": "Makers Just Make",
+            "tag": "Item",
+            "specs": "Logo/Splash Screen.",
+            "status": "Pending",
+            "created": "2026-01-11 05:39:32"
+        },
+        {
+            "name": "Content Channel",
+            "tag": "Item",
+            "specs": "Tarot & Nature Sleep Videos.",
+            "status": "Pending",
+            "created": "2026-01-11 05:39:32"
+        },
+        {
+            "name": "Avatar Forge",
+            "tag": "Item",
+            "specs": "AI-Designed Avatars. Retopology, Optimization, Rigging Service.",
+            "status": "Pending"
+        },
+        {
+            "name": "AI Comic Workshop",
+            "tag": "Item",
+            "specs": "Graphic Novel / Short Comic Strip. AI-Assisted Storytelling.",
+            "status": "Pending"
+        },
+        {
+            "name": "Blender Loop Academy",
+            "tag": "Item",
+            "specs": "Ducky3D Tutorials. Looping Animations. Skill Building.",
+            "status": "Pending"
+        },
+        {
+            "name": "Color Theory Study",
+            "tag": "Item",
+            "specs": "Art Fundamentals. Palette Building. Overcoming Color Weakness.",
+            "status": "Pending"
+        },
+        {
+            "name": "Music Theory Lab",
+            "tag": "Item",
+            "specs": "Interactive App. Fret Trainers, Song Transposers, Theory Games. Guitar/Uke.",
+            "status": "Pending"
+        }
+    ],
+    "Tasks": [
+        {
+            "name": "Design RAG System",
+            "tag": "Item",
+            "specs": "",
+            "status": "In Progress"
+        },
+        {
+            "name": "Design Expert Infrastructure",
+            "tag": "Item",
+            "specs": "",
+            "status": "In Progress"
+        }
+    ]
+}

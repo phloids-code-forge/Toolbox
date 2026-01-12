@@ -1,0 +1,21 @@
+{
+    "location": {
+        "name": "SEMINOLE, OK",
+        "lat": 35.22,
+        "lon": -96.67
+    },
+    "api_keys": {
+        "openai": null,
+        "weather": null
+    },
+    "paths": {
+        "memory": "pip_memory.json",
+        "dashboard": "Dashboard.md",
+        "experts": "Experts/",
+        "handover": "Handover/",
+        "logs": "logs/"
+    },
+    "settings": {
+        "weather_refresh_ms": 600000
+    }
+}
