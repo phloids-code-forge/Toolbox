@@ -14,6 +14,11 @@
   - Single blue eye (glowing)
   - Compact robot body
 - **Redesign Goal:** Create legally distinct original IP
+- **Specifics (V2):**
+  - **Silhouette:** "Cute version of a tough robot."
+  - **Proportions:** Larger chest, thin hips (heroic taper), but compact/cute scale.
+  - **Joints:** Black.
+  - **Lines:** Clean, minimal.
 
 ---
 
