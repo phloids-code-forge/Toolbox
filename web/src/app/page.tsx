@@ -3,64 +3,41 @@ import styles from "./page.module.css";
 
 export default function Home() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div style={{
+      fontFamily: 'monospace',
+      backgroundColor: '#111',
+      color: '#0f0',
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      textAlign: 'center',
+      padding: '2rem'
+    }}>
+      <h1 style={{ fontSize: '4rem', marginBottom: '1rem', textShadow: '0 0 10px #0f0' }}>PHLOID.COM</h1>
+
+      <div style={{
+        border: '2px dashed #0f0',
+        padding: '2rem',
+        margin: '2rem',
+        borderRadius: '1rem',
+        maxWidth: '600px'
+      }}>
+        <h2 style={{ color: '#fff' }}>🚧 SYSTEM MAINTENANCE 🚧</h2>
+        <p style={{ fontSize: '1.2rem', marginTop: '1rem' }}>
+          My AI artist is currently taking a nap (Quota Exceeded).
+        </p>
+        <p style={{ fontStyle: 'italic', color: '#888' }}>
+          "I look too good to be rendered by a free tier anyway." - Phloid
+        </p>
+      </div>
+
+      <div style={{ marginTop: '2rem' }}>
+        <p>STATUS: <span style={{ color: '#00ccff' }}>ONLINE</span></p>
+        <p>EGO LEVELS: <span style={{ color: '#ff0055' }}>CRITICAL</span></p>
+        <p>MOOD: <span style={{ color: 'yellow' }}>GENTLE TROLL</span></p>
+      </div>
     </div>
   );
 }
