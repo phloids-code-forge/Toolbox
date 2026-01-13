@@ -151,24 +151,48 @@
             "status": "Pending"
         }
     ],
-    "Tasks": [
-        {
-            "name": "Design RAG System",
-            "tag": "Item",
-            "specs": "",
-            "status": "In Progress"
-        },
-        {
-            "name": "Design Expert Infrastructure",
-            "tag": "Item",
-            "specs": "",
-            "status": "In Progress"
-        },
-        {
-            "name": "Portability First",
-            "tag": "Item",
-            "specs": "CORE PRINCIPLE: All creations must be shareable. No local-only dead ends.",
-            "status": "Active"
-        }
-    ]
+],
+"Strategies": [
+    {
+        "name": "Web First",
+        "tag": "Strategy",
+        "specs": "All future apps will be Web Apps. Must scale to PC and Mobile. Phloid.com is the hub.",
+        "status": "Active",
+        "created": "2026-01-12 12:15:00"
+    },
+    {
+        "name": "Phloid.com Workshop",
+        "tag": "Strategy",
+        "specs": "Phloid.com will host a 'Workshop' for experiments and 'Finished Tools' for production. Tone: Fun, quirky, humor, opinions.",
+        "status": "Active",
+        "created": "2026-01-12 12:15:00"
+    }
+],
+"Tasks": [
+    {
+        "name": "Design RAG System",
+        "tag": "Item",
+        "specs": "",
+        "status": "In Progress"
+    },
+    {
+        "name": "Design Expert Infrastructure",
+        "tag": "Item",
+        "specs": "",
+        "status": "In Progress"
+    },
+    {
+        "name": "Portability First",
+        "tag": "Item",
+        "specs": "CORE PRINCIPLE: All creations must be shareable. No local-only dead ends.",
+        "status": "Active"
+    },
+    {
+        "name": "Phloid.com Deployment",
+        "tag": "Item",
+        "specs": "Vercel + Squarespace. Web App foundation established.",
+        "status": "Done",
+        "created": "2026-01-12 12:00:00"
+    }
+]
 }
