@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/react";
 import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
@@ -22,6 +23,13 @@ export const metadata: Metadata = {
   description: "A dual-mode weather platform ranking sources by truth.",
 };
 
+// Prevent auto-zoom on mobile inputs
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -31,6 +39,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} antialiased bg-slate-950 text-slate-50`}>
         {children}
+        <Analytics />
       </body>
     </html>
   );

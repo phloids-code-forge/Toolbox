@@ -1,5 +1,5 @@
 # Session Journal: Weather Wars V2 Release (Final)
-**Timestamp**: 2026-01-12 22:42 CST
+**Timestamp**: 2026-01-12 22:50 CST
 **Operator**: Phloid & Pip (Co-Pilot)
 
 ## ✅ Accomplished
@@ -15,8 +15,11 @@
     - **Upgraded Database**: Storing full `daily[]` forecast arrays in JSONB.
     - **Upgraded Parsers**: Mapped `WeatherAPI`, `Open-Meteo`, and `OpenWeather` to 7-day output.
     - **Frontend**: Grid now consumes real DB data instead of simulated projections.
-4.  **Deployment**:
-    - All features pushed to `main` (Production).
+4.  **Phloid OS Portal (Restructure)**:
+    - Moved Dashboard to `/weatherwars`.
+    - Created Landing Page (`/`) with **Giant Red Launch Button**.
+5.  **Deployment**:
+    - All features from `src/app/` pushed to `main` (Production).
 
 ## 🚧 Left Hanging
 -   **None.** The V2 scope is complete.
