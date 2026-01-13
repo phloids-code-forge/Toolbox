@@ -15,6 +15,16 @@ export interface WeatherSnapshot {
         soilMoisture?: number;  // Gardner's Gold
         solarRadiation?: number; // Energy Potential
         cape?: number;          // Storm Energy
+
+        // 7-Day Forecast Array
+        daily?: {
+            date: string; // YYYY-MM-DD
+            dayName: string; // Mon, Tue
+            high: number | null;
+            low: number | null;
+            precipChance: number | null;
+            condition?: string;
+        }[];
     };
 
     // Did it work?

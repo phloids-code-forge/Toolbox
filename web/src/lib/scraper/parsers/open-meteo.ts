@@ -39,7 +39,7 @@ export const OPEN_METEO_PARSER: ScraperDefinition = {
     id: 'open_meteo',
     sourceType: 'API',
     // Uses coords from active city config
-    url: `https://api.open-meteo.com/v1/forecast?latitude=${ACTIVE_CITY.coords.lat}&longitude=${ACTIVE_CITY.coords.lng}&current=temperature_2m,relative_humidity_2m,weather_code,precipitation_probability,wind_speed_10m&hourly=uv_index,cape,soil_moisture_3_to_9cm,shortwave_radiation&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=${encodeURIComponent(ACTIVE_CITY.timezone)}&forecast_days=7`,
+    url: `https://api.open-meteo.com/v1/forecast?latitude=${ACTIVE_CITY.coords.lat}&longitude=${ACTIVE_CITY.coords.lng}&current=temperature_2m,relative_humidity_2m,weather_code,precipitation_probability,wind_speed_10m&hourly=uv_index,cape,soil_moisture_3_to_9cm,shortwave_radiation&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=${encodeURIComponent(ACTIVE_CITY.timezone)}&forecast_days=7`,
     parser: (jsonString: string) => {
         try {
             const data = JSON.parse(jsonString);
@@ -47,11 +47,25 @@ export const OPEN_METEO_PARSER: ScraperDefinition = {
             const daily = data.daily;
             const hourly = data.hourly;
 
+            // Zip daily arrays
+            const dailyForecast = daily?.time?.map((date: string, i: number) => {
+                const dayDate = new Date(date);
+                return {
+                    date: date,
+                    dayName: dayDate.toLocaleDateString('en-US', { weekday: 'short', timeZone: ACTIVE_CITY.timezone }),
+                    high: daily.temperature_2m_max[i],
+                    low: daily.temperature_2m_min[i],
+                    precipChance: daily.precipitation_probability_max?.[i] ?? 0,
+                    condition: WMO_CODES[daily.weather_code?.[i]] || 'Unknown'
+                };
+            }) || [];
+
             // Safety check for hourly data (in case URL is old/cached)
             if (!hourly) {
                 return {
                     currentTemp: current?.temperature_2m,
                     conditionText: (WMO_CODES[current?.weather_code] || 'Unknown') + " (No Hourly Data)",
+                    daily: dailyForecast
                 };
             }
 
@@ -82,6 +96,9 @@ export const OPEN_METEO_PARSER: ScraperDefinition = {
                 cape: hourly.cape[hourIndex],
                 soilMoisture: hourly.soil_moisture_3_to_9cm[hourIndex],
                 solarRadiation: hourly.shortwave_radiation[hourIndex],
+
+                // 7-day extended
+                daily: dailyForecast
             };
         } catch (e: any) {
             console.error("Open-Meteo Parse Error", e);

@@ -60,29 +60,34 @@ export function ForecastGrid() {
         async function load() {
             const res = await getLatestSnapshots();
             if (res.success && res.data) {
-                // Transform data into forecast format
-                // Exclude NWS (no forecast data), include News 9 and API sources
                 const transformed: SourceForecast[] = res.data
                     .filter((d: any) => !d.station_id.startsWith('nws-') && d.station_id !== 'kfor')
                     .map((d: any) => {
                         const forecast = d.forecast_data;
-                        // Generate mock 7-day data based on available data
-                        // In production, this would come from the actual forecast API response
-                        const days: ForecastDay[] = [];
-                        const today = new Date();
+                        let days: ForecastDay[] = forecast?.daily || [];
 
-                        for (let i = 0; i < 7; i++) {
-                            const date = new Date(today);
-                            date.setDate(date.getDate() + i);
+                        // Fallback if no daily data (or empty)
+                        if (days.length === 0) {
+                            const today = new Date();
+                            for (let i = 0; i < 7; i++) {
+                                const date = new Date(today);
+                                date.setDate(date.getDate() + i);
 
-                            days.push({
-                                date: date.toISOString().split('T')[0],
-                                dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
-                                high: forecast?.high ? Math.round(forecast.high) + (i * 2 - 3) : null,
-                                low: forecast?.low ? Math.round(forecast.low) + (i - 2) : null,
-                                precipChance: forecast?.precipChance ?? (i === 3 ? 30 : i === 4 ? 60 : null),
-                            });
+                                days.push({
+                                    date: date.toISOString().split('T')[0],
+                                    dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
+                                    high: i === 0 && forecast?.high ? Math.round(forecast.high) : null,
+                                    low: i === 0 && forecast?.low ? Math.round(forecast.low) : null,
+                                    precipChance: i === 0 && forecast?.precipProb ? forecast.precipProb : null,
+                                });
+                            }
                         }
+
+                        // Ensure we have dayName if the API didn't provide it nicely formatted
+                        days = days.map(day => ({
+                            ...day,
+                            dayName: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })
+                        }));
 
                         return {
                             sourceId: d.station_id,
