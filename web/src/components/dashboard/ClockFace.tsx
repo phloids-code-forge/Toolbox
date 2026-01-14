@@ -14,6 +14,7 @@ import { TestAlertButton } from "./TestAlertButton";
 import { AlertBanner } from "./AlertBanner";
 import { GreenThumbPanel } from "./GreenThumbPanel";
 import { UniversityModal } from "./UniversityModal";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 // Friendly display names for sources
 const SOURCE_NAMES: Record<string, string> = {
@@ -70,14 +71,15 @@ export function ClockFace() {
 
     return (
         // MAIN CONTAINER: Full viewport height, flex column
-        <div className="flex flex-col w-full min-h-screen bg-black text-slate-300 font-sans selection:bg-emerald-500/30">
+        <div className="flex flex-col w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-sans selection:bg-emerald-500/30 transition-colors duration-300">
 
             {/* Real NWS Alert Banner (polls DB every 30s) */}
             <AlertBanner />
 
             {/* Header: Compact to maximize content space */}
             <header className="flex flex-col items-center pt-4 pb-4 md:pt-6 md:pb-4 relative z-10 shrink-0">
-                <div className="hidden md:block absolute top-4 right-4 md:top-8 md:right-8">
+                <div className="hidden md:flex items-center gap-3 absolute top-4 right-4 md:top-6 md:right-8">
+                    <ThemeToggle />
                     <TestAlertButton />
                 </div>
 
