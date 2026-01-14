@@ -1,16 +1,81 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ============================================
+   PHLOID THEME SYSTEM
+   - .dark = War Room (current default)
+   - .light = Morning Calm (soothing)
+   ============================================ */
+
+/* DARK THEME (Default) */
+:root,
+.dark {
+  --background: #000000;
+  --foreground: #e2e8f0;
+  
+  /* Surfaces */
+  --surface: rgba(15, 23, 42, 0.4);
+  --surface-hover: rgba(30, 41, 59, 0.6);
+  --surface-solid: #0f172a;
+  
+  /* Borders */
+  --border: rgba(51, 65, 85, 0.5);
+  --border-hover: rgba(71, 85, 105, 0.7);
+  
+  /* Accents */
+  --accent-primary: #10b981;
+  --accent-primary-muted: rgba(16, 185, 129, 0.2);
+  --accent-secondary: #ef4444;
+  
+  /* Text */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #475569;
+  
+  /* Semantic */
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
+
+  color-scheme: dark;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* LIGHT THEME (Soothing Morning) */
+.light {
+  --background: #faf8f5;
+  --foreground: #1c1917;
+  
+  /* Surfaces - warm cream tones */
+  --surface: rgba(245, 243, 240, 0.8);
+  --surface-hover: rgba(231, 229, 226, 0.9);
+  --surface-solid: #f5f3f0;
+  
+  /* Borders - soft stone */
+  --border: rgba(168, 162, 158, 0.3);
+  --border-hover: rgba(120, 113, 108, 0.4);
+  
+  /* Accents - muted forest greens */
+  --accent-primary: #059669;
+  --accent-primary-muted: rgba(5, 150, 105, 0.15);
+  --accent-secondary: #dc2626;
+  
+  /* Text - warm grays */
+  --text-primary: #1c1917;
+  --text-secondary: #57534e;
+  --text-muted: #a8a29e;
+  
+  /* Semantic */
+  --success: #16a34a;
+  --warning: #d97706;
+  --error: #dc2626;
+  --info: #2563eb;
+
+  color-scheme: light;
 }
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
 
 html,
 body {
@@ -24,6 +89,7 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 * {
@@ -37,8 +103,34 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+/* ============================================
+   UTILITY CLASSES FOR THEMING
+   ============================================ */
+
+.bg-surface {
+  background-color: var(--surface);
+}
+
+.bg-surface-hover:hover {
+  background-color: var(--surface-hover);
+}
+
+.bg-surface-solid {
+  background-color: var(--surface-solid);
+}
+
+.border-border {
+  border-color: var(--border);
+}
+
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-muted {
+  color: var(--text-muted);
 }
