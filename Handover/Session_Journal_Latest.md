@@ -1,27 +1,53 @@
-# SESSION JOURNAL // 2026-01-13
-**Timestamp:** 20:04 CST
+# SESSION JOURNAL
+**System Timestamp:** 2026-01-13 21:30 CST
 
-## ✅ ACCOMPLISHED (The Wins)
-- **The Professor:** Created `12_The_Professor.md` Expert Persona.
-- **The University:** Built `UniversityModal.tsx` for educational pop-ups.
-- **Green Thumb:** Updated panel to support "Click for Explainer".
-- **The Ticker:** Wrote logic to inject "Professor's Wit" (Fire/Freeze warnings).
-- **The Archive:** Created "Phloid's Corner" (`/corner`) blog and `changelog.ts`.
-- **Navigation:** Added hidden 'π' link to footer.
+---
 
-## 🚧 LEFT HANGING (The Cliffhanger)
-- **Dashboard Crash:** The `/weatherwars` route is currently crashing with a client-side exception.
-- **Debug State:** `ClockFace.tsx` has been overwritten with a "DEBUG MODE" simple div to isolate the error.
-- **Next Step:** Upon reboot, you need to verify if the "DEBUG MODE" screen loads.
-    - If YES: The bug is in `GreenThumb` or `ForecastTicker`.
-    - If NO: It's an environment/Next.js cache issue.
+## ✅ ACCOMPLISHED
 
-## 😤 HASSLES (The Friction)
-- **Port Collisions:** Server restart issues (EADDRINUSE).
-- **Agent Stalls:** "You stopped working" - likely tool timeouts or memory pressure.
-- **Client-Side Exception:** Persistent white screen on the main dashboard.
+### Dashboard Restoration
+- Fixed crash caused by stale Server Action reference in `.next` cache
+- Nuked `.next` and recompiled — dashboard stable
+- Restored all components: GreenThumbPanel, UniversityModal, ForecastTicker, ForecastGrid, RadarEmbed, AstronomyPanel, AlertBanner
 
-## 📦 HANDOVER PACKET (For Next Instance)
-1. **Current Code:** `ClockFace.tsx` is in "Nuclear Debug Mode".
-2. **Goal:** Restore the dashboard piece-by-piece.
-3. **Safe Haven:** `/corner` is working perfectly (verify at `http://localhost:3010/corner`).
+### Layout Fixes
+- Removed `max-w-[1800px]` constraint — 4K screens now fill properly
+- Hidden TestAlertButton on mobile to declutter header
+- Increased bottom padding (`pb-20`) so ticker doesn't cover competitor cards
+
+### Ko-fi Integration
+- Set up Ko-fi account: `ko-fi.com/phloid`
+- Added pink heart "Support" button to landing page footer
+
+### Theme System
+- Created `ThemeProvider.tsx` — manages dark/light state with localStorage persistence
+- Created `ThemeToggle.tsx` — sun/moon button with smooth transitions
+- Updated `globals.css` with CSS variables for both themes
+- **Dark Mode:** "War Room" — deep blacks, slate, emerald accents
+- **Light Mode:** "Morning Calm" — soothing cream/warm gray
+- Added toggle to both landing page AND dashboard
+
+### Content Updates
+- Created `13_The_Publicist.md` — new expert persona for PR/copywriting
+- Updated `changelog.ts` — "Light & Dark" entry with all today's work
+- Updated `corner.ts` — refined "Why This Exists" manifesto
+
+---
+
+## 🚧 LEFT HANGING
+- None critical — session ended cleanly
+
+---
+
+## 😤 HASSLES
+- Connection instability triggered early shutdown
+- ThemeProvider initially crashed due to context not wrapping unmounted state — fixed by providing default context values
+
+---
+
+## COMMITS THIS SESSION
+1. `991e46b` — feat: Restore Dashboard V3 - GreenThumb, UniversityModal, Professor's Wit, Corner Blog
+2. `9f8e8ab` — fix: Layout adjustments - 4K fill, mobile header cleanup, ticker clearance
+3. `d4effc3` — feat: Ko-fi tip button + Light/Dark theme system
+4. `2c9d76e` — feat: Add theme toggle to Weather Wars dashboard
+5. `3c11a16` — content: Updated changelog and corner post with Publicist copy

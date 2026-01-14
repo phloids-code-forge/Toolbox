@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getLatestSnapshots } from "@/app/actions/db-manage";
 import Link from "next/link";
+import { Heart } from "lucide-react";
 
 import { RealTimeClock } from "./RealTimeClock";
 import { WeatherIcon } from "./WeatherIcon";
@@ -87,7 +88,7 @@ export function ClockFace() {
                     Weather Wars // Battle for Accuracy
                 </h2>
 
-                <div className="text-5xl md:text-7xl lg:text-8xl font-black bg-clip-text text-transparent bg-gradient-to-b from-white via-slate-200 to-slate-500/50 drop-shadow-[0_10px_20px_rgba(255,255,255,0.1)] tracking-tighter">
+                <div className="text-5xl md:text-7xl lg:text-8xl font-black bg-clip-text text-transparent bg-gradient-to-b from-[var(--text-primary)] via-[var(--text-secondary)] to-[var(--text-muted)] drop-shadow-[0_10px_20px_rgba(0,0,0,0.1)] dark:drop-shadow-[0_10px_20px_rgba(255,255,255,0.1)] tracking-tighter">
                     <RealTimeClock />
                 </div>
             </header>
@@ -102,7 +103,7 @@ export function ClockFace() {
                     <div className="xl:col-span-3 flex flex-col gap-6 order-1 xl:order-1 sm:flex-row xl:flex-col sm:items-stretch">
 
                         {/* NWS Truth Circle */}
-                        <div className="flex-1 relative flex flex-col items-center justify-center p-8 rounded-[2rem] aspect-square border border-emerald-500/20 bg-slate-900/20 backdrop-blur-sm shadow-[0_0_80px_-20px_rgba(16,185,129,0.15)] group hover:border-emerald-500/40 hover:bg-emerald-950/20 transition-all duration-500">
+                        <div className="flex-1 relative flex flex-col items-center justify-center p-8 rounded-[2rem] aspect-square border border-emerald-500/20 bg-emerald-50/80 dark:bg-slate-900/20 backdrop-blur-sm shadow-[0_0_80px_-20px_rgba(16,185,129,0.15)] group hover:border-emerald-500/40 dark:hover:bg-emerald-950/20 hover:bg-emerald-100/80 transition-all duration-500 overflow-hidden">
                             <div className="absolute inset-4 rounded-full border border-emerald-500/10 group-hover:scale-105 transition-transform duration-700" />
                             <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-b from-emerald-500/5 to-transparent opacity-50" />
 
@@ -110,11 +111,11 @@ export function ClockFace() {
                                 Official NWS
                             </span>
 
-                            <div className="flex items-start justify-center text-emerald-400 drop-shadow-[0_0_25px_rgba(16,185,129,0.5)] scale-110 xl:scale-125 origin-bottom">
-                                <span className="text-8xl xl:text-9xl font-bold tracking-tighter leading-none">
+                            <div className="flex items-start justify-center text-emerald-600 dark:text-emerald-400 drop-shadow-[0_0_25px_rgba(16,185,129,0.3)] dark:drop-shadow-[0_0_25px_rgba(16,185,129,0.5)] scale-100 xl:scale-110 origin-center">
+                                <span className="text-7xl xl:text-8xl font-bold tracking-tighter leading-none">
                                     {nws.currentTemp ? Math.round(nws.currentTemp) : '--'}
                                 </span>
-                                <span className="text-4xl xl:text-5xl font-light opacity-60 mt-4">°</span>
+                                <span className="text-3xl xl:text-4xl font-light opacity-60 mt-2">°</span>
                             </div>
 
                             <div className="flex items-center gap-2 mt-6 mb-8 text-emerald-200/90">
@@ -184,7 +185,7 @@ export function ClockFace() {
                         const theme = COLOR_THEMES[colorKey];
 
                         return (
-                            <div key={station.id} className={`relative flex flex-col items-center p-6 rounded-2xl bg-slate-900/40 border ${theme.border} transition-all duration-300 hover:bg-slate-900/80 ${theme.hoverBorder} group`}>
+                            <div key={station.id} className={`relative flex flex-col items-center p-6 rounded-2xl bg-stone-100/80 dark:bg-slate-900/40 border ${theme.border} transition-all duration-300 hover:bg-stone-200/90 dark:hover:bg-slate-900/80 ${theme.hoverBorder} group overflow-hidden`}>
                                 {/* Station Name + Score */}
                                 <div className="flex items-center justify-between w-full mb-3">
                                     <h3 className={`text-sm font-bold tracking-widest uppercase ${theme.text}`}>
@@ -201,7 +202,7 @@ export function ClockFace() {
                                 </div>
 
                                 {/* Current Temp */}
-                                <div className="text-5xl font-bold text-white tracking-tighter my-1 drop-shadow-lg">
+                                <div className="text-5xl font-bold text-stone-800 dark:text-white tracking-tighter my-1 drop-shadow-lg">
                                     {s.currentTemp ? Math.round(s.currentTemp) : '--'}°
                                 </div>
 
@@ -233,11 +234,20 @@ export function ClockFace() {
                 <UniversityModal topic={explainTopic} onClose={() => setExplainTopic(null)} />
             )}
 
-            {/* Footer with secret π link */}
-            <footer className="fixed bottom-12 right-4 z-40">
+            {/* Footer with Ko-fi + secret π link */}
+            <footer className="fixed bottom-14 right-4 z-40 flex items-center gap-4">
+                <a
+                    href="https://ko-fi.com/phloid"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--surface)] border border-[var(--border)] hover:border-pink-500/50 hover:bg-pink-500/10 transition-all duration-300 group"
+                >
+                    <Heart className="w-4 h-4 text-pink-500 group-hover:fill-pink-500 transition-all" />
+                    <span className="text-xs font-mono text-[var(--text-secondary)] group-hover:text-pink-400 transition-colors">Support</span>
+                </a>
                 <Link
                     href="/corner"
-                    className="text-slate-800 hover:text-emerald-500 transition-colors text-lg font-bold opacity-50 hover:opacity-100"
+                    className="text-[var(--text-muted)] hover:text-emerald-500 transition-colors text-lg font-bold opacity-50 hover:opacity-100"
                     title="Phloid's Corner"
                 >
                     π
