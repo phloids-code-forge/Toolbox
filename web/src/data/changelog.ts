@@ -7,13 +7,16 @@ export interface Log {
 export const CHANGELOG: Log[] = [
     {
         date: "2026-01-13",
-        title: "The Professor & The Garden",
+        title: "Light & Dark",
         points: [
-            "Implemented 'The University': Quirky educational modals.",
-            "Added 'Green Thumb' panel: Morel Radar & Soil Moisture tracking.",
-            "Wired Forecast Ticker to real NWS data.",
-            "Inject 'The Professor's Wit' into ticker alerts.",
-            "Refactored Dashboard to Fluid Grid (4K support)."
+            "New: Light/Dark theme toggle. Your eyes, your rules.",
+            "New: Ko-fi support button. Buy us a coffee if you're feeling generous.",
+            "Fixed: 4K layout now fills the screen properly.",
+            "Fixed: Mobile header no longer crowded by debug buttons.",
+            "Fixed: Bottom cards no longer hidden by the ticker.",
+            "Added: 'The University' — tap any metric for a real explanation.",
+            "Added: 'Green Thumb' panel — soil temp, moisture, morel hunting.",
+            "Added: 'The Professor's Wit' — dry humor injected into weather alerts."
         ]
     },
     {
