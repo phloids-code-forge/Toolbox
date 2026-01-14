@@ -1,10 +1,9 @@
-"use client";
-
 import { useEffect, useState } from "react";
+import { SNARKY_TICKER_LINES } from "@/config/ticker_snark";
 
 interface ForecastTickerProps {
     daily?: any[];
-    alerts?: any[]; // NWS Alerts (optional for now)
+    alerts?: any[];
 }
 
 export function ForecastTicker({ daily, alerts }: ForecastTickerProps) {
@@ -16,48 +15,71 @@ export function ForecastTicker({ daily, alerts }: ForecastTickerProps) {
     useEffect(() => {
         const newItems: string[] = [];
 
-        // 1. ALERTS (High Priority)
+        // 1. Gather all "Info" bits first
+        const infoBits: string[] = [];
+
+        // Alerts (High Priority)
         if (alerts && alerts.length > 0) {
             alerts.forEach(a => {
                 const headline = (a.headline || "WEATHER ALERT").toUpperCase();
-                newItems.push(`⚠️ ${headline}`);
-
-                // THE PROFESSOR'S WIT: Contextual Injection
-                if (headline.includes("FIRE") || headline.includes("RED FLAG")) {
-                    newItems.push("PROFESSOR: DON'T DROP THAT MIXTAPE. THE WORLD IS GASOLINE.");
-                }
-                if (headline.includes("FREEZE") || headline.includes("FROST")) {
-                    newItems.push("PROFESSOR: PLANTS ARE SCREAMING. COVER THEM.");
-                }
-                if (headline.includes("HEAT") || headline.includes("HOT")) {
-                    newItems.push("PROFESSOR: THE SUN IS A DEADLY LASER. HIDE.");
-                }
+                infoBits.push(`⚠️ ${headline}`);
+                if (headline.includes("TORNADO")) infoBits.push("DO NOT GO OUTSIDE TO FILM IT. SERIOUSLY.");
             });
         }
 
-        // 2. DAILY FORECAST (Today/Tomorrow)
+        // Decompose Daily Forecast
         if (daily && daily.length >= 2) {
             const today = daily[0];
             const tmrw = daily[1];
 
-            // Today
-            const t_high = today.high ? Math.round(today.high) : '--';
-            const t_low = today.low ? Math.round(today.low) : '--';
-            newItems.push(`TODAY: ${today.condition?.toUpperCase() || 'CLEAR'} / H:${t_high}° L:${t_low}°`);
+            // Today's chunks
+            infoBits.push(`TODAY: ${today.condition?.toUpperCase() || 'CLEAR'}`);
+            infoBits.push(`HIGH: ${Math.round(today.high)}°F`);
+            infoBits.push(`LOW: ${Math.round(today.low)}°F`);
+            // Add randomness for boring bits if available in data, else placeholders
+            infoBits.push("UV INDEX: MODERATE"); // Placeholder until real data
+            infoBits.push("WIND: NORTH 12 MPH"); // Placeholder until real data
 
-            // Tomorrow
-            const tm_high = tmrw.high ? Math.round(tmrw.high) : '--';
-            newItems.push(`TOMORROW: ${tmrw.condition?.toUpperCase() || 'CLEAR'} / HIGH ${tm_high}°`);
+            // Tomorrow's chunks
+            infoBits.push(`TOMORROW: ${tmrw.condition?.toUpperCase() || 'CLEAR'}`);
+            infoBits.push(`TARGET HIGH: ${Math.round(tmrw.high)}°F`);
+
+            // Astro (Static for now, can be dynamic later)
+            infoBits.push("MOON: WAXING GIBBOUS");
+            infoBits.push("SUNRISE: 07:12 AM");
+            infoBits.push("SUNSET: 05:48 PM");
+        } else {
+            // Filler info if no data
+            infoBits.push("SYSTEM ONLINE");
+            infoBits.push("MONITORING FREQUENCIES");
+            infoBits.push("SATELLITE UPLINK ESTABLISHED");
         }
 
-        // 3. STATIC FILLER (If no data yet)
-        if (newItems.length === 0) {
-            newItems.push("SYSTEM ONLINE");
-            newItems.push("AWAITING NWS FEED");
-        } else {
-            // Append Golden Hour / UV if we have it (Hardcoded for now as it's not passed yet)
-            newItems.push("GOLDEN HOUR: CHECK DASHBOARD");
-            newItems.push("UV INDEX: MODERATE");
+        // 2. Interleave Logic (1 Joke : 3 Info)
+        // [Joke, Info, Info, Info, Joke, Info, Info, Info...]
+
+        let infoIndex = 0;
+        let protectionCount = 0; // Prevent infinite loops
+
+        while (infoIndex < infoBits.length && protectionCount < 100) {
+            protectionCount++;
+
+            // Add a Joke
+            const randomJoke = SNARKY_TICKER_LINES[Math.floor(Math.random() * SNARKY_TICKER_LINES.length)];
+            newItems.push(randomJoke);
+
+            // Add up to 3 Info bits
+            for (let i = 0; i < 3; i++) {
+                if (infoIndex < infoBits.length) {
+                    newItems.push(infoBits[infoIndex]);
+                    infoIndex++;
+                }
+            }
+        }
+
+        // If we ran out of info but the list is short, add more jokes
+        if (newItems.length < 10) {
+            newItems.push(...SNARKY_TICKER_LINES.sort(() => 0.5 - Math.random()).slice(0, 5));
         }
 
         setItems(newItems);
@@ -69,8 +91,8 @@ export function ForecastTicker({ daily, alerts }: ForecastTickerProps) {
             <div className="flex animate-marquee whitespace-nowrap gap-12">
                 {/* Triple Loop for smoothness */}
                 {[...items, ...items, ...items, ...items].map((item, i) => (
-                    <span key={i} className="text-xs md:text-sm font-mono font-bold text-emerald-400 tracking-widest uppercase">
-                        {item} ::
+                    <span key={i} className={`text-xs md:text-sm font-mono font-bold tracking-widest pl-10 ${item.includes("⚠️") ? "text-red-500 animate-pulse" : item.length > 50 ? "text-emerald-400" : "text-slate-300"}`}>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{item} ::
                     </span>
                 ))}
             </div>
@@ -81,7 +103,7 @@ export function ForecastTicker({ daily, alerts }: ForecastTickerProps) {
                     100% { transform: translateX(-50%); }
                 }
                 .animate-marquee {
-                    animation: marquee 60s linear infinite;
+                    animation: marquee 120s linear infinite; /* Slowed down for readability */
                 }
             `}</style>
         </div>

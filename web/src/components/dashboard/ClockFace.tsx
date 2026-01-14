@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getLatestSnapshots } from "@/app/actions/db-manage";
 import Link from "next/link";
-import { Heart } from "lucide-react";
+import { Heart, Map as MapIcon } from "lucide-react";
 
 import { RealTimeClock } from "./RealTimeClock";
 import { WeatherIcon } from "./WeatherIcon";
@@ -80,6 +80,10 @@ export function ClockFace() {
             {/* Header: Compact to maximize content space */}
             <header className="flex flex-col items-center pt-4 pb-4 md:pt-6 md:pb-4 relative z-10 shrink-0">
                 <div className="hidden md:flex items-center gap-3 absolute top-4 right-4 md:top-6 md:right-8">
+                    <Link href="/nationwide" className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-emerald-500/50 transition-all group">
+                        <MapIcon className="w-4 h-4 text-slate-400 group-hover:text-emerald-400" />
+                        <span className="text-xs font-bold text-slate-400 group-hover:text-white uppercase tracking-wider">Nationwide</span>
+                    </Link>
                     <ThemeToggle />
                     <TestAlertButton />
                 </div>
@@ -97,28 +101,37 @@ export function ClockFace() {
             <main className="flex-grow flex flex-col w-full mx-auto px-4 md:px-8 xl:px-12 2xl:px-16 gap-6 md:gap-8 pb-20">
 
                 {/* UPPER DECK: Core Data Visibility */}
+                <div className="flex justify-end mb-2 xl:hidden">
+                    <Link href="/nationwide" className="px-4 py-2 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 rounded-md text-xs font-bold tracking-widest text-slate-300 hover:text-white uppercase transition-all flex items-center gap-2">
+                        <MapIcon className="w-4 h-4" />
+                        Nationwide Map
+                    </Link>
+                </div>
+
                 <div className="flex flex-col xl:grid xl:grid-cols-12 gap-6 xl:gap-10 items-stretch flex-grow">
 
                     {/* Left Flank: The Truth (NWS), Astronomy, Green Thumb */}
                     <div className="xl:col-span-3 flex flex-col gap-6 order-1 xl:order-1 sm:flex-row xl:flex-col sm:items-stretch">
 
                         {/* NWS Truth Circle */}
-                        <div className="flex-1 relative flex flex-col items-center justify-center p-6 sm:p-8 rounded-[2rem] aspect-square border border-emerald-500/20 bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl shadow-[0_20px_50px_-12px_rgba(16,185,129,0.25)] dark:shadow-[0_0_80px_-20px_rgba(16,185,129,0.15)] group hover:scale-[1.02] transition-all duration-500 overflow-hidden ring-1 ring-emerald-500/10">
+                        <div className="flex-1 relative flex flex-col items-center justify-center p-6 rounded-[2rem] aspect-square border border-emerald-500/20 bg-slate-300/50 dark:bg-slate-700/40 backdrop-blur-xl shadow-[0_20px_50px_-12px_rgba(16,185,129,0.25)] dark:shadow-[0_0_80px_-20px_rgba(16,185,129,0.15)] group hover:scale-[1.02] transition-all duration-500 overflow-hidden ring-1 ring-emerald-500/10">
+
+
                             <div className="absolute inset-4 rounded-full border border-emerald-500/10 group-hover:scale-105 transition-transform duration-700" />
-                            <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-emerald-500/5 via-transparent to-emerald-500/5 opacity-50" />
+                            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-emerald-500/5 via-transparent to-emerald-500/5 opacity-50" />
 
                             <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold px-4 py-1.5 rounded-full mb-6 tracking-widest uppercase backdrop-blur-md">
                                 Official NWS
                             </span>
 
-                            <div className="flex items-start justify-center text-emerald-700 dark:text-emerald-400 drop-shadow-sm dark:drop-shadow-[0_0_25px_rgba(16,185,129,0.5)] scale-100 xl:scale-110 origin-center z-10 my-4">
+                            <div className="flex items-start justify-center text-emerald-800 dark:text-emerald-300 drop-shadow-sm dark:drop-shadow-[0_0_25px_rgba(16,185,129,0.5)] scale-100 xl:scale-110 origin-center z-10 my-4">
                                 <span className="text-[5rem] sm:text-[6rem] lg:text-[7rem] xl:text-[8rem] font-bold tracking-tighter leading-none">
                                     {nws.currentTemp ? Math.round(nws.currentTemp) : '--'}
                                 </span>
                                 <span className="text-4xl xl:text-5xl font-light opacity-60 mt-2 sm:mt-4">°</span>
                             </div>
 
-                            <div className="flex items-center gap-2 mt-6 mb-8 text-emerald-200/90">
+                            <div className="flex items-center gap-2 mt-6 mb-8 text-emerald-900/80 dark:text-emerald-200/90">
                                 <WeatherIcon condition={nws.conditionText} className="w-8 h-8" />
                                 <p className="font-mono text-lg uppercase tracking-wider font-bold">
                                     {nws.conditionText || 'ONLINE'}
@@ -128,14 +141,14 @@ export function ClockFace() {
                             {/* Detailed Stats */}
                             <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-center w-full max-w-[200px]">
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] text-emerald-500/60 uppercase tracking-widest">Feels Like</span>
-                                    <span className="text-xl font-bold text-emerald-300">
+                                    <span className="text-[10px] text-emerald-700/60 dark:text-emerald-500/60 uppercase tracking-widest">Feels Like</span>
+                                    <span className="text-xl font-bold text-emerald-800 dark:text-emerald-300">
                                         {nws.windChill ? Math.round(nws.windChill) : (nws.currentTemp ? Math.round(nws.currentTemp) : '--')}°
                                     </span>
                                 </div>
                                 <div className="flex flex-col border-l border-emerald-500/20">
-                                    <span className="text-[10px] text-emerald-500/60 uppercase tracking-widest">Wind</span>
-                                    <span className="text-xl font-bold text-emerald-300">
+                                    <span className="text-[10px] text-emerald-700/60 dark:text-emerald-500/60 uppercase tracking-widest">Wind</span>
+                                    <span className="text-xl font-bold text-emerald-800 dark:text-emerald-300">
                                         {nws.windSpeed ? Math.round(nws.windSpeed) : '--'} <span className="text-xs font-normal opacity-70">mph</span>
                                     </span>
                                 </div>
@@ -185,7 +198,7 @@ export function ClockFace() {
                         const theme = COLOR_THEMES[colorKey];
 
                         return (
-                            <div key={station.id} className={`relative flex flex-col items-center p-4 rounded-2xl bg-white/80 dark:bg-slate-900/40 border ${theme.border} transition-all duration-300 hover:bg-white dark:hover:bg-slate-900/80 ${theme.hoverBorder} group overflow-hidden shadow-sm hover:shadow-md`}>
+                            <div key={station.id} className={`relative flex flex-col items-center p-6 rounded-md bg-white/80 dark:bg-slate-900/40 border ${theme.border} transition-all duration-300 hover:bg-white dark:hover:bg-slate-900/80 ${theme.hoverBorder} group overflow-hidden shadow-sm hover:shadow-md min-h-[150px] justify-between`}>
                                 {/* Station Name + Score */}
                                 <div className="flex items-center justify-between w-full mb-3">
                                     <h3 className={`text-sm font-bold tracking-widest uppercase ${theme.text}`}>

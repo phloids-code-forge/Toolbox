@@ -7,6 +7,16 @@ export interface Log {
 export const CHANGELOG: Log[] = [
     {
         date: "2026-01-13",
+        title: "The Nationwide Release",
+        points: [
+            "New: Nationwide Command Center (/nationwide) — Active Fronts monitoring.",
+            "New: 'The Jester' Ticker — Snarky weather commentary (feat. phloid).",
+            "Refined: UI Reset — Switched to tactical rounded edges for broader data visibility.",
+            "Fixed: Strictly enforced text safety zones to prevent all border clipping."
+        ]
+    },
+    {
+        date: "2026-01-13",
         title: "Light & Dark",
         points: [
             "New: Light/Dark theme toggle. Your eyes, your rules.",

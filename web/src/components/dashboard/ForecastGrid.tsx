@@ -126,7 +126,7 @@ export function ForecastGrid() {
     };
 
     return (
-        <div className="w-full bg-slate-900/30 rounded-2xl p-4 border border-slate-800">
+        <div className="w-full bg-slate-900/30 rounded-md p-6 border border-slate-800">
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wide">
                     {visibleDays}-Day Forecast
