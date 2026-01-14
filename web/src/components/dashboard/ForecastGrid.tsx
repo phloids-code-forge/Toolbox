@@ -61,7 +61,7 @@ export function ForecastGrid() {
             const res = await getLatestSnapshots();
             if (res.success && res.data) {
                 const transformed: SourceForecast[] = res.data
-                    .filter((d: any) => !d.station_id.startsWith('nws-') && d.station_id !== 'kfor')
+                    .filter((d: any) => !d.station_id.startsWith('nws-') && d.station_id !== 'kfor' && d.station_id !== 'kwtv')
                     .map((d: any) => {
                         const forecast = d.forecast_data;
                         let days: ForecastDay[] = forecast?.daily || [];
@@ -188,25 +188,38 @@ export function ForecastGrid() {
                                         </div>
                                     </td>
                                     {source.days.slice(0, visibleDays).map((day, i) => (
-                                        <td key={i} className="p-3 text-center border-l border-slate-800/30">
-                                            {day.high !== null ? (
-                                                <div className="flex flex-col items-center">
-                                                    <div className="text-xl font-bold text-white tracking-tight">
-                                                        {day.high}°
-                                                    </div>
-                                                    <div className="text-sm font-semibold text-slate-500">
-                                                        {day.low}°
-                                                    </div>
+                                        <td key={i} className="p-3 text-center border-l border-slate-800/30 align-top">
+                                            <div className="flex flex-col items-center justify-between h-20">
+                                                {/* Temperature Block (Fixed Height) */}
+                                                <div className="flex flex-col items-center justify-center h-12">
+                                                    {day.high !== null ? (
+                                                        <>
+                                                            <div className="text-xl font-bold text-white tracking-tight leading-none">
+                                                                {day.high}°
+                                                            </div>
+                                                            <div className="text-sm font-semibold text-slate-500 leading-none mt-1">
+                                                                {day.low}°
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-slate-700">-</span>
+                                                    )}
                                                 </div>
-                                            ) : (
-                                                <span className="text-slate-700">-</span>
-                                            )}
-                                            {day.precipChance !== null && day.precipChance > 0 && (
-                                                <div className="flex items-center justify-center gap-0.5 mt-2 text-blue-400 bg-blue-500/10 rounded-full px-2 py-0.5">
-                                                    <Droplets className="w-3 h-3" />
-                                                    <span className="text-xs font-bold">{day.precipChance}%</span>
+
+                                                {/* Precipitation Block (Fixed Slot) */}
+                                                <div className="h-6 flex items-center justify-center">
+                                                    {day.precipChance !== null && day.precipChance > 0 ? (
+                                                        <div className="flex items-center justify-center gap-0.5 text-blue-400 bg-blue-500/10 rounded-full px-2 py-0.5">
+                                                            <Droplets className="w-3 h-3" />
+                                                            <span className="text-xs font-bold">{day.precipChance}%</span>
+                                                        </div>
+                                                    ) : (
+                                                        // Empty placeholder to preserve alignment if needed, 
+                                                        // but with 'justify-between h-20' it sticks to bottom.
+                                                        <span />
+                                                    )}
                                                 </div>
-                                            )}
+                                            </div>
                                         </td>))}
                                 </tr>
                             );

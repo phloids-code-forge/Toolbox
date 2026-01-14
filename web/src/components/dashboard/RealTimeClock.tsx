@@ -36,7 +36,7 @@ export function RealTimeClock() {
             <div className="font-mono tracking-widest font-bold">
                 {time}
             </div>
-            <div className="text-slate-500 text-sm font-mono mt-1">
+            <div className="text-slate-400 text-lg md:text-xl font-bold mt-2 md:mt-4 tracking-wide opacity-80">
                 {date}
             </div>
         </div>

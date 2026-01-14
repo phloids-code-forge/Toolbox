@@ -15,7 +15,7 @@ export function RadarEmbed() {
         return (
             <div
                 onClick={() => setIsFullscreen(true)}
-                className="relative w-full h-32 rounded-xl overflow-hidden border border-slate-800 bg-slate-900/30 cursor-pointer group hover:border-slate-600 transition-all"
+                className="relative w-full h-full min-h-[300px] rounded-xl overflow-hidden border border-slate-800 bg-slate-900/30 cursor-pointer group hover:border-slate-600 transition-all"
             >
                 <div className="absolute top-2 left-3 z-10 bg-black/70 px-2 py-1 rounded text-[10px] text-slate-400 font-bold uppercase tracking-wide flex items-center gap-1">
                     <span>Live Radar</span>

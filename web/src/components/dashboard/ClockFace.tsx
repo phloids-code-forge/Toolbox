@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getLatestSnapshots } from "@/app/actions/db-manage";
+import Link from "next/link";
 
 import { RealTimeClock } from "./RealTimeClock";
 import { WeatherIcon } from "./WeatherIcon";
@@ -11,6 +12,8 @@ import { RadarEmbed } from "./RadarEmbed";
 import { AstronomyPanel } from "./AstronomyPanel";
 import { TestAlertButton } from "./TestAlertButton";
 import { AlertBanner } from "./AlertBanner";
+import { GreenThumbPanel } from "./GreenThumbPanel";
+import { UniversityModal } from "./UniversityModal";
 
 // Friendly display names for sources
 const SOURCE_NAMES: Record<string, string> = {
@@ -40,6 +43,7 @@ const COLOR_THEMES: Record<string, { border: string; text: string; hoverBorder: 
 export function ClockFace() {
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [explainTopic, setExplainTopic] = useState<string | null>(null);
 
     useEffect(() => {
         async function load() {
@@ -57,20 +61,22 @@ export function ClockFace() {
     // Organize Data
     const nwsData = data.find(d => d.station_id.startsWith('nws-'));
     const nws = nwsData?.forecast_data || {};
+    const openMeteoData = data.find(d => d.station_id === 'open_meteo');
+    const openMeteo = openMeteoData?.forecast_data || {};
     const competitors = data.filter(d =>
         !d.station_id.startsWith('nws-') &&
         d.station_id !== 'kfor'
     );
 
     return (
-        // MAIN CONTAINER: Adjusted for better viewing height and padding
-        <div className="flex flex-col w-full min-h-screen bg-black text-slate-300 font-sans selection:bg-emerald-500/30 pb-12 sm:pb-0">
+        // MAIN CONTAINER: Full viewport height, flex column
+        <div className="flex flex-col w-full min-h-screen bg-black text-slate-300 font-sans selection:bg-emerald-500/30">
 
             {/* Real NWS Alert Banner (polls DB every 30s) */}
             <AlertBanner />
 
             {/* Header: More top padding, better vertical spacing */}
-            <header className="flex flex-col items-center pt-8 pb-6 md:pt-12 md:pb-8 relative z-10">
+            <header className="flex flex-col items-center pt-8 pb-6 md:pt-12 md:pb-8 relative z-10 shrink-0">
                 <div className="absolute top-4 right-4 md:top-8 md:right-8">
                     <TestAlertButton />
                 </div>
@@ -84,13 +90,13 @@ export function ClockFace() {
                 </div>
             </header>
 
-            {/* CONTENT WRAPPER: Limits max width for readability on ultra-wide screens */}
-            <main className="flex-grow flex flex-col w-full max-w-[1800px] mx-auto px-4 md:px-8 xl:px-12 gap-8 md:gap-12 pb-8">
+            {/* CONTENT WRAPPER: Grows to fill available space */}
+            <main className="flex-grow flex flex-col w-full max-w-[1800px] mx-auto px-4 md:px-8 xl:px-12 gap-8 md:gap-12 pb-16">
 
                 {/* UPPER DECK: Core Data Visibility */}
-                <div className="flex flex-col xl:grid xl:grid-cols-12 gap-6 xl:gap-10 items-stretch">
+                <div className="flex flex-col xl:grid xl:grid-cols-12 gap-6 xl:gap-10 items-stretch flex-grow">
 
-                    {/* Left Flank: The Truth (NWS) & Astronomy */}
+                    {/* Left Flank: The Truth (NWS), Astronomy, Green Thumb */}
                     <div className="xl:col-span-3 flex flex-col gap-6 order-1 xl:order-1 sm:flex-row xl:flex-col sm:items-stretch">
 
                         {/* NWS Truth Circle */}
@@ -134,8 +140,18 @@ export function ClockFace() {
                         </div>
 
                         {/* Astronomy Panel */}
-                        <div className="flex-1 xl:flex-none">
+                        <div className="flex-none">
                             <AstronomyPanel />
+                        </div>
+
+                        {/* Green Thumb Panel */}
+                        <div className="flex-none">
+                            <GreenThumbPanel
+                                soilTemp={openMeteo.soilTemperature}
+                                soilMoisture={openMeteo.soilMoisture}
+                                daily={openMeteo.daily}
+                                onExplain={(topic) => setExplainTopic(topic)}
+                            />
                         </div>
                     </div>
 
@@ -151,7 +167,7 @@ export function ClockFace() {
                 </div>
 
                 {/* LOWER DECK: The Participants (Cards) */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 pt-4 border-t border-slate-800/50">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 pt-4 border-t border-slate-800/50 shrink-0">
                     {competitors.map((station) => {
                         const s = station.forecast_data;
                         const accuracy = ACCURACY_SCORES[station.station_id] || 0;
@@ -208,7 +224,23 @@ export function ClockFace() {
             </main>
 
             {/* Ticker */}
-            <ForecastTicker />
+            <ForecastTicker daily={nws.daily} alerts={nws.alerts} />
+
+            {/* The University Modal (triggered by GreenThumb clicks) */}
+            {explainTopic && (
+                <UniversityModal topic={explainTopic} onClose={() => setExplainTopic(null)} />
+            )}
+
+            {/* Footer with secret π link */}
+            <footer className="fixed bottom-12 right-4 z-40">
+                <Link
+                    href="/corner"
+                    className="text-slate-800 hover:text-emerald-500 transition-colors text-lg font-bold opacity-50 hover:opacity-100"
+                    title="Phloid's Corner"
+                >
+                    π
+                </Link>
+            </footer>
 
         </div>
     );

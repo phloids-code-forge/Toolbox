@@ -39,7 +39,7 @@ export const OPEN_METEO_PARSER: ScraperDefinition = {
     id: 'open_meteo',
     sourceType: 'API',
     // Uses coords from active city config
-    url: `https://api.open-meteo.com/v1/forecast?latitude=${ACTIVE_CITY.coords.lat}&longitude=${ACTIVE_CITY.coords.lng}&current=temperature_2m,relative_humidity_2m,weather_code,precipitation_probability,wind_speed_10m&hourly=uv_index,cape,soil_moisture_3_to_9cm,shortwave_radiation&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=${encodeURIComponent(ACTIVE_CITY.timezone)}&forecast_days=7`,
+    url: `https://api.open-meteo.com/v1/forecast?latitude=${ACTIVE_CITY.coords.lat}&longitude=${ACTIVE_CITY.coords.lng}&current=temperature_2m,relative_humidity_2m,weather_code,precipitation_probability,wind_speed_10m&hourly=uv_index,cape,soil_moisture_3_to_9cm,soil_temperature_6cm,shortwave_radiation&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=${encodeURIComponent(ACTIVE_CITY.timezone)}&forecast_days=7`,
     parser: (jsonString: string) => {
         try {
             const data = JSON.parse(jsonString);
@@ -95,6 +95,7 @@ export const OPEN_METEO_PARSER: ScraperDefinition = {
                 uvIndex: hourly.uv_index[hourIndex],
                 cape: hourly.cape[hourIndex],
                 soilMoisture: hourly.soil_moisture_3_to_9cm[hourIndex],
+                soilTemp: hourly.soil_temperature_6cm[hourIndex], // Added for Morels
                 solarRadiation: hourly.shortwave_radiation[hourIndex],
 
                 // 7-day extended
