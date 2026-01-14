@@ -103,19 +103,19 @@ export function ClockFace() {
                     <div className="xl:col-span-3 flex flex-col gap-6 order-1 xl:order-1 sm:flex-row xl:flex-col sm:items-stretch">
 
                         {/* NWS Truth Circle */}
-                        <div className="flex-1 relative flex flex-col items-center justify-center p-8 rounded-[2rem] aspect-square border border-emerald-500/20 bg-emerald-50/80 dark:bg-slate-900/20 backdrop-blur-sm shadow-[0_0_80px_-20px_rgba(16,185,129,0.15)] group hover:border-emerald-500/40 dark:hover:bg-emerald-950/20 hover:bg-emerald-100/80 transition-all duration-500 overflow-hidden">
+                        <div className="flex-1 relative flex flex-col items-center justify-center p-6 sm:p-8 rounded-[2rem] aspect-square border border-emerald-500/20 bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl shadow-[0_20px_50px_-12px_rgba(16,185,129,0.25)] dark:shadow-[0_0_80px_-20px_rgba(16,185,129,0.15)] group hover:scale-[1.02] transition-all duration-500 overflow-hidden ring-1 ring-emerald-500/10">
                             <div className="absolute inset-4 rounded-full border border-emerald-500/10 group-hover:scale-105 transition-transform duration-700" />
-                            <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-b from-emerald-500/5 to-transparent opacity-50" />
+                            <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-emerald-500/5 via-transparent to-emerald-500/5 opacity-50" />
 
                             <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold px-4 py-1.5 rounded-full mb-6 tracking-widest uppercase backdrop-blur-md">
                                 Official NWS
                             </span>
 
-                            <div className="flex items-start justify-center text-emerald-600 dark:text-emerald-400 drop-shadow-[0_0_25px_rgba(16,185,129,0.3)] dark:drop-shadow-[0_0_25px_rgba(16,185,129,0.5)] scale-100 xl:scale-110 origin-center">
-                                <span className="text-7xl xl:text-8xl font-bold tracking-tighter leading-none">
+                            <div className="flex items-start justify-center text-emerald-700 dark:text-emerald-400 drop-shadow-sm dark:drop-shadow-[0_0_25px_rgba(16,185,129,0.5)] scale-100 xl:scale-110 origin-center z-10 my-4">
+                                <span className="text-[5rem] sm:text-[6rem] lg:text-[7rem] xl:text-[8rem] font-bold tracking-tighter leading-none">
                                     {nws.currentTemp ? Math.round(nws.currentTemp) : '--'}
                                 </span>
-                                <span className="text-3xl xl:text-4xl font-light opacity-60 mt-2">°</span>
+                                <span className="text-4xl xl:text-5xl font-light opacity-60 mt-2 sm:mt-4">°</span>
                             </div>
 
                             <div className="flex items-center gap-2 mt-6 mb-8 text-emerald-200/90">
@@ -185,7 +185,7 @@ export function ClockFace() {
                         const theme = COLOR_THEMES[colorKey];
 
                         return (
-                            <div key={station.id} className={`relative flex flex-col items-center p-6 rounded-2xl bg-stone-100/80 dark:bg-slate-900/40 border ${theme.border} transition-all duration-300 hover:bg-stone-200/90 dark:hover:bg-slate-900/80 ${theme.hoverBorder} group overflow-hidden`}>
+                            <div key={station.id} className={`relative flex flex-col items-center p-4 rounded-2xl bg-white/80 dark:bg-slate-900/40 border ${theme.border} transition-all duration-300 hover:bg-white dark:hover:bg-slate-900/80 ${theme.hoverBorder} group overflow-hidden shadow-sm hover:shadow-md`}>
                                 {/* Station Name + Score */}
                                 <div className="flex items-center justify-between w-full mb-3">
                                     <h3 className={`text-sm font-bold tracking-widest uppercase ${theme.text}`}>
@@ -202,7 +202,7 @@ export function ClockFace() {
                                 </div>
 
                                 {/* Current Temp */}
-                                <div className="text-5xl font-bold text-stone-800 dark:text-white tracking-tighter my-1 drop-shadow-lg">
+                                <div className="text-4xl lg:text-5xl font-bold text-stone-800 dark:text-white tracking-tighter my-2 drop-shadow-sm">
                                     {s.currentTemp ? Math.round(s.currentTemp) : '--'}°
                                 </div>
 
