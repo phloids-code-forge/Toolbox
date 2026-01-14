@@ -75,9 +75,9 @@ export function ClockFace() {
             {/* Real NWS Alert Banner (polls DB every 30s) */}
             <AlertBanner />
 
-            {/* Header: More top padding, better vertical spacing */}
-            <header className="flex flex-col items-center pt-8 pb-6 md:pt-12 md:pb-8 relative z-10 shrink-0">
-                <div className="absolute top-4 right-4 md:top-8 md:right-8">
+            {/* Header: Compact to maximize content space */}
+            <header className="flex flex-col items-center pt-4 pb-4 md:pt-6 md:pb-4 relative z-10 shrink-0">
+                <div className="hidden md:block absolute top-4 right-4 md:top-8 md:right-8">
                     <TestAlertButton />
                 </div>
 
@@ -91,7 +91,7 @@ export function ClockFace() {
             </header>
 
             {/* CONTENT WRAPPER: Grows to fill available space */}
-            <main className="flex-grow flex flex-col w-full max-w-[1800px] mx-auto px-4 md:px-8 xl:px-12 gap-8 md:gap-12 pb-16">
+            <main className="flex-grow flex flex-col w-full mx-auto px-4 md:px-8 xl:px-12 2xl:px-16 gap-6 md:gap-8 pb-20">
 
                 {/* UPPER DECK: Core Data Visibility */}
                 <div className="flex flex-col xl:grid xl:grid-cols-12 gap-6 xl:gap-10 items-stretch flex-grow">
