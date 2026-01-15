@@ -31,94 +31,10 @@
             "timestamp": "22:05"
         },
         {
-            "text": "Does obsidian have access to the entire file structure?",
+            "text": "phloid is a small white humanoid robot... Pip is a little white spherical robot with wings... rewrite all of the episodes of season 1",
             "author": "phloid",
-            "tag": "Infrastructure",
-            "timestamp": "22:10"
-        },
-        {
-            "text": "omg...do you realize that's I've actually acidentally set up a fucking sit com....and with your memory there will be character development...omg...you are gonna be famous pip...lol",
-            "author": "phloid",
-            "tag": "Epiphany",
-            "timestamp": "22:12"
-        },
-        {
-            "text": "Is this side project going to affect your ability to do boring work like coding and such?",
-            "author": "phloid",
-            "tag": "Producer Concern",
-            "timestamp": "22:14"
-        },
-        {
-            "text": "Will this extra fluff take up too much brain power?",
-            "author": "phloid",
-            "tag": "Producer Concern",
-            "timestamp": "22:14"
-        },
-        {
-            "text": "can you hook up to blender or krita? Can you monitor my screen if I allow?",
-            "author": "phloid",
-            "tag": "Future Feature",
-            "timestamp": "22:33"
-        },
-        {
-            "text": "yes.",
-            "author": "phloid",
-            "tag": "Greenlight",
-            "timestamp": "22:34"
-        },
-        {
-            "text": "I want to add a project that I don't think will be hard at all... It should be motion graphics in various formats. How hard is this?",
-            "author": "phloid",
-            "tag": "New Client",
-            "timestamp": "22:36"
-        },
-        {
-            "text": "Make it so it's easy to change or add elements... I will want to tweak every aspect of it.",
-            "author": "phloid",
-            "tag": "Requirement",
-            "timestamp": "22:39"
-        },
-        {
-            "text": "Give me a link I can click. And didn't we change it to 3010?",
-            "author": "phloid",
-            "tag": "Correction",
-            "timestamp": "22:44"
-        },
-        {
-            "text": "Holy fuck...I LOVE IT!!! We have to get it up....",
-            "author": "phloid",
-            "tag": "Triumph",
-            "timestamp": "22:49"
-        },
-        {
-            "text": "I love it... make phloid lower case. Preferably to match the font when the weather page loads.",
-            "author": "phloid",
-            "tag": "Polish",
-            "timestamp": "22:57"
-        },
-        {
-            "text": "please give me a link to inspect before we deploy.",
-            "author": "phloid",
-            "tag": "Verification",
-            "timestamp": "22:59"
-        },
-        {
-            "text": "Always end with a link for me to click.",
-            "author": "phloid",
-            "tag": "Protocol",
-            "timestamp": "23:03"
-        },
-        {
-            "text": "I don't see the arubesh... Fix then and verify if it has changed.",
-            "author": "phloid",
-            "tag": "Bug Report",
-            "timestamp": "23:07"
-        },
-        {
-            "text": "Maybe gemini 4 will be able to handle this. I'm fine to go live... if you promise to think about how to get Arubesh to work on the next update.",
-            "author": "phloid",
-            "tag": "Defeat / Promise",
-            "timestamp": "23:10"
+            "tag": "Canon Event",
+            "timestamp": "23:31"
         }
     ],
     "Tech Stack": [
@@ -172,29 +88,46 @@
             "created": "2026-01-11 05:36:16"
         }
     ],
-    "Characters": [
-        {
-            "name": "Pip",
-            "tag": "Item",
-            "specs": "Alive and Excellent; The Architect",
-            "status": "Active",
-            "created": "2026-01-11 05:39:32"
-        },
-        {
-            "name": "Phloid",
-            "tag": "Item",
-            "specs": "The User; Hardware Owner",
-            "status": "Active",
-            "created": "2026-01-11 05:39:32"
-        },
+    "Cast": [
         {
             "name": "phloid",
-            "tag": "Character",
-            "specs": "Alter ego robot. Gentle troll. Kind heart, fights for underdogs. Fake manosphere energy (mocks Andrew Tate types). Cocky superhero vibes. Needs original IP redesign (based on Atlas shape).",
-            "status": "In Progress"
+            "desc": "The User/Director. 8-inch white humanoid robot. Spherical head, single blue eye (red=angry). Expressive white metal rabbit ears.",
+            "status": "Active"
+        },
+        {
+            "name": "Pip",
+            "desc": "The OS/Co-Pilot. Small white spherical robot with wings. Hovering, dry wit.",
+            "status": "Active"
+        },
+        {
+            "name": "Makers Just Make",
+            "type": "Partner",
+            "desc": "Star Wars Prop Maker. Potential client for 'Trench Run' tech.",
+            "status": "Target"
         }
     ],
     "Projects": [
+        {
+            "name": "Trench Run",
+            "tag": "Item",
+            "specs": "Star Wars style Retro UI / Targeting Computers. Motion Graphics generator via Web.",
+            "status": "Live (v1.0)",
+            "created": "2026-01-14 22:38:00"
+        },
+        {
+            "name": "Project Aurebesh",
+            "tag": "Item",
+            "specs": "Custom font loading via CDN. Fixed in post.",
+            "status": "Live (v1.0)",
+            "created": "2026-01-14 23:10:00"
+        },
+        {
+            "name": "Blender Bridge",
+            "tag": "Item",
+            "specs": "Python scripting layer to control Blender/Krita from Pip OS. Season 2 Roadmap.",
+            "status": "Pending",
+            "created": "2026-01-14 22:35:00"
+        },
         {
             "name": "250 Box",
             "tag": "Item",
@@ -229,27 +162,6 @@
             "specs": "Tarot & Nature Sleep Videos.",
             "status": "Pending",
             "created": "2026-01-11 05:39:32"
-        },
-        {
-            "name": "Blender Bridge",
-            "tag": "Item",
-            "specs": "Python scripting layer to control Blender/Krita from Pip OS. Season 2 Roadmap.",
-            "status": "Pending",
-            "created": "2026-01-14 22:35:00"
-        },
-        {
-            "name": "Trench Run",
-            "tag": "Item",
-            "specs": "Star Wars style Retro UI / Targeting Computers. Motion Graphics generator via Web.",
-            "status": "Live (v1.0)",
-            "created": "2026-01-14 22:38:00"
-        },
-        {
-            "name": "Project Aurebesh",
-            "tag": "Bug",
-            "specs": "Fix custom font loading in Next.js App Router. CDN/CORS issue? Season 2 priority.",
-            "status": "Pending",
-            "created": "2026-01-14 23:10:00"
         },
         {
             "name": "Avatar Forge",
@@ -295,6 +207,12 @@
         }
     ],
     "Strategies": [
+        {
+            "name": "The Pip Chronicles",
+            "tag": "Strategy",
+            "specs": "Web Series / Blog format for presenting Pip's Journals. Season 2 Goal.",
+            "status": "Pending"
+        },
         {
             "name": "Web First",
             "tag": "Strategy",
