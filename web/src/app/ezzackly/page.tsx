@@ -7,14 +7,16 @@ import AbbrevDecoder from './components/AbbrevDecoder';
 import SentroSizer from './components/SentroSizer';
 import ZenCounter from './components/ZenCounter';
 import GaugeConverter from './components/GaugeConverter';
+import GraphganGenerator from './components/GraphganGenerator';
 
-type Tool = 'hook' | 'abbrev' | 'sentro' | 'counter' | 'gauge';
+type Tool = 'hook' | 'abbrev' | 'sentro' | 'counter' | 'gauge' | 'graphgan';
 
 const tools: { id: Tool; name: string; icon: string; desc: string }[] = [
-    { id: 'hook', name: 'Hook Chart', icon: '🪝', desc: 'Size conversions' },
-    { id: 'abbrev', name: 'Abbreviations', icon: '📖', desc: 'Pattern decoder' },
     { id: 'sentro', name: 'Sentro Sizer', icon: '🧢', desc: 'Hat calculator' },
+    { id: 'graphgan', name: 'Graphgan', icon: '🎨', desc: 'Pixel charts' },
     { id: 'counter', name: 'Zen Counter', icon: '🔢', desc: 'ASMR counter' },
+    { id: 'hook', name: 'Hook Chart', icon: '🪝', desc: 'Sizes' },
+    { id: 'abbrev', name: 'Abbreviations', icon: '📖', desc: 'Decoder' },
     { id: 'gauge', name: 'Gauge', icon: '📏', desc: 'Converter' },
 ];
 
@@ -79,8 +81,8 @@ export default function EzzacklyStudio() {
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             className={`flex-shrink-0 px-4 py-3 rounded-2xl transition-all duration-300 flex items-center gap-2 ${activeTool === tool.id
-                                    ? 'bg-gradient-to-br from-[#D4A5A5] to-[#C5A065] text-white shadow-lg shadow-[#D4A5A5]/30'
-                                    : 'bg-white/80 text-[#3C2415] hover:bg-white border border-[#E8D5D5]/50 hover:border-[#D4A5A5]/30 hover:shadow-md'
+                                ? 'bg-gradient-to-br from-[#D4A5A5] to-[#C5A065] text-white shadow-lg shadow-[#D4A5A5]/30'
+                                : 'bg-white/80 text-[#3C2415] hover:bg-white border border-[#E8D5D5]/50 hover:border-[#D4A5A5]/30 hover:shadow-md'
                                 }`}
                         >
                             <span className="text-lg">{tool.icon}</span>
@@ -108,6 +110,7 @@ export default function EzzacklyStudio() {
                         {activeTool === 'sentro' && <SentroSizer />}
                         {activeTool === 'counter' && <ZenCounter />}
                         {activeTool === 'gauge' && <GaugeConverter />}
+                        {activeTool === 'graphgan' && <GraphganGenerator />}
                     </motion.div>
                 </AnimatePresence>
             </main>
