@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getLatestSnapshots } from "@/app/actions/db-manage";
 import Link from "next/link";
-import { Heart, Map as MapIcon } from "lucide-react";
+import { Heart } from "lucide-react";
 
 import { RealTimeClock } from "./RealTimeClock";
 import { WeatherIcon } from "./WeatherIcon";
@@ -80,10 +80,6 @@ export function ClockFace() {
             {/* Header: Compact to maximize content space */}
             <header className="flex flex-col items-center pt-4 pb-4 md:pt-6 md:pb-4 relative z-10 shrink-0">
                 <div className="hidden md:flex items-center gap-3 absolute top-4 right-4 md:top-6 md:right-8">
-                    <Link href="/nationwide" className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-emerald-500/50 transition-all group">
-                        <MapIcon className="w-4 h-4 text-slate-400 group-hover:text-emerald-400" />
-                        <span className="text-xs font-bold text-slate-400 group-hover:text-white uppercase tracking-wider">Nationwide</span>
-                    </Link>
                     <ThemeToggle />
                     <TestAlertButton />
                 </div>
@@ -101,12 +97,6 @@ export function ClockFace() {
             <main className="flex-grow flex flex-col w-full mx-auto px-4 md:px-8 xl:px-12 2xl:px-16 gap-6 md:gap-8 pb-20">
 
                 {/* UPPER DECK: Core Data Visibility */}
-                <div className="flex justify-end mb-2 xl:hidden">
-                    <Link href="/nationwide" className="px-4 py-2 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 rounded-md text-xs font-bold tracking-widest text-slate-300 hover:text-white uppercase transition-all flex items-center gap-2">
-                        <MapIcon className="w-4 h-4" />
-                        Nationwide Map
-                    </Link>
-                </div>
 
                 <div className="flex flex-col xl:grid xl:grid-cols-12 gap-6 xl:gap-10 items-stretch flex-grow">
 
@@ -261,7 +251,7 @@ export function ClockFace() {
                 <Link
                     href="/corner"
                     className="text-[var(--text-muted)] hover:text-emerald-500 transition-colors text-lg font-bold opacity-50 hover:opacity-100"
-                    title="Phloid's Corner"
+                    title="phloid's Corner"
                 >
                     π
                 </Link>

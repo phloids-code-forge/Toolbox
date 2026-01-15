@@ -1,0 +1,33 @@
+{
+    "timestamp": "2026-01-14T00:18:00-06:00",
+    "session_id": "2026-01-13_NATIONWIDE",
+    "project_state": {
+        "current_version": "0.9.5",
+        "active_routes": [
+            "/weatherwars",
+            "/nationwide"
+        ],
+        "primary_focus": "Expansion & Polish"
+    },
+    "feature_flags": {
+        "enableNationwide": true,
+        "enableSnarkyTicker": true,
+        "enableScraper": true,
+        "debugMode": true
+    },
+    "file_system": {
+        "structure": "PARA (Projects, Areas, Resources, Archives)",
+        "inbox_location": "c:\\Users\\nug\\PiPos\\Inbox",
+        "library_location": "c:\\Users\\nug\\PiPos\\Resources\\The_Library"
+    },
+    "breadcrumbs": [
+        "Use 'phloid' (lowercase) for all branding.",
+        "The 'Prime Directive' (Text > Borders) is non-negotiable.",
+        "Scraper backend is confirmed working; check logs at /api/cron/scrape if issues arise."
+    ],
+    "next_immediate_steps": [
+        "Review Vercel deployment stability.",
+        "Consider expanding 'The University' content.",
+        "Refactor 'RadarEmbed' to be truly dynamic for local city pages."
+    ]
+}

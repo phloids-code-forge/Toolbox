@@ -6,10 +6,18 @@ export interface Log {
 
 export const CHANGELOG: Log[] = [
     {
-        date: "2026-01-13",
-        title: "The Nationwide Release",
+        date: "2026-01-14",
+        title: "The Capitalization Incident",
         points: [
-            "New: Nationwide Command Center (/nationwide) — Active Fronts monitoring.",
+            "Correction: Global find/replace executed. 'Phloid' is dead. Long live 'phloid'.",
+            "Fixed: The AI has effectively been scolded for capitalizing the Founder's name.",
+            "Visual: Branding now 100% compliant with the 'Always Lowercase' directive."
+        ]
+    },
+    {
+        date: "2026-01-13",
+        title: "The Jester Update",
+        points: [
             "New: 'The Jester' Ticker — Snarky weather commentary (feat. phloid).",
             "Refined: UI Reset — Switched to tactical rounded edges for broader data visibility.",
             "Fixed: Strictly enforced text safety zones to prevent all border clipping."

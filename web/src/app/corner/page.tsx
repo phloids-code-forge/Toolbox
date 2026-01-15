@@ -12,7 +12,7 @@ export default function PhloidsCorner() {
                 <header className="flex items-center justify-between border-b border-slate-800 pb-4">
                     <div className="flex items-center gap-3">
                         <Terminal className="w-6 h-6 text-emerald-500" />
-                        <h1 className="text-xl font-bold text-slate-200 tracking-tight">Phloid's Corner</h1>
+                        <h1 className="text-xl font-bold text-slate-200 tracking-tight">phloid's Corner</h1>
                     </div>
                     <Link href="/weatherwars" className="text-xs group flex items-center gap-2 hover:text-emerald-400 transition-colors">
                         <MoveLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />

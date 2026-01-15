@@ -20,4 +20,8 @@
 
 ## 4. Web Standards (If applicable)
 *   **Aesthetics:** High-End, Premium.
+*   **PRIME DIRECTIVE:** **Text NEVER touches the border.**
+    *   Padding must ALWAYS safely clear the border-radius.
+    *   Mathematically guarantee this: `Padding > Border Radius`.
+    *   If text is clipped, IT IS A BUG. Fix it immediately.
 *   **Stack:** HTML/JS/CSS (Vanilla preferred for control), Next.js only for complex apps.

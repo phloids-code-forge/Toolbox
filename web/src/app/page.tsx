@@ -15,7 +15,7 @@ export default function LandingPage() {
       {/* Header / Brand + Theme Toggle */}
       <div className="absolute top-8 left-8 z-10">
         <h1 className="text-[var(--text-muted)] font-mono text-sm tracking-[0.3em] uppercase opacity-70">
-          Phloid // OS
+          phloid // OS
         </h1>
       </div>
       <div className="absolute top-8 right-8 z-10">
