@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+.font-aurebesh {
+  font-family: 'Aurebesh', sans-serif;
+  text-transform: uppercase;
+  /* Aurebesh usually looks better uppercase */
+}
+
+
 /* ============================================
    PHLOID THEME SYSTEM
    - .dark = War Room (current default)
@@ -11,26 +18,26 @@
 .dark {
   --background: #000000;
   --foreground: #e2e8f0;
-  
+
   /* Surfaces */
   --surface: rgba(15, 23, 42, 0.4);
   --surface-hover: rgba(30, 41, 59, 0.6);
   --surface-solid: #0f172a;
-  
+
   /* Borders */
   --border: rgba(51, 65, 85, 0.5);
   --border-hover: rgba(71, 85, 105, 0.7);
-  
+
   /* Accents */
   --accent-primary: #10b981;
   --accent-primary-muted: rgba(16, 185, 129, 0.2);
   --accent-secondary: #ef4444;
-  
+
   /* Text */
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #475569;
-  
+
   /* Semantic */
   --success: #22c55e;
   --warning: #f59e0b;
@@ -44,26 +51,26 @@
 .light {
   --background: #faf8f5;
   --foreground: #1c1917;
-  
+
   /* Surfaces - warm cream tones */
   --surface: rgba(245, 243, 240, 0.8);
   --surface-hover: rgba(231, 229, 226, 0.9);
   --surface-solid: #f5f3f0;
-  
+
   /* Borders - soft stone */
   --border: rgba(168, 162, 158, 0.3);
   --border-hover: rgba(120, 113, 108, 0.4);
-  
+
   /* Accents - muted forest greens */
   --accent-primary: #059669;
   --accent-primary-muted: rgba(5, 150, 105, 0.15);
   --accent-secondary: #dc2626;
-  
+
   /* Text - warm grays */
   --text-primary: #1c1917;
   --text-secondary: #57534e;
   --text-muted: #a8a29e;
-  
+
   /* Semantic */
   --success: #16a34a;
   --warning: #d97706;

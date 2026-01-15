@@ -10,6 +10,131 @@ Every project feeds into a unified creative pipeline. Skills compound. Tools get
 
 ---
 
+## 📊 PROJECT STATS
+
+| Project | Type | Status | Description |
+|:---|:---|:---|:---|
+| **250 Box** | Project | 🚧 Active | Main Focus. Migration & Vibe Check. |
+| **NotionLink** | Project | 🪦 Archive | Archived. Replaced by local pip_memory.json + cns.py. |
+| **Tech Stack** | Project | ✅ Done | Hardware/Software DB Setup. |
+| **Makers Just Make** | Project | ⏳ Pending | Logo/Splash Screen. |
+| **Content Channel** | Project | ⏳ Pending | Tarot & Nature Sleep Videos. |
+| **Avatar Forge** | Biz | ⏳ Pending | AI-Designed Avatars. Retopology, Optimization, Rigging Service. |
+| **AI Comic Workshop** | Project | ⏳ Pending | Graphic Novel / Short Comic Strip. AI-Assisted Storytelling. |
+| **Blender Loop Academy** | Skill | ⏳ Pending | Ducky3D Tutorials. Looping Animations. Skill Building. |
+| **Color Theory Study** | Project | ⏳ Pending | Art Fundamentals. Palette Building. Overcoming Color Weakness. |
+| **Music Theory Lab** | Tool | ⏳ Pending | Interactive App. Fret Trainers, Song Transposers, Theory Games. Guitar/Uke. |
+| **Tarot Channel** | Project | ⏸️ On Hold | Friend's project. ON HOLD pending their commitment. |
+| **Cinematic Sleep Stories** | Project | ⏳ Pending | 8hr storytelling ambience. Subtle shifts. Fairy in mailbox energy. High-art sleep videos. |
+| **Weather Wars** | Tool/Biz | ✅ Live | Gamified weather forecast accuracy tracking (phloid.com) |
+| **250 Box Challenge** | Skill | 🚧 Active | Perspective & form drawing fundamentals |
+| **Sleep Scape** | Tool/Fun | 💡 Ideation | Interactive ambient sleep scenes (Tent, Beach House, Space Station) |
+| **The Speakeasy** | Creative/Fun | 💡 Ideation | Hidden MUD/text adventure ("The Phloid Nightclub") |
+| **Vibe Architect Curriculum** | Skill | 💡 Ideation | Learn system architecture without writing code |
+| **Local Playwright Automation** | Tool | 💡 Ideation | Automated daily screenshots from local machine |
+| **Color Theory Study** | Skill | ⏳ Pending | Palette design for all visual work |
+| **Blender Loop Academy** | Skill | ⏳ Pending | Motion graphics + rigging (Ducky3D style) |
+| **Avatar Forge** | Creative/Biz | ⏳ Pending | VRChat/VTuber avatar creation service |
+| **AI Comic Workshop** | Creative | ⏳ Pending | Comic panel creation with AI assistance |
+| **Content Channel** | Creative/Biz | ⏳ Pending | YouTube/streaming content |
+| **Music Theory Lab** | Tool/Fun | ⏳ Pending | Interactive music learning app |
+| **Makers Just Make** | Brand | ⏳ Pending | Unified brand identity for all projects |
+
+---
+
+## 🆕 NEW PROJECT IDEAS (Jan 2026 Brainstorm)
+
+### 🌙 Sleep Scape
+**Type:** Interactive Web App  
+**Concept:** Client-side animated sleep/ambient scenes. No video files—pure code/animation.
+
+**Themes:**
+- 🏕️ Tent (Rain Storm)
+- 🏖️ Beach House
+- 🚀 Space Station (Nebula/Solar Flare)
+
+**Key Features:**
+- **Stochastic Loops:** Elements move based on RNG to prevent repetition.
+- **Time Sync:** Lighting changes based on user's system time.
+- **Diegetic Alarms:** Alarms integrate into the world (e.g., Space Station oxygen purge).
+- **Privacy-First:** Local Storage only. Transparent data dashboard.
+
+---
+
+### 🎰 The Speakeasy (Hidden MUD)
+**Type:** Secret Community Layer  
+**Engine:** Evennia (Python)  
+**Access:** Konami Code or hidden glitch trigger opens a terminal overlay.
+
+**Setting:** "The Phloid Nightclub" — Cyberpunk aesthetic.
+
+**Features:**
+- NPC AI using cheap API calls (Gemini Flash).
+- Text-based now, but architected for future 3D frontend (Godot/Three.js).
+- Server sends JSON objects so frontend can be swapped without rewriting backend.
+
+---
+
+### 🏗️ Vibe Architect Curriculum
+**Type:** Self-Education  
+**Goal:** Master System Architecture without learning low-level code syntax.
+
+**Method:** "Just-in-Time" Learning.
+- Pip explains Architectural Patterns (SSOT, Normalization, Caching) *before* generating code.
+- Focus on *why* systems are designed a certain way.
+
+**Core Concepts to Learn:**
+- Single Source of Truth (SSOT)
+- Database Normalization
+- Caching Strategies
+- API Gateway Patterns
+- Load Balancing
+- Pub/Sub Messaging
+
+---
+
+### 🤖 Local Playwright Automation
+**Type:** Backend Tool  
+**Goal:** Automate daily weather website screenshots.
+
+**Constraint:** MUST run locally (desktop/Raspberry Pi) to maintain residential IP.
+
+**Architecture:**
+- Script runs on user hardware → visits TV station websites.
+- Saves timestamped screenshots to private "Evidence" folder.
+- Syncs data to cloud database for Weather Wars scoring.
+
+**Status:** Needs deeper discussion before implementation.
+
+---
+
+### 🎨 Web Design Expert Persona
+**Persona:** "The Creative Technologist"
+
+**Core Competency 1: Elegance**
+- High-end UI/UX
+- Typography, whitespace, "invisible" professional polish
+- Perfect mobile responsiveness, fast load times
+
+**Core Competency 2: Whimsy**
+- Micro-interactions that delight
+- Hidden easter eggs
+- Satisfying button clicks
+- Dynamic animations
+
+---
+
+### 🛠️ Software Style Guide (PHLOID_STYLE_GUIDE.md)
+**Philosophy:** "The Vibe Architect"
+
+- Code must be explained via logic flow first.
+- **Data Integrity:** "Rock Solid" validation. Never guess.
+- **Communication:** "No Fluff." Direct, honest assessments.
+- **Naming:** User prefers `phloid` (lowercase, always).
+- **Infrastructure:** Python preferred for backend. System Stability > Speed.
+
+---
+
 ## 🗺️ ECOSYSTEM MAP
 
 ```mermaid
@@ -18,17 +143,21 @@ graph TB
         BOX["250 Box Challenge"]
         COLOR["Color Theory Study"]
         BLENDER["Blender Loop Academy"]
+        VIBE["Vibe Architect Curriculum"]
     end
 
     subgraph CREATIVE["🎨 CREATIVE OUTPUT"]
         COMIC["AI Comic Workshop"]
         AVATAR["Avatar Forge"]
         CONTENT["Content Channel"]
+        SPEAKEASY["The Speakeasy (MUD)"]
     end
 
     subgraph TOOLS["⚙️ INTERACTIVE TOOLS"]
         MUSIC["Music Theory Lab"]
-        WEATHER["Weather Command"]
+        WEATHER["Weather Wars"]
+        SLEEP["Sleep Scape"]
+        PLAYWRIGHT["Local Automation"]
     end
 
     subgraph BRAND["💼 BRAND"]
@@ -42,6 +171,8 @@ graph TB
     COLOR -->|"Color Grading"| CONTENT
     BLENDER -->|"Motion Graphics"| CONTENT
     BLENDER -->|"Rigging Skills"| AVATAR
+    VIBE -->|"System Design"| WEATHER
+    VIBE -->|"Architecture"| SPEAKEASY
 
     %% Creative Synergies
     AVATAR -->|"Character Assets"| COMIC
@@ -51,27 +182,16 @@ graph TB
     %% Tool Integration
     MUSIC -->|"Audio/Soundtrack"| CONTENT
     WEATHER -->|"API Patterns"| MUSIC
+    WEATHER -->|"API Patterns"| SLEEP
+    PLAYWRIGHT -->|"Data Collection"| WEATHER
+    SLEEP -->|"Ambient Audio"| MUSIC
 
     %% Brand Umbrella
     MAKERS -->|"Identity"| COMIC
     MAKERS -->|"Branding"| CONTENT
     MAKERS -->|"Logo/Assets"| AVATAR
+    MAKERS -->|"Branding"| WEATHER
 ```
-
----
-
-## 📊 PROJECT STATS
-
-| Project | Type | Status | Synergy Score |
-|:---|:---|:---|:---:|
-| **250 Box** | Skill | 🚧 Active | ⭐⭐⭐⭐⭐ |
-| **Color Theory Study** | Skill | ⏳ Pending | ⭐⭐⭐⭐ |
-| **Blender Loop Academy** | Skill | ⏳ Pending | ⭐⭐⭐⭐⭐ |
-| **Avatar Forge** | Creative/Biz | ⏳ Pending | ⭐⭐⭐⭐⭐ |
-| **AI Comic Workshop** | Creative | ⏳ Pending | ⭐⭐⭐⭐ |
-| **Content Channel** | Creative/Biz | ⏳ Pending | ⭐⭐⭐⭐⭐ |
-| **Music Theory Lab** | Tool/Fun | ⏳ Pending | ⭐⭐⭐ |
-| **Makers Just Make** | Brand | ⏳ Pending | ⭐⭐⭐⭐ |
 
 ---
 
@@ -81,45 +201,25 @@ graph TB
 - 250 Box teaches **perspective** → feeds into comic panels, 3D modeling, avatar design
 - Color Theory → unlocks **palette consistency** across all visual work
 
+### **Vibe Architect → All Code Projects**
+- Understanding system design makes Weather Wars, Sleep Scape, and Music Lab more robust
+- Prevents "Black Box Panic" when debugging
+
 ### **Blender → Avatar Forge + Content**
 - Ducky3D loops = **motion graphics** for Content Channel
 - Rigging practice = **cleaner avatar bones** for Avatar Forge
 
-### **Avatar Forge → Multi-Platform**
-- VRChat/VTubing avatars
-- Comic character models (3D → 2D reference)
-- Content Channel mascots
+### **Weather Wars → Everything Technical**
+- API patterns reused across Music Lab, Sleep Scape
+- Data validation patterns ("Rock Solid") apply everywhere
 
-### **Music Theory Lab → Audio Everywhere**
-- Soundtrack tools for Content Channel
-- Reuses API patterns from Weather Command (modular code!)
+### **Sleep Scape → Passive Income Potential**
+- Client-side animation = low hosting costs
+- Ko-fi tiers for custom themes
 
-### **Makers Just Make → Brand Glue**
-- Logo/splash screen for ALL projects
-- Unified visual identity
-
----
-
-## 🚀 RECOMMENDED EXECUTION ORDER
-
-```mermaid
-gantt
-    title Optimal Build Sequence
-    dateFormat  YYYY-MM-DD
-    section Foundation
-    250 Box (Active)        :active, box, 2026-01-11, 60d
-    Color Theory            :color, after box, 30d
-    section Creative
-    Blender Loops           :blender, 2026-01-15, 45d
-    Avatar Forge            :avatar, after blender, 30d
-    AI Comic Workshop       :comic, after color, 45d
-    section Brand
-    Makers Just Make        :makers, 2026-01-20, 14d
-    section Tools
-    Music Theory Lab        :music, 2026-02-01, 30d
-    section Output
-    Content Channel         :content, after avatar, 60d
-```
+### **The Speakeasy → Community Building**
+- Hidden community layer for superfans
+- MUD "Builder" status as Ko-fi perk
 
 ---
 
@@ -127,14 +227,15 @@ gantt
 
 | Metric | Value |
 |:---|:---|
-| **Total Projects** | 8 |
+| **Total Projects** | 13 |
+| **Live** | 1 (Weather Wars) |
 | **Active** | 1 (250 Box) |
-| **Skill-Building** | 3 |
-| **Revenue Potential** | 3 (Avatar Forge, Content, Music App) |
-| **Cross-Project Dependencies** | 12+ synergy links |
+| **In Ideation** | 5 |
+| **Skill-Building** | 4 |
+| **Revenue Potential** | 5 (Avatar Forge, Content, Music App, Sleep Scape, Weather Wars) |
 
-**Every hour spent on foundations (250 Box, Color, Blender) multiplies across the entire ecosystem.**
+**Every hour spent on foundations (250 Box, Color, Blender, Vibe Architect) multiplies across the entire ecosystem.**
 
 ---
 
-*Generated by Pip OS | 2026-01-11 23:07*
+*Updated by Pip OS | 2026-01-14 20:26*

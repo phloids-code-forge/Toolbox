@@ -1,14 +1,15 @@
 {
-    "timestamp": "2026-01-14T20:05:00-06:00",
-    "session_id": "2026-01-14_PRE_DEPLOY",
+    "timestamp": "2026-01-14T21:45:00-06:00",
+    "session_id": "2026-01-14_PIP_OS_V8",
     "project_state": {
-        "current_version": "0.9.10",
+        "current_version": "v8.0 (Narrative Journal)",
         "active_routes": [
             "/",
             "/weatherwars",
             "/corner"
         ],
-        "primary_focus": "Production Deploy"
+        "primary_focus": "Pip OS Improvements Complete",
+        "live_url": "https://phloid.com"
     },
     "feature_flags": {
         "enableNationwide": false,
@@ -21,14 +22,24 @@
         "inbox_location": "c:\\Users\\nug\\PiPos\\Inbox",
         "library_location": "c:\\Users\\nug\\PiPos\\Resources\\The_Library"
     },
+    "pip_os_commands": {
+        "validate": "python scripts/validate_handover.py",
+        "snapshot": "python cns.py snapshot",
+        "expert_inject": "python cns.py expert inject <name>",
+        "expert_list": "python cns.py expert list --tags",
+        "ecosystem_sync": "python cns.py ecosystem sync",
+        "journal": "python cns.py journal"
+    },
     "breadcrumbs": [
-        "SCRAPPED: Nationwide Map feature removed due to calibration issues.",
-        "Removed: All /nationwide links from ClockFace.tsx.",
-        "Updated: Changelog entry renamed from 'Nationwide Release' to 'Jester Update'.",
-        "VERIFIED: Landing page (/), War Room (/weatherwars), Corner (/corner) all functional."
+        "SHIPPED: Pip OS v8.0 with 5 new commands.",
+        "DRAFTED: The Speakeasy PRD (backburnered).",
+        "FIXED: pip_memory.json syntax error.",
+        "RULE: Task boundaries only for milestones or fun stuff.",
+        "BACKBURNERED: Supabase database upgrade."
     ],
     "next_immediate_steps": [
-        "Deploy to Vercel.",
-        "Monitor post-deploy for any issues."
+        "Let Pip OS settle.",
+        "Consider: Sleep Scape, Speakeasy Phase 1, or 250 Box.",
+        "Database upgrade when Weather Wars needs scoring history."
     ]
 }

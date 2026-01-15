@@ -1,34 +1,45 @@
 {
-    "timestamp": "2026-01-14T00:38:00-06:00",
-    "session_id": "2026-01-14_BRANDING_FIX",
+    "timestamp": "2026-01-14T21:45:00-06:00",
+    "session_id": "2026-01-14_PIP_OS_V8",
     "project_state": {
-        "current_version": "0.9.6",
+        "current_version": "v8.0 (Narrative Journal)",
         "active_routes": [
+            "/",
             "/weatherwars",
-            "/nationwide",
             "/corner"
         ],
-        "primary_focus": "Branding & Stability"
+        "primary_focus": "Pip OS Improvements Complete",
+        "live_url": "https://phloid.com"
     },
     "feature_flags": {
-        "enableNationwide": true,
+        "enableNationwide": false,
         "enableSnarkyTicker": true,
-        "enableScraper": true,
-        "debugMode": true
+        "enableRandomDeck": true,
+        "debugMode": false
     },
     "file_system": {
         "structure": "PARA (Projects, Areas, Resources, Archives)",
         "inbox_location": "c:\\Users\\nug\\PiPos\\Inbox",
         "library_location": "c:\\Users\\nug\\PiPos\\Resources\\The_Library"
     },
+    "pip_os_commands": {
+        "validate": "python scripts/validate_handover.py",
+        "snapshot": "python cns.py snapshot",
+        "expert_inject": "python cns.py expert inject <name>",
+        "expert_list": "python cns.py expert list --tags",
+        "ecosystem_sync": "python cns.py ecosystem sync",
+        "journal": "python cns.py journal"
+    },
     "breadcrumbs": [
-        "Branding is now strictly 'phloid' (lowercase). Do not revert.",
-        "Shutdown protocol was successfully enforced this session.",
-        "Next session should prioritize the Nationwide Map view."
+        "SHIPPED: Pip OS v8.0 with 5 new commands.",
+        "DRAFTED: The Speakeasy PRD (backburnered).",
+        "FIXED: pip_memory.json syntax error.",
+        "RULE: Task boundaries only for milestones or fun stuff.",
+        "BACKBURNERED: Supabase database upgrade."
     ],
     "next_immediate_steps": [
-        "Implement Nationwide Map view.",
-        "Expand 'The University' content.",
-        "Automate handover validation script."
+        "Let Pip OS settle.",
+        "Consider: Sleep Scape, Speakeasy Phase 1, or 250 Box.",
+        "Database upgrade when Weather Wars needs scoring history."
     ]
 }

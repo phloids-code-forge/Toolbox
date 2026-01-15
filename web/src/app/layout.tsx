@@ -38,6 +38,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
+      <head>
+        <link href="https://fonts.cdnfonts.com/css/aurebesh" rel="stylesheet" />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} antialiased`}>
         <ThemeProvider>
           {children}
