@@ -13,6 +13,7 @@ export interface WeatherSnapshot {
         // Deep Dive Metrics
         uvIndex?: number;       // "Redhead Beware"
         soilMoisture?: number;  // Gardner's Gold
+        soilTemp?: number;      // Morel Radar
         solarRadiation?: number; // Energy Potential
         cape?: number;          // Storm Energy
 
