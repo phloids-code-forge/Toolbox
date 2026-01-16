@@ -42,6 +42,13 @@ const COLOR_THEMES: Record<string, { border: string; text: string; hoverBorder: 
     blue: { border: "border-blue-500/20", text: "text-blue-400", hoverBorder: "hover:border-blue-500/50", accent: "bg-blue-500" },
 };
 
+// Convert degrees to cardinal direction
+function degreesToCardinal(deg: number | undefined): string {
+    if (deg === undefined) return '';
+    const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    return dirs[Math.round(deg / 45) % 8];
+}
+
 export function ClockFace() {
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -257,7 +264,10 @@ export function ClockFace() {
                                 <div className={`flex flex-col border-l border-current opacity-80 ${currentTheme.textColor}`}>
                                     <span className={`text-[10px] ${currentTheme.subText} opacity-60 uppercase tracking-widest`}>Wind</span>
                                     <span className={`text-xl font-bold ${currentTheme.mainText}`}>
-                                        {primaryData.windSpeed ? Math.round(primaryData.windSpeed) : '--'} <span className="text-xs font-normal opacity-70">mph</span>
+                                        {primaryData.windDirection !== undefined && <span className="text-sm opacity-80">{degreesToCardinal(primaryData.windDirection)} </span>}
+                                        {primaryData.windSpeed ? Math.round(primaryData.windSpeed) : '--'}
+                                        {primaryData.windGust && <span className="text-sm opacity-70"> G:{Math.round(primaryData.windGust)}</span>}
+                                        <span className="text-xs font-normal opacity-70"> mph</span>
                                     </span>
                                 </div>
                             </div>

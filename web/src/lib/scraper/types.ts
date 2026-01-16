@@ -11,6 +11,8 @@ export interface WeatherSnapshot {
         precipProb?: number;
         conditionText?: string;
         windSpeed?: number;  // mph
+        windGust?: number;   // mph (gusts)
+        windDirection?: number; // degrees (0-360)
         windChill?: number;  // Fahrenheit
         // Deep Dive Metrics
         uvIndex?: number;       // "Redhead Beware"

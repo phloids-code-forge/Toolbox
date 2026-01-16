@@ -65,6 +65,18 @@ export const NWS_PARSER: ScraperDefinition = {
                 windChill = (props.windChill.value * 9 / 5) + 32;
             }
 
+            // Wind gusts (in km/h from NWS, convert to mph)
+            let windGust: number | undefined = undefined;
+            if (props.windGust?.value !== null && props.windGust?.value !== undefined) {
+                windGust = Math.round(props.windGust.value * 0.621371); // km/h to mph
+            }
+
+            // Wind direction (in degrees)
+            let windDirection: number | undefined = undefined;
+            if (props.windDirection?.value !== null && props.windDirection?.value !== undefined) {
+                windDirection = Math.round(props.windDirection.value);
+            }
+
             console.log(`[NWS Parser] Raw temp: ${props.temperature?.value}, WindChill: ${props.windChill?.value}, Computed F: ${currentTemp}`);
 
             // ========================================
@@ -158,6 +170,8 @@ export const NWS_PARSER: ScraperDefinition = {
                 currentTemp,
                 conditionText,
                 windSpeed,
+                windGust,
+                windDirection,
                 windChill,
                 high,
                 low,
