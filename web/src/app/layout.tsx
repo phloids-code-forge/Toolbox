@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import { Geist, Geist_Mono, Space_Grotesk, Playfair_Display, Lato } from "next/font/google";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import Doodads from "@/components/Doodads";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -59,6 +60,7 @@ export default function RootLayout({
         <ThemeProvider>
           {children}
         </ThemeProvider>
+        <Doodads />
         <Analytics />
       </body>
     </html>
