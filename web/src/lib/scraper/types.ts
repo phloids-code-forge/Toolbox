@@ -10,6 +10,8 @@ export interface WeatherSnapshot {
         low?: number;
         precipProb?: number;
         conditionText?: string;
+        windSpeed?: number;  // mph
+        windChill?: number;  // Fahrenheit
         // Deep Dive Metrics
         uvIndex?: number;       // "Redhead Beware"
         soilMoisture?: number;  // Gardner's Gold

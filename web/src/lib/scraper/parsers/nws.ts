@@ -53,10 +53,10 @@ export const NWS_PARSER: ScraperDefinition = {
 
             const conditionText = String(props.textDescription || 'Clear');
 
-            // Wind speed (in m/s from NWS, convert to mph)
+            // Wind speed (in km/h from NWS, convert to mph)
             let windSpeed: number | undefined = undefined;
             if (props.windSpeed?.value !== null && props.windSpeed?.value !== undefined) {
-                windSpeed = Math.round(props.windSpeed.value * 2.237); // m/s to mph
+                windSpeed = Math.round(props.windSpeed.value * 0.621371); // km/h to mph
             }
 
             // Wind chill for "feels like"
