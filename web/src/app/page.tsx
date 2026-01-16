@@ -96,7 +96,7 @@ export default function LandingPage() {
         <div className="group relative flex-1 hover:flex-[1.1] transition-all duration-300 overflow-hidden flex items-center justify-center p-6">
           {/* JUNK DRAWER panel */}
           <div className="flex-1 bg-zinc-900/50 rounded-2xl p-6 border border-white/5 relative group overflow-hidden">
-            <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay" />
+            <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay pointer-events-none" />
             <h2 className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-4">Junk Drawer</h2>
             <ul className="space-y-3">
               <li>
