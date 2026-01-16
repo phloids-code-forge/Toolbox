@@ -98,7 +98,7 @@ export const OPEN_METEO_PARSER: ScraperDefinition = {
 
             return {
                 currentTemp: current.temperature_2m,
-                conditionText: WMO_CODES[current.weather_code] || 'Unknown',
+                conditionText: (WMO_CODES[current.weather_code] || 'Unknown') + ` [Debug: Soil=${typeof hourly.soil_temperature_6cm}, Val=${hourly.soil_temperature_6cm?.[hourIndex]}]`,
                 precipProb: current.precipitation_probability,
                 high: daily.temperature_2m_max ? daily.temperature_2m_max[0] : undefined,
                 low: daily.temperature_2m_min ? daily.temperature_2m_min[0] : undefined,

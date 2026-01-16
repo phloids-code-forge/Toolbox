@@ -58,6 +58,11 @@ export function ClockFace() {
         load();
     }, []);
 
+    useEffect(() => {
+        const om = data.find(d => d.station_id === 'open_meteo')?.forecast_data;
+        if (om) console.log("DEBUG OPEN METEO:", om);
+    }, [data]);
+
     if (loading) return <div className="text-slate-500 animate-pulse p-8">Loading War Room...</div>;
 
     // Organize Data
