@@ -61,7 +61,8 @@ export function ForecastGrid() {
             const res = await getLatestSnapshots();
             if (res.success && res.data) {
                 const transformed: SourceForecast[] = res.data
-                    .filter((d: any) => !d.station_id.startsWith('nws-') && d.station_id !== 'kfor' && d.station_id !== 'kwtv')
+                    // kfor removed due to 403, kwtv excluded for now (no daily data)
+                    .filter((d: any) => d.station_id !== 'kfor' && d.station_id !== 'kwtv')
                     .map((d: any) => {
                         const forecast = d.forecast_data;
                         let days: ForecastDay[] = forecast?.daily || [];

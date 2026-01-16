@@ -40,5 +40,6 @@ export interface ScraperDefinition {
     // Optional: Custom headers for this specific scraper (e.g. NWS User-Agent)
     headers?: Record<string, string>;
     // A function that takes the HTML/JSON and returns the snapshot
-    parser: (html: string) => Partial<WeatherSnapshot["forecast"]>;
+    // Supports async parsers for sources that need multiple API calls (e.g. NWS)
+    parser: (html: string) => Partial<WeatherSnapshot["forecast"]> | Promise<Partial<WeatherSnapshot["forecast"]>>;
 }

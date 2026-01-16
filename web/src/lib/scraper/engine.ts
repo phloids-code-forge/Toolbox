@@ -90,8 +90,8 @@ export async function runScraper(scraper: ScraperDefinition): Promise<WeatherSna
         const response = await fetchWithRetry(scraper.url, requestHeaders);
         const html = await response.text();
 
-        // Parse
-        const data = scraper.parser(html);
+        // Parse (await in case parser is async)
+        const data = await scraper.parser(html);
 
         // Construct Result
         return {
