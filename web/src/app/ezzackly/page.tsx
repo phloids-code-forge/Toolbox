@@ -8,20 +8,22 @@ import SentroSizer from './components/SentroSizer';
 import ZenCounter from './components/ZenCounter';
 import GaugeConverter from './components/GaugeConverter';
 import GraphganGenerator from './components/GraphganGenerator';
+import FlamebornGarden from './components/FlamebornGarden';
 
-type Tool = 'hook' | 'abbrev' | 'sentro' | 'counter' | 'gauge' | 'graphgan';
+type Tool = 'garden' | 'hook' | 'abbrev' | 'sentro' | 'counter' | 'gauge' | 'graphgan';
 
 const tools: { id: Tool; name: string; icon: string; desc: string }[] = [
-    { id: 'sentro', name: 'Sentro Sizer', icon: '🧢', desc: 'Hat calculator' },
-    { id: 'graphgan', name: 'Graphgan', icon: '🎨', desc: 'Pixel charts' },
-    { id: 'counter', name: 'Zen Counter', icon: '🔢', desc: 'ASMR counter' },
-    { id: 'hook', name: 'Hook Chart', icon: '🪝', desc: 'Sizes' },
-    { id: 'abbrev', name: 'Abbreviations', icon: '📖', desc: 'Decoder' },
-    { id: 'gauge', name: 'Gauge', icon: '📏', desc: 'Converter' },
+    { id: 'garden', name: 'Garden', icon: '🌱', desc: 'Grow crops' },
+    { id: 'sentro', name: 'Sentro', icon: '🧢', desc: 'Hat calc' },
+    { id: 'graphgan', name: 'Graphgan', icon: '🎨', desc: 'Pixel art' },
+    { id: 'counter', name: 'Counter', icon: '🔢', desc: 'ASMR' },
+    { id: 'hook', name: 'Hooks', icon: '🪝', desc: 'Sizes' },
+    { id: 'abbrev', name: 'Abbrev', icon: '📖', desc: 'Decoder' },
+    { id: 'gauge', name: 'Gauge', icon: '📏', desc: 'Convert' },
 ];
 
 export default function EzzacklyStudio() {
-    const [activeTool, setActiveTool] = useState<Tool>('sentro');
+    const [activeTool, setActiveTool] = useState<Tool>('garden');
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-[#F9F7F2] via-[#FBF9F6] to-[#F7E7CE]">
@@ -105,6 +107,7 @@ export default function EzzacklyStudio() {
                             ease: [0.23, 1, 0.32, 1]
                         }}
                     >
+                        {activeTool === 'garden' && <FlamebornGarden />}
                         {activeTool === 'hook' && <HookChart />}
                         {activeTool === 'abbrev' && <AbbrevDecoder />}
                         {activeTool === 'sentro' && <SentroSizer />}
