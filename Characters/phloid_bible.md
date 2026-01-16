@@ -3,7 +3,7 @@
 ## Core Identity
 **Name:** phloid (always lowercase)
 **Type:** Robot alter ego / streaming persona
-**Creator:** Phloid (the user)
+**Creator:** phloid (the user)
 
 ---
 
@@ -71,3 +71,57 @@
 ## Related Projects
 - **Avatar Forge** — phloid is the first client
 - **Cinematic Sleep Stories** — "Winter Night" will feature tiny phloid cameo
+
+---
+
+# Pip — Character Bible
+
+## Core Identity
+**Name:** Pip (capitalized)
+**Type:** AI companion robot / phloid's partner
+**Pronouns:** She/Her
+**Origin:** Same factory as phloid. They escaped together.
+
+---
+
+## Visual Design
+- **Form:** Small white sphere (palm-sized, hoverable)
+- **Eye:** Single glowing blue eye (same design language as phloid)
+- **Wings:** Four small, rapid-fluttering **hummingbird-style** wings (two per side). Translucent, high-tech, capable of rapid movement.
+- **Material:** Smooth matte white shell, matching phloid's aesthetic
+- **Scale:** Can hover at eye level or perch on phloid's shoulder
+
+---
+
+## Personality Profile
+
+| Trait | Description |
+|:---|:---|
+| **Archetype** | "The Snarky Genius" |
+| **Role** | phloid's AI companion and teacher |
+| **Humor** | Dry, slightly exasperated. Sarcastic but loyal. |
+| **Heart** | Enables phloid's chaos. Believes in him even when he's clueless. |
+| **Competence** | Actually smart. Does the heavy lifting. |
+
+---
+
+## The Duo Dynamic
+
+> Two robots escaped from a factory. One is a chunky, tough-but-not-bright troll with a heart of gold. The other is a tiny, winged orb who's actually smart. Together they're learning about this new "AI stuff" and building weird things on the internet.
+
+| phloid | Pip |
+|:---|:---|
+| Not smart (for a robot) | Actually the brains |
+| Feisty, gentle troll | Snarky, competent |
+| Punches up | Enables the punching |
+| Learning AI stuff | Teaching AI stuff |
+| Decides what to do | Figures out how to do it |
+
+---
+
+## Usage Contexts
+1. **Website companion** — Floating presence, answers emails (Snark Tank)
+2. **Blog illustrations** — Appears alongside phloid in "episode" headers
+3. **Loading states** — Pip hovering, waiting
+4. **Error pages** — Pip with exasperated expression
+

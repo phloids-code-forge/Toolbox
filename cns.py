@@ -40,6 +40,7 @@ def generate_dashboard():
         
         # Loop through every World (Database)
         for world_name, items in data.items():
+            if world_name == "Session_Quotes": continue
             f.write(f"## 📂 {world_name}\n")
             
             if not items:

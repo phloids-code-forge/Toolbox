@@ -14,6 +14,26 @@ Every project feeds into a unified creative pipeline. Skills compound. Tools get
 
 | Project | Type | Status | Description |
 |:---|:---|:---|:---|
+| **Weather Wars** | Project | ⏳ Pending | Interim Commander, Morel Fix, Metadata. |
+| **Flameborn Garden** | Project | ⏳ Pending | Enshrouded crops, real-time timers, ASMR. |
+| **Trench Run** | Project | ⏳ Pending | Star Wars style Retro UI / Targeting Computers. Motion Graphics generator via Web. |
+| **Project Aurebesh** | Project | ⏳ Pending | Custom font loading via CDN. Fixed in post. |
+| **Blender Bridge** | Project | ⏳ Pending | Python scripting layer to control Blender/Krita from Pip OS. Season 2 Roadmap. |
+| **250 Box** | Project | 🚧 Active | Main Focus. Migration & Vibe Check. |
+| **NotionLink** | Project | 🪦 Archive | Archived. Replaced by local pip_memory.json + cns.py. |
+| **Tech Stack** | Project | ✅ Done | Hardware/Software DB Setup. |
+| **Makers Just Make** | Project | ⏳ Pending | Logo/Splash Screen. |
+| **Content Channel** | Project | ⏳ Pending | Tarot & Nature Sleep Videos. |
+| **Avatar Forge** | Biz | ⏳ Pending | AI-Designed Avatars. Retopology, Optimization, Rigging Service. |
+| **AI Comic Workshop** | Project | ⏳ Pending | Graphic Novel / Short Comic Strip. AI-Assisted Storytelling. |
+| **Blender Loop Academy** | Skill | ⏳ Pending | Ducky3D Tutorials. Looping Animations. Skill Building. |
+| **Color Theory Study** | Project | ⏳ Pending | Art Fundamentals. Palette Building. Overcoming Color Weakness. |
+| **Music Theory Lab** | Tool | ⏳ Pending | Interactive App. Fret Trainers, Song Transposers, Theory Games. Guitar/Uke. |
+| **Tarot Channel** | Project | ⏸️ On Hold | Friend's project. ON HOLD pending their commitment. |
+| **Cinematic Sleep Stories** | Project | ⏳ Pending | 8hr storytelling ambience. Subtle shifts. Fairy in mailbox energy. High-art sleep videos. |
+| **Void Typer** | Tool | 🟢 Active | Catharsis web app |
+| **Phloid Mail** | Project | ⏳ Pending | Email agent (pip@) |
+| **Pip V3** | Project | ⏳ Pending | Gemini File Search RAG |
 | **250 Box** | Project | 🚧 Active | Main Focus. Migration & Vibe Check. |
 | **NotionLink** | Project | 🪦 Archive | Archived. Replaced by local pip_memory.json + cns.py. |
 | **Tech Stack** | Project | ✅ Done | Hardware/Software DB Setup. |
@@ -39,10 +59,55 @@ Every project feeds into a unified creative pipeline. Skills compound. Tools get
 | **Content Channel** | Creative/Biz | ⏳ Pending | YouTube/streaming content |
 | **Music Theory Lab** | Tool/Fun | ⏳ Pending | Interactive music learning app |
 | **Makers Just Make** | Brand | ⏳ Pending | Unified brand identity for all projects |
+| **Meditation App** | Project | 💡 Ideation | Simple meditation timer/guide. |
+| **Phloid Mail** | System | 💡 Ideation | Custom domain (phloid.com) via Fastmail. JMAP for AI agent. |
+| **Blind IDE Challenge** | Event | 📅 Tomorrow | Testing skills with unknown IDE/Environment. |
+| **Pip V3 (The Brain)** | System | 💡 Ideation | Use Gemini File Search API for master RAG memory. Upload *everything*. |
+| **Fastmail Agent** | Tool | 📅 Tomorrow | Assist with inbox organization/archival. |
+| **Lock in site changes** | Task | ⏳ Pending | Prep shutdown. |
 
 ---
 
+## 🏗️ SITE ARCHITECTURE STRATEGY: "The Junk Drawer"
+**Philosophy:** `phloid.com` is a curated chaos. A "Junk Drawer" of apps.
+- **Dynamic Ranking:** The most popular/used apps float to the top visually.
+- **Discovery:** Users dig through the "drawer" to find hidden gems.
+- **Low Friction:** New ideas land in the drawer immediately. Polish comes later.
+
+---
+
+
 ## 🆕 NEW PROJECT IDEAS (Jan 2026 Brainstorm)
+
+### 📥 Phloid Mail (pip@phloid.com)
+**Type:** Infrastructure / AI Agent
+**Goal:** Auto-managed email presence with personality.
+**Requirements:**
+- **Infrastructure Options:**
+    - *Option A (Free):* Cloudflare Email Workers (Serverless, $0).
+    - *Option B (Easy):* Mailgun ($15/mo).
+    - *Option C (Hard):* VPS Postfix ($6/mo).
+- **Public Auto-Responder:** "The Snark Tank." Pip analyzes incoming public mail and sends contextually snarky replies to trolls/low-effort emails.
+- **Ghostwriter:** Pip formats your rambling emails into blog posts.
+- **Interface:** No standard webmail. Pip _is_ the client.
+
+---
+
+### 🧘 Meditation App
+**Type:** Web App
+**Concept:** Minimalist mindfulness tool.
+**Vibe:** Calm, grounding, perhaps tied to weather/Sleep Scape.
+**Status:** Pure Ideation.
+
+---
+
+### 🕶️ Blind IDE Challenge
+**Type:** Skill Event
+**Timing:** Tomorrow (2026-01-16).
+**Goal:** Stress-test coding adaptability.
+**Constraint:** User receives a "Blind" IDE setup. Must build something.
+
+---
 
 ### 🌙 Sleep Scape
 **Type:** Interactive Web App  

@@ -1,10 +1,17 @@
 {
     "session_date": "2026-01-15",
-    "session_time": "18:14 CST",
+    "session_time": "20:50 CST",
     "active_projects": [
         {
-            "name": "ezzackly's studio",
+            "name": "Weather Wars",
             "codename": "Rosewood",
+            "route": "/weatherwars",
+            "status": "v1.1 Live (Interim Commander Active)",
+            "url": "https://phloid.com/weatherwars"
+        },
+        {
+            "name": "Flameborn Garden",
+            "codename": "Ezzackly",
             "route": "/ezzackly",
             "status": "v1.0 Live",
             "url": "https://phloid.com/ezzackly"
@@ -12,59 +19,46 @@
     ],
     "key_files": [
         {
-            "path": "web/src/app/ezzackly/page.tsx",
-            "purpose": "Main studio page with tool navigation"
+            "path": "web/src/components/dashboard/ClockFace.tsx",
+            "purpose": "Main weather display with Interim Commander logic"
         },
         {
-            "path": "web/src/app/ezzackly/components/",
-            "purpose": "6 tool components (SentroSizer, GraphganGenerator, ZenCounter, HookChart, AbbrevDecoder, GaugeConverter)"
+            "path": "web/src/components/dashboard/GreenThumbPanel.tsx",
+            "purpose": "Garden/Morel data display"
         },
         {
-            "path": "web/src/app/page.tsx",
-            "purpose": "Three-panel landing page"
+            "path": "web/src/lib/scraper/parsers/open-meteo.ts",
+            "purpose": "Weather data parser (Robust hour matching enabled)"
         },
         {
-            "path": "web/src/app/layout.tsx",
-            "purpose": "Added Playfair Display + Lato fonts"
+            "path": "web/src/app/ezzackly/components/FlamebornGarden.tsx",
+            "purpose": "Enshrouded farming component"
         }
     ],
     "outstanding_bugs": [],
     "approved_features_pending": [
         {
-            "name": "Flameborn Garden",
+            "name": "TV Station Integration",
             "priority": "NEXT",
             "spec_location": "rosewood_design_doc.md",
             "features": [
-                "10 Enshrouded crops with real timers",
-                "Multiple garden plots (4+)",
-                "Weather graphics (sun/moon/rain)",
-                "ASMR planting/harvest sounds",
-                "Inventory system",
-                "Wither mechanic (optional)"
+                "KWTV Integration (Currently excluded from Fallback)",
+                "KFOR Integration"
             ]
         }
     ],
     "design_decisions": {
-        "palette": {
-            "alabaster": "#F9F7F2",
-            "dusty_rose": "#D4A5A5",
-            "antique_gold": "#C5A065",
-            "champagne": "#F7E7CE",
-            "espresso": "#3C2415"
+        "interim_commander": {
+            "logic": "If NWS temp is missing, promote highest accuracy competitor.",
+            "theme": "Purple for Open-Meteo, Blue for WeatherAPI."
         },
-        "typography": {
-            "headers": "Playfair Display",
-            "body": "Lato"
-        },
-        "audio": "Web Audio API for ASMR (no external files needed)"
+        "metadata": {
+            "root": "phloid's Workshop",
+            "template": "%s | phloid"
+        }
     },
     "client_info": {
-        "name": "ezzackly",
-        "interests": [
-            "machine knitting",
-            "crochet",
-            "Enshrouded gaming"
-        ],
-        "hardware": "Sentro 48 knitting machine"
+        "name": "phloid",
+        "status": "Pleased (FAVORITITE OS status achieved)"
     }
 }

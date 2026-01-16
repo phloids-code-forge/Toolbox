@@ -108,6 +108,20 @@
     ],
     "Projects": [
         {
+            "name": "Weather Wars",
+            "tag": "Item",
+            "specs": "Interim Commander, Morel Fix, Metadata.",
+            "status": "Live (v1.1)",
+            "created": "2026-01-15 20:50:00"
+        },
+        {
+            "name": "Flameborn Garden",
+            "tag": "Item",
+            "specs": "Enshrouded crops, real-time timers, ASMR.",
+            "status": "Live (v1.0)",
+            "created": "2026-01-15 20:50:00"
+        },
+        {
             "name": "Trench Run",
             "tag": "Item",
             "specs": "Star Wars style Retro UI / Targeting Computers. Motion Graphics generator via Web.",
@@ -203,6 +217,24 @@
             "name": "Cinematic Sleep Stories",
             "tag": "Item",
             "specs": "8hr storytelling ambience. Subtle shifts. Fairy in mailbox energy. High-art sleep videos.",
+            "status": "Pending"
+        },
+        {
+            "name": "Void Typer",
+            "tag": "Item",
+            "specs": "Catharsis web app",
+            "status": "Active"
+        },
+        {
+            "name": "Phloid Mail",
+            "tag": "Item",
+            "specs": "Email agent (pip@)",
+            "status": "Pending"
+        },
+        {
+            "name": "Pip V3",
+            "tag": "Item",
+            "specs": "Gemini File Search RAG",
             "status": "Pending"
         }
     ],

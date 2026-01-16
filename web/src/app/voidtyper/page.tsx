@@ -90,19 +90,19 @@ export default function VoidTyper() {
                 return {
                     initial: { opacity: 1, y: 0 },
                     animate: { opacity: 0, y: -20 },
-                    transition: { duration: 1.5, ease: 'easeOut' },
+                    transition: { duration: 1.5, ease: 'easeOut' as const },
                 };
             case 'crumble':
                 return {
                     initial: { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' },
                     animate: { opacity: 0, y: 100, scale: 0.5, filter: 'blur(8px)' },
-                    transition: { duration: 1.5, ease: 'easeIn' },
+                    transition: { duration: 1.5, ease: 'easeIn' as const },
                 };
             case 'burn':
                 return {
                     initial: { opacity: 1, scale: 1, filter: 'brightness(1) blur(0px)' },
                     animate: { opacity: 0, scale: 1.2, filter: 'brightness(3) blur(4px)' },
-                    transition: { duration: 1.2, ease: 'easeOut' },
+                    transition: { duration: 1.2, ease: 'easeOut' as const },
                 };
         }
     };
