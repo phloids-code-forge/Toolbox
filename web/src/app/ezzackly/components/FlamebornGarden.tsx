@@ -2,18 +2,69 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Crop data from Enshrouded
+// Complete Enshrouded crop data with verified seedbed processing times (in minutes)
+// Times are for Seedbed processing, NOT actual in-game grow time on soil
+// We use "real minutes" for the app timer experience
 const CROPS = [
-    { id: 'berry', name: 'Berry Bush', time: 3, icon: '🫐', color: '#8B5CF6' },
-    { id: 'tree', name: 'Broadleaf', time: 3, icon: '🌳', color: '#22C55E' },
-    { id: 'flax', name: 'Flax', time: 5, icon: '💠', color: '#3B82F6' },
-    { id: 'mushroom', name: 'Red Mushroom', time: 5, icon: '🍄', color: '#EF4444' },
-    { id: 'indigo', name: 'Indigo', time: 10, icon: '🪻', color: '#6366F1' },
-    { id: 'strawberry', name: 'Strawberry', time: 10, icon: '🍓', color: '#F43F5E' },
-    { id: 'corn', name: 'Corn', time: 15, icon: '🌽', color: '#EAB308' },
-    { id: 'tomato', name: 'Tomato', time: 15, icon: '🍅', color: '#DC2626' },
-    { id: 'wheat', name: 'Wheat', time: 20, icon: '🌾', color: '#CA8A04' },
-    { id: 'pumpkin', name: 'Pumpkin', time: 70, icon: '🎃', color: '#F97316' },
+    // VEGETABLES
+    { id: 'beet', name: 'Forest Beet', time: 5, icon: '🥕', color: '#8B1538', category: 'vegetable' },
+    { id: 'bellpepper', name: 'Bell Pepper', time: 7, icon: '🫑', color: '#4CAF50', category: 'vegetable' },
+    { id: 'corn', name: 'Corn', time: 5, icon: '🌽', color: '#EAB308', category: 'vegetable' },
+    { id: 'tomato', name: 'Tomato', time: 5, icon: '🍅', color: '#DC2626', category: 'vegetable' },
+
+    // GRAINS & FIBERS
+    { id: 'wheat', name: 'Wheat', time: 5, icon: '🌾', color: '#CA8A04', category: 'grain' },
+    { id: 'flax', name: 'Flax', time: 5, icon: '💠', color: '#3B82F6', category: 'fiber' },
+    { id: 'sugarcane', name: 'Sugarcane', time: 7, icon: '🎋', color: '#84CC16', category: 'grain' },
+
+    // FRUITS & BERRIES
+    { id: 'berry', name: 'Purple Berries', time: 3, icon: '🫐', color: '#8B5CF6', category: 'fruit' },
+    { id: 'strawberry', name: 'Strawberry', time: 5, icon: '🍓', color: '#F43F5E', category: 'fruit' },
+    { id: 'banana', name: 'Banana', time: 10, icon: '🍌', color: '#FBBF24', category: 'fruit' },
+    { id: 'coconut', name: 'Coconut', time: 10, icon: '🥥', color: '#854D0E', category: 'fruit' },
+    { id: 'hazelnut', name: 'Hazelnut', time: 5, icon: '🌰', color: '#92400E', category: 'fruit' },
+
+    // HERBS & TEA
+    { id: 'chamomile', name: 'Chamomile', time: 3, icon: '🌼', color: '#FDE047', category: 'herb' },
+    { id: 'sage', name: 'Sage', time: 5, icon: '🌿', color: '#65A30D', category: 'herb' },
+    { id: 'ginger', name: 'Ginger', time: 7, icon: '🫚', color: '#D97706', category: 'herb' },
+    { id: 'saffron', name: 'Saffron', time: 7, icon: '🌸', color: '#F97316', category: 'herb' },
+    { id: 'coffee', name: 'Coffee', time: 10, icon: '☕', color: '#78350F', category: 'herb' },
+
+    // DYES & MATERIALS
+    { id: 'indigo', name: 'Indigo', time: 10, icon: '🪻', color: '#6366F1', category: 'dye' },
+    { id: 'aureolin', name: 'Aureolin Flower', time: 5, icon: '🌻', color: '#FACC15', category: 'dye' },
+    { id: 'daylily', name: 'Daylily', time: 5, icon: '🌺', color: '#FB923C', category: 'dye' },
+    { id: 'gentian', name: 'Gentian', time: 7, icon: '💜', color: '#7C3AED', category: 'dye' },
+
+    // MUSHROOMS
+    { id: 'mushroom', name: 'Red Mushroom', time: 5, icon: '🍄', color: '#EF4444', category: 'fungi' },
+    { id: 'azureruss', name: 'Azure Russula', time: 10, icon: '🍄‍🟫', color: '#60A5FA', category: 'fungi' },
+
+    // DESERT/SPECIAL
+    { id: 'aloe', name: 'Aloe', time: 7, icon: '🪴', color: '#22C55E', category: 'desert' },
+    { id: 'grapple', name: 'Grapple Plant', time: 5, icon: '🌵', color: '#EA580C', category: 'desert' },
+
+    // TREES
+    { id: 'shrub', name: 'Shrub', time: 3, icon: '🌳', color: '#16A34A', category: 'tree' },
+    { id: 'basswood', name: 'Basswood Tree', time: 3, icon: '🌲', color: '#15803D', category: 'tree' },
+    { id: 'conifer', name: 'Conifer Tree', time: 7, icon: '🎄', color: '#166534', category: 'tree' },
+    { id: 'bamboo', name: 'Bamboo', time: 10, icon: '🎍', color: '#4ADE80', category: 'tree' },
+
+    // AQUATIC
+    { id: 'algae', name: 'Algae', time: 5, icon: '🌊', color: '#06B6D4', category: 'aquatic' },
+];
+
+// Category filters for better UX
+const CATEGORIES = [
+    { id: 'all', name: 'All', icon: '🌱' },
+    { id: 'vegetable', name: 'Veggies', icon: '🥕' },
+    { id: 'grain', name: 'Grains', icon: '🌾' },
+    { id: 'fruit', name: 'Fruits', icon: '🫐' },
+    { id: 'herb', name: 'Herbs', icon: '🌿' },
+    { id: 'dye', name: 'Dyes', icon: '🎨' },
+    { id: 'fungi', name: 'Fungi', icon: '🍄' },
+    { id: 'tree', name: 'Trees', icon: '🌳' },
 ];
 
 interface PlantedCrop {
@@ -38,6 +89,7 @@ export default function FlamebornGarden() {
         soundEnabled: true,
     });
     const [selectedSeed, setSelectedSeed] = useState<string | null>(null);
+    const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [now, setNow] = useState(Date.now());
     const [showInventory, setShowInventory] = useState(false);
     const audioContextRef = useRef<AudioContext | null>(null);
@@ -74,6 +126,11 @@ export default function FlamebornGarden() {
     };
 
     const [weather] = useState(getWeather);
+
+    // Filter crops by category
+    const filteredCrops = selectedCategory === 'all'
+        ? CROPS
+        : CROPS.filter(c => c.category === selectedCategory);
 
     // Play sound effect
     const playSound = useCallback((type: 'plant' | 'harvest' | 'ready') => {
@@ -234,6 +291,7 @@ export default function FlamebornGarden() {
                             <h2 className="text-2xl font-bold text-white drop-shadow-md" style={{ fontFamily: "'Fredoka One', cursive, 'Playfair Display', serif" }}>
                                 🌱 Flameborn Farm
                             </h2>
+                            <p className="text-green-100 text-xs">30 Enshrouded crops • Real-time timers</p>
                         </div>
                         <div className="flex gap-2">
                             <button
@@ -397,13 +455,29 @@ export default function FlamebornGarden() {
                     </div>
                 </div>
 
-                {/* Seed drawer styled like a wooden cart */}
+                {/* Seed drawer with category filters */}
                 <div className="mt-4 bg-amber-100 rounded-xl p-4 border-4 border-amber-800/40 shadow-lg" style={{ background: 'linear-gradient(180deg, #DEB887 0%, #D2B48C 100%)' }}>
+                    {/* Category filter tabs */}
+                    <div className="flex flex-wrap gap-1 mb-3">
+                        {CATEGORIES.map(cat => (
+                            <button
+                                key={cat.id}
+                                onClick={() => setSelectedCategory(cat.id)}
+                                className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${selectedCategory === cat.id
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-white/60 text-amber-800 hover:bg-white'
+                                    }`}
+                            >
+                                {cat.icon} {cat.name}
+                            </button>
+                        ))}
+                    </div>
+
                     <h3 className="text-sm font-bold text-amber-900 mb-3 flex items-center gap-2">
-                        <span className="text-lg">🌱</span> Seed Cart — tap to select
+                        <span className="text-lg">🌱</span> Seed Cart — {filteredCrops.length} seeds
                     </h3>
-                    <div className="flex flex-wrap gap-2">
-                        {CROPS.map(crop => (
+                    <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+                        {filteredCrops.map(crop => (
                             <motion.button
                                 key={crop.id}
                                 onClick={() => setSelectedSeed(selectedSeed === crop.id ? null : crop.id)}
