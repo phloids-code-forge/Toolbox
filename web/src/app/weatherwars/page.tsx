@@ -4,6 +4,8 @@ import { useState } from "react";
 import { SplashScreen } from "@/components/dashboard/SplashScreen";
 import { ClockFace } from "@/components/dashboard/ClockFace";
 
+// Metadata removed - handled in layout.tsx
+
 export default function Home() {
   const [showSplash, setShowSplash] = useState(true);
 

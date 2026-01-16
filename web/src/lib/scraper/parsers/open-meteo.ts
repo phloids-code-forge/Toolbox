@@ -75,10 +75,22 @@ export const OPEN_METEO_PARSER: ScraperDefinition = {
             let hourIndex = hourly.time.indexOf(current.time);
 
             // Fallback if current.time (e.g. 12:15) doesn't perfectly match hourly (12:00)
-            if (hourIndex === -1) {
-                // Simple heuristic: match the first 13 chars (YYYY-MM-DDTHH)
-                const currentHourStr = current.time.substring(0, 13);
-                hourIndex = hourly.time.findIndex((t: string) => t.startsWith(currentHourStr));
+            if (hourIndex === -1 && hourly?.time) {
+                // Find closest time
+                const currTime = new Date(current.time).getTime();
+                let minDiff = Infinity;
+                let closestIdx = 0;
+
+                hourly.time.forEach((t: string, idx: number) => {
+                    const diff = Math.abs(new Date(t).getTime() - currTime);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        closestIdx = idx;
+                    }
+                });
+
+                hourIndex = closestIdx;
+                console.log(`[Open-Meteo] Matched current ${current.time} to hourly ${hourly.time[hourIndex]} (idx ${hourIndex})`);
             }
 
             // Safety fallback

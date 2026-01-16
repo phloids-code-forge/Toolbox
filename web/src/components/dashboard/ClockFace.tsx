@@ -70,6 +70,122 @@ export function ClockFace() {
         d.station_id !== 'kfor'
     );
 
+    // ==========================================
+    // INTERIM COMMANDER LOGIC (Smart Fallback)
+    // ==========================================
+    // If NWS is missing temp, find the highest-rated alternative to take command.
+
+    // Candidates in order of accuracy (User defined: Open-Meteo -> WeatherAPI -> OpenWeather)
+    // KWTV excluded for now per user request.
+    const FALLBACK_ORDER = ['open_meteo', 'weatherapi', 'openweathermap'];
+
+    let primarySourceId = 'nws';
+    let primaryData = nws;
+    let isInterim = false;
+
+    // Check if NWS is valid (has temp)
+    if (nws.currentTemp === null || nws.currentTemp === undefined) {
+        // NWS is down! Find a leader.
+        for (const candidateId of FALLBACK_ORDER) {
+            const candidate = data.find(d => d.station_id === candidateId);
+            if (candidate?.forecast_data?.currentTemp !== undefined && candidate?.forecast_data?.currentTemp !== null) {
+                primarySourceId = candidateId;
+                primaryData = candidate.forecast_data;
+                isInterim = true;
+                break;
+            }
+        }
+    }
+
+    // Determine Theme based on Primary Source
+    let themeKey = 'slate';
+    if (primarySourceId === 'nws') themeKey = 'emerald'; // NWS is Green
+    else if (primarySourceId === 'open_meteo') themeKey = 'purple';
+    else if (primarySourceId === 'weatherapi') themeKey = 'blue';
+    else if (primarySourceId === 'openweathermap') themeKey = 'orange';
+
+    // Manually map NWS emerald theme since it's not in the shared COLOR_THEMES object (it was hardcoded)
+    const activeTheme = themeKey === 'emerald' ? {
+        border: "border-emerald-500/20",
+        text: "text-emerald-400",
+        accent: "bg-emerald-500",
+        ring: "ring-emerald-500/10",
+        glow: "shadow-[0_20px_50px_-12px_rgba(16,185,129,0.25)]",
+        darkGlow: "dark:shadow-[0_0_80px_-20px_rgba(16,185,129,0.15)]",
+        textMain: "text-emerald-800 dark:text-emerald-300",
+        textSecondary: "text-emerald-900/80 dark:text-emerald-200/90",
+        labelBg: "bg-emerald-500/10",
+        gradient: "from-emerald-500/5 via-transparent to-emerald-500/5"
+    } : {
+        // Map standard themes to the main circle style
+        border: COLOR_THEMES[themeKey].border,
+        text: COLOR_THEMES[themeKey].text,
+        accent: COLOR_THEMES[themeKey].accent,
+        // Customized glows for other colors
+        ring: `ring-${themeKey}-500/10`,
+        glow: `shadow-[0_20px_50px_-12px_rgba(var(--${themeKey}-500-rgb),0.25)]`, // Approximate/Fallback since tailwind arbitrary values are tricky dynamically
+        // Use simpler safe defaults for dynamic colors if possible, or just hardcode map:
+        darkGlow: "",
+        textMain: `text-${themeKey}-800 dark:text-${themeKey}-300`,
+        textSecondary: `text-${themeKey}-900/80 dark:text-${themeKey}-200/90`,
+        labelBg: `bg-${themeKey}-500/10`,
+        gradient: `from-${themeKey}-500/5 via-transparent to-${themeKey}-500/5`
+    };
+
+    // Helper for non-emerald dynamic colors (Tailwind safe-list might be needed, but we'll try standard keys)
+    // Actually, dynamic classes like `text-${themeKey}-400` often fail in Tailwind JIT if not seen.
+    // Let's make a precise map for the MAIN circle to be safe.
+    const COMMANDER_THEMES: Record<string, any> = {
+        nws: {
+            borderColor: "border-emerald-500/20",
+            textColor: "text-emerald-400",
+            labelBg: "bg-emerald-500/10",
+            shadow: "shadow-[0_20px_50px_-12px_rgba(16,185,129,0.25)] dark:shadow-[0_0_80px_-20px_rgba(16,185,129,0.15)]",
+            ring: "ring-emerald-500/10",
+            gradient: "from-emerald-500/5 via-transparent to-emerald-500/5",
+            mainText: "text-emerald-800 dark:text-emerald-300",
+            subText: "text-emerald-900/80 dark:text-emerald-200/90",
+            label: "OFFICIAL NWS"
+        },
+        open_meteo: {
+            borderColor: "border-purple-500/20",
+            textColor: "text-purple-400",
+            labelBg: "bg-purple-500/10",
+            shadow: "shadow-[0_20px_50px_-12px_rgba(168,85,247,0.25)] dark:shadow-[0_0_80px_-20px_rgba(168,85,247,0.15)]",
+            ring: "ring-purple-500/10",
+            gradient: "from-purple-500/5 via-transparent to-purple-500/5",
+            mainText: "text-purple-800 dark:text-purple-300",
+            subText: "text-purple-900/80 dark:text-purple-200/90",
+            label: "INTERIM COMMAND: OPEN-METEO"
+        },
+        weatherapi: {
+            borderColor: "border-blue-500/20",
+            textColor: "text-blue-400",
+            labelBg: "bg-blue-500/10",
+            shadow: "shadow-[0_20px_50px_-12px_rgba(59,130,246,0.25)] dark:shadow-[0_0_80px_-20px_rgba(59,130,246,0.15)]",
+            ring: "ring-blue-500/10",
+            gradient: "from-blue-500/5 via-transparent to-blue-500/5",
+            mainText: "text-blue-800 dark:text-blue-300",
+            subText: "text-blue-900/80 dark:text-blue-200/90",
+            label: "INTERIM COMMAND: WEATHER API"
+        },
+        openweathermap: {
+            borderColor: "border-orange-500/20",
+            textColor: "text-orange-400",
+            labelBg: "bg-orange-500/10",
+            shadow: "shadow-[0_20px_50px_-12px_rgba(249,115,22,0.25)] dark:shadow-[0_0_80px_-20px_rgba(249,115,22,0.15)]",
+            ring: "ring-orange-500/10",
+            gradient: "from-orange-500/5 via-transparent to-orange-500/5",
+            mainText: "text-orange-800 dark:text-orange-300",
+            subText: "text-orange-900/80 dark:text-orange-200/90",
+            label: "INTERIM COMMAND: OPENWEATHER"
+        }
+    };
+
+    // Fallback scheme if ID not found
+    const currentTheme = COMMANDER_THEMES[primarySourceId] || COMMANDER_THEMES['nws'];
+
+
     return (
         // MAIN CONTAINER: Full viewport height, flex column
         <div className="flex flex-col w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-sans selection:bg-emerald-500/30 transition-colors duration-300">
@@ -103,43 +219,43 @@ export function ClockFace() {
                     {/* Left Flank: The Truth (NWS), Astronomy, Green Thumb */}
                     <div className="xl:col-span-3 flex flex-col gap-6 order-1 xl:order-1 sm:flex-row xl:flex-col sm:items-stretch">
 
-                        {/* NWS Truth Circle */}
-                        <div className="flex-1 relative flex flex-col items-center justify-center p-6 rounded-[2rem] aspect-square border border-emerald-500/20 bg-slate-300/50 dark:bg-slate-700/40 backdrop-blur-xl shadow-[0_20px_50px_-12px_rgba(16,185,129,0.25)] dark:shadow-[0_0_80px_-20px_rgba(16,185,129,0.15)] group hover:scale-[1.02] transition-all duration-500 overflow-hidden ring-1 ring-emerald-500/10">
+                        {/* NWS Truth Circle (OR INTERIM COMMANDER) */}
+                        <div className={`flex-1 relative flex flex-col items-center justify-center p-6 rounded-[2rem] aspect-square border ${currentTheme.borderColor} bg-slate-300/50 dark:bg-slate-700/40 backdrop-blur-xl ${currentTheme.shadow} group hover:scale-[1.02] transition-all duration-500 overflow-hidden ring-1 ${currentTheme.ring}`}>
 
 
-                            <div className="absolute inset-4 rounded-full border border-emerald-500/10 group-hover:scale-105 transition-transform duration-700" />
-                            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-emerald-500/5 via-transparent to-emerald-500/5 opacity-50" />
+                            <div className={`absolute inset-4 rounded-full border border-current opacity-10 group-hover:scale-105 transition-transform duration-700 ${currentTheme.textColor}`} />
+                            <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${currentTheme.gradient} opacity-50`} />
 
-                            <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold px-4 py-1.5 rounded-full mb-6 tracking-widest uppercase backdrop-blur-md">
-                                Official NWS
+                            <span className={`${currentTheme.labelBg} border border-current ${currentTheme.textColor} bg-opacity-10 text-xs font-bold px-4 py-1.5 rounded-full mb-6 tracking-widest uppercase backdrop-blur-md`}>
+                                {currentTheme.label}
                             </span>
 
-                            <div className="flex items-start justify-center text-emerald-800 dark:text-emerald-300 drop-shadow-sm dark:drop-shadow-[0_0_25px_rgba(16,185,129,0.5)] scale-100 xl:scale-110 origin-center z-10 my-4">
+                            <div className={`flex items-start justify-center ${currentTheme.mainText} drop-shadow-sm dark:drop-shadow-[0_0_25px_currentColor] scale-100 xl:scale-110 origin-center z-10 my-4`}>
                                 <span className="text-[5rem] sm:text-[6rem] lg:text-[7rem] xl:text-[8rem] font-bold tracking-tighter leading-none">
-                                    {nws.currentTemp ? Math.round(nws.currentTemp) : '--'}
+                                    {primaryData.currentTemp ? Math.round(primaryData.currentTemp) : '--'}
                                 </span>
                                 <span className="text-4xl xl:text-5xl font-light opacity-60 mt-2 sm:mt-4">°</span>
                             </div>
 
-                            <div className="flex items-center gap-2 mt-6 mb-8 text-emerald-900/80 dark:text-emerald-200/90">
-                                <WeatherIcon condition={nws.conditionText} className="w-8 h-8" />
+                            <div className={`flex items-center gap-2 mt-6 mb-8 ${currentTheme.subText}`}>
+                                <WeatherIcon condition={primaryData.conditionText} className="w-8 h-8" />
                                 <p className="font-mono text-lg uppercase tracking-wider font-bold">
-                                    {nws.conditionText || 'ONLINE'}
+                                    {primaryData.conditionText || 'ONLINE'}
                                 </p>
                             </div>
 
                             {/* Detailed Stats */}
                             <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-center w-full max-w-[200px]">
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] text-emerald-700/60 dark:text-emerald-500/60 uppercase tracking-widest">Feels Like</span>
-                                    <span className="text-xl font-bold text-emerald-800 dark:text-emerald-300">
-                                        {nws.windChill ? Math.round(nws.windChill) : (nws.currentTemp ? Math.round(nws.currentTemp) : '--')}°
+                                    <span className={`text-[10px] ${currentTheme.subText} opacity-60 uppercase tracking-widest`}>Feels Like</span>
+                                    <span className={`text-xl font-bold ${currentTheme.mainText}`}>
+                                        {primaryData.windChill ? Math.round(primaryData.windChill) : (primaryData.currentTemp ? Math.round(primaryData.currentTemp) : '--')}°
                                     </span>
                                 </div>
-                                <div className="flex flex-col border-l border-emerald-500/20">
-                                    <span className="text-[10px] text-emerald-700/60 dark:text-emerald-500/60 uppercase tracking-widest">Wind</span>
-                                    <span className="text-xl font-bold text-emerald-800 dark:text-emerald-300">
-                                        {nws.windSpeed ? Math.round(nws.windSpeed) : '--'} <span className="text-xs font-normal opacity-70">mph</span>
+                                <div className={`flex flex-col border-l border-current opacity-80 ${currentTheme.textColor}`}>
+                                    <span className={`text-[10px] ${currentTheme.subText} opacity-60 uppercase tracking-widest`}>Wind</span>
+                                    <span className={`text-xl font-bold ${currentTheme.mainText}`}>
+                                        {primaryData.windSpeed ? Math.round(primaryData.windSpeed) : '--'} <span className="text-xs font-normal opacity-70">mph</span>
                                     </span>
                                 </div>
                             </div>

@@ -16,14 +16,14 @@ export function GreenThumbPanel({ soilTemp, soilMoisture, daily, onExplain }: {
 }) {
 
     // Logic: Morel Hunting (50-58F)
-    const sTemp = soilTemp ?? 0;
-    const isMorelSeason = sTemp >= 50 && sTemp <= 60;
+    const sTemp = soilTemp; // Undefined if missing
+    const isMorelSeason = sTemp !== undefined && sTemp >= 50 && sTemp <= 60;
 
     // Logic: Watering
     const moisture = soilMoisture ?? 0;
-    const isDry = moisture < 0.25; // Random heuristic for "Dry" (0.0 - 1.0 ?) - OpenMeteo uses m³/m³ usually? No, it's % often?
-    // Wait, OpenMeteo hourly soil_moisture_3_to_9cm is m³/m³. Typical field capacity is ~0.3-0.4. Wilting point ~0.1-0.2.
-    // So < 0.25 is getting dry. > 0.4 is wet.
+    const isDry = moisture < 0.25;
+
+    // console.log("[GreenThumb] Props:", { soilTemp, soilMoisture });
 
     return (
         <div className="flex flex-col gap-3 h-full bg-slate-900/30 border border-slate-800/50 rounded-2xl p-4 overflow-hidden">
@@ -42,7 +42,7 @@ export function GreenThumbPanel({ soilTemp, soilMoisture, daily, onExplain }: {
                 <div className="flex flex-col">
                     <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Morel Radar</span>
                     <span className={`text-sm font-bold ${isMorelSeason ? "text-emerald-300" : "text-slate-400"}`}>
-                        {sTemp > 0 ? `${sTemp.toFixed(1)}°F` : '--'}
+                        {(sTemp !== undefined && sTemp !== null) ? `${sTemp.toFixed(1)}°F` : '--'}
                     </span>
                 </div>
                 {isMorelSeason ? (

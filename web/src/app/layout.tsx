@@ -31,7 +31,10 @@ const lato = Lato({
 });
 
 export const metadata: Metadata = {
-  title: "Weather Wars | The Battle for Accuracy",
+  title: {
+    template: '%s | phloid',
+    default: "phloid's Workshop",
+  },
   description: "A dual-mode weather platform ranking sources by truth.",
 };
 
