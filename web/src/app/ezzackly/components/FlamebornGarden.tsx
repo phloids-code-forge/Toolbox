@@ -39,7 +39,7 @@ const CROPS = [
 
     // MUSHROOMS
     { id: 'mushroom', name: 'Red Mushroom', time: 5, icon: '🍄', color: '#EF4444', category: 'fungi' },
-    { id: 'azureruss', name: 'Azure Russula', time: 10, icon: '🍄‍🟫', color: '#60A5FA', category: 'fungi' },
+    { id: 'azureruss', name: 'Azure Russula', time: 10, icon: '💎', color: '#3B82F6', category: 'fungi' },
 
     // DESERT/SPECIAL
     { id: 'aloe', name: 'Aloe', time: 7, icon: '🪴', color: '#22C55E', category: 'desert' },
@@ -402,9 +402,9 @@ export default function FlamebornGarden() {
                                                     transition={{ duration: 0.6, repeat: isReady ? Infinity : 0 }}
                                                     className="relative"
                                                     style={{
-                                                        fontSize: stage === 0 ? '1.5rem' : stage === 1 ? '2rem' : '2.5rem',
-                                                        opacity: stage === 0 ? 0.7 : stage === 1 ? 0.85 : 1,
-                                                        filter: isReady ? 'drop-shadow(0 0 8px gold)' : 'none'
+                                                        fontSize: stage === 0 ? '2.5rem' : stage === 1 ? '3rem' : '3.5rem',
+                                                        opacity: stage === 0 ? 0.6 : stage === 1 ? 0.8 : 1,
+                                                        filter: isReady ? 'drop-shadow(0 0 10px gold)' : 'none'
                                                     }}
                                                 >
                                                     {crop.icon}
@@ -420,8 +420,8 @@ export default function FlamebornGarden() {
                                                 </motion.div>
                                                 {/* Timer */}
                                                 <div className={`text-xs font-bold mt-1 px-2 py-0.5 rounded-full ${isReady
-                                                        ? 'bg-yellow-400 text-yellow-900'
-                                                        : 'bg-black/40 text-white'
+                                                    ? 'bg-yellow-400 text-yellow-900'
+                                                    : 'bg-black/40 text-white'
                                                     }`}>
                                                     {timeStr}
                                                 </div>
@@ -464,8 +464,8 @@ export default function FlamebornGarden() {
                                 key={cat.id}
                                 onClick={() => setSelectedCategory(cat.id)}
                                 className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${selectedCategory === cat.id
-                                        ? 'bg-green-600 text-white'
-                                        : 'bg-white/60 text-amber-800 hover:bg-white'
+                                    ? 'bg-green-600 text-white'
+                                    : 'bg-white/60 text-amber-800 hover:bg-white'
                                     }`}
                             >
                                 {cat.icon} {cat.name}
@@ -484,8 +484,8 @@ export default function FlamebornGarden() {
                                 whileHover={{ scale: 1.05, y: -2 }}
                                 whileTap={{ scale: 0.95 }}
                                 className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${selectedSeed === crop.id
-                                        ? 'bg-green-500 text-white shadow-lg ring-2 ring-yellow-400'
-                                        : 'bg-white/90 text-amber-900 border-2 border-amber-400 hover:border-green-500'
+                                    ? 'bg-green-500 text-white shadow-lg ring-2 ring-yellow-400'
+                                    : 'bg-white/90 text-amber-900 border-2 border-amber-400 hover:border-green-500'
                                     }`}
                             >
                                 <span className="text-xl">{crop.icon}</span>
