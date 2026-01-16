@@ -93,34 +93,33 @@ export default function LandingPage() {
         </Link>
 
         {/* Bottom: Void Typer */}
-        <Link href="/voidtyper" className="group relative flex-1 hover:flex-[1.1] transition-all duration-300 overflow-hidden">
-          {/* Background */}
-          <div className="absolute inset-0 bg-black group-hover:bg-neutral-950 transition-colors duration-500" />
-
-          {/* Content */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 z-10">
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
-              <span className="text-white/30 tracking-[0.2em] text-[10px] font-bold uppercase mb-2 block">Catharsis Engine</span>
-              <h2 className="text-xl md:text-2xl font-black text-white/80 group-hover:scale-105 transition-transform duration-300" style={{ fontFamily: "'Playfair Display', serif" }}>void typer</h2>
-              <div className="mt-3 px-4 py-1.5 border border-white/20 text-white/50 rounded-full text-[10px] font-bold bg-white/5 group-hover:bg-white group-hover:text-black transition-all">
-                RELEASE
-              </div>
-            </motion.div>
+        <div className="group relative flex-1 hover:flex-[1.1] transition-all duration-300 overflow-hidden flex items-center justify-center p-6">
+          {/* JUNK DRAWER panel */}
+          <div className="flex-1 bg-zinc-900/50 rounded-2xl p-6 border border-white/5 relative group overflow-hidden">
+            <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay" />
+            <h2 className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-4">Junk Drawer</h2>
+            <ul className="space-y-3">
+              <li>
+                <Link href="/trenchrun" className="flex items-center justify-between group/link">
+                  <span className="text-zinc-300 font-mono text-sm group-hover/link:text-[#FF5E5B] transition-colors">TRENCH_RUN.exe</span>
+                  <span className="text-xs text-zinc-600">v1.0</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/voidtyper" className="flex items-center justify-between group/link">
+                  <span className="text-zinc-300 font-mono text-sm group-hover/link:text-white transition-colors">VOID_TYPER</span>
+                  <span className="text-xs text-zinc-600">v1.0</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/chronicles" className="flex items-center justify-between group/link">
+                  <span className="text-zinc-500 font-mono text-sm group-hover/link:text-green-500 transition-colors">CHRONICLES.log</span>
+                  <span className="text-[10px] text-zinc-700 border border-zinc-800 px-1 rounded">LOCKED</span>
+                </Link>
+              </li>
+            </ul>
           </div>
-
-          {/* Breathing guide hint */}
-          <motion.div
-            animate={{ scale: [1, 1.1, 1], opacity: [0.05, 0.1, 0.05] }}
-            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute inset-0 flex items-center justify-center pointer-events-none"
-          >
-            <div className="w-32 h-32 rounded-full border border-white/10" />
-          </motion.div>
-        </Link>
+        </div>
       </div>
 
       {/* CENTER: Phloid Identity */}
