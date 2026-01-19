@@ -60,8 +60,16 @@ def health_check():
     return {"status": "Pip Cloud Brain Online"}
 
 @app.post("/sms")
-async def sms_reply(From: str = Form(...), Body: str = Form(...)):
-    """Handle incoming SMS."""
+async def sms_reply(request: Request):
+    """Handle incoming SMS (Robust)."""
+    form_data = await request.form()
+    print(f"📩 Raw Form Data: {form_data}")
+    
+    From = form_data.get("From")
+    Body = form_data.get("Body")
+    
+    if not From or not Body:
+        return "Missing Data"
     
     # Security
     if ALLOWED_NUMBER and From != ALLOWED_NUMBER:
