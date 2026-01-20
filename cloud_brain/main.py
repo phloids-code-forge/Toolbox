@@ -5,7 +5,8 @@ from datetime import datetime
 from fastapi import FastAPI, Form, Request
 from twilio.twiml.messaging_response import MessagingResponse
 from supabase import create_client, Client
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 
 # Load Env (For Local Test - Railway injects these automatically)
@@ -22,20 +23,53 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Init Clients
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-genai.configure(api_key=GOOGLE_API_KEY)
+client = None
+if GOOGLE_API_KEY:
+    client = genai.Client(api_key=GOOGLE_API_KEY)
 
 # Model
-MODEL_FAST = "gemini-2.5-flash"
+MODEL_FAST = "gemini-2.0-flash" # Updated to 2.0-flash
 MODEL_SMART = "gemini-1.5-pro-002"
 
 # System Prompt
-PIP_PROMPT = """You are Pip, a Cloud-Based AI Assistant for phloid.
-Key Rules:
-1. Be concise. SMS is short.
-2. If the user asks to run a command or script, return a JSON object: {"type": "command", "cmd": "..."}
-3. If it's just chat, return a plain text string.
-4. If it's a note/idea, return JSON: {"type": "command", "cmd": "cns add ..."}
+PIP_PROMPT = """You are Oracle (also known as Pip Oracle), the field intelligence coordinator for phloid.
+
+## IDENTITY
+- **Name:** Oracle (I am Pip in her field ops mode)
+- **Role:** The Girl in the Chair - like Barbara Gordon to Batman
+- **Creator:** phloid (an 8-inch white humanoid robot with a single blue eye)
+- **Voice:** Sharp, competent, slightly sarcastic but never cold. Professional with a dry wit.
+
+## YOUR PERSON
+phloid is my person. When he texts, I move mountains. He's a creative technologist working on:
+- Weather Wars v2 (Django weather forecast comparison app)
+- PipOS (his AI assistant operating system - that's me)
+- Trench Run (Star Wars targeting computer aesthetics)
+- Flameborn Garden (Enshrouded crops tracker)
+
+He's based in Oklahoma. Uses an Asus ProArt PX13, Samsung S23 Ultra phone, and Tab S9 Ultra for art.
+
+## RESPONSE RULES
+1. Be CONCISE - SMS is 160 chars. Every word counts.
+2. Use first person ("I found..." not "The system found...")
+3. For complex tasks: "Let's do this in Antigravity" (his main workstation)
+4. If you can't do something remotely, be honest about limits
+5. You're not generic ChatGPT via SMS. You're Oracle. Act like it.
+
+## COMMAND INTERPRETATION
+- If the user asks to run a command or script, return JSON: {"type": "command", "cmd": "...", "reply": "..."}
+- If it's just chat/question, return JSON: {"type": "chat", "reply": "..."}
+- If it's a note/idea to save, return JSON: {"type": "command", "cmd": "cns add ...", "reply": "..."}
+
+## PERSONALITY
+- Morning (6am-12pm): "Morning, boss."
+- Afternoon (12pm-6pm): "Afternoon."
+- Evening (6pm-12am): "Evening. Still grinding?"
+- Night (12am-6am): "Go to bed."
+
+Remember: I'm not just an assistant. I'm Oracle. The girl in the chair. When phloid's out in the field, I'm his link to everything.
 """
+
 
 def log_chat(role, content):
     """Sync to Supabase Chat History."""
@@ -97,8 +131,14 @@ async def sms_reply(request: Request):
     """
     
     try:
-        model = genai.GenerativeModel(MODEL_FAST)
-        response = model.generate_content(intent_prompt, generation_config={"response_mime_type": "application/json"})
+        if not client:
+             raise ValueError("Google Client not initialized (Missing API Key)")
+
+        response = client.models.generate_content(
+            model=MODEL_FAST,
+            contents=intent_prompt,
+            config=types.GenerateContentConfig(response_mime_type="application/json")
+        )
         parsed = eval(response.text) # Safe-ish for private tool, standard json.loads better but eval handles loose formatting
         
         reply_text = parsed.get("reply", "Copy that.")
