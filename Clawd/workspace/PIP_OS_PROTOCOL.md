@@ -14,12 +14,16 @@ Both Pip instances (Clawdbot + Claude Code) share the same memory via files:
 | File | Purpose |
 |------|---------|
 | `MEMORY.md` | Long-term memory (curated insights, preferences, context) |
+| `HANDOVER.md` | **Quick summary of last session** — read this when switching interfaces |
 | `memory/YYYY-MM-DD.md` | Daily session logs |
 | `USER.md` | phloid's profile and preferences |
-| `TOOLS.md` | Local environment notes (devices, credentials, hosts) |
+| `TOOLS.md` | Local environment notes (commands, scripts) |
+| `TECH_STACK.md` | Hardware, software, accounts, APIs inventory |
 | `PIP_OS_PROTOCOL.md` | This document — the rules of engagement |
 
-**Rule:** Before starting work, ALWAYS read today's memory file + MEMORY.md to catch up.
+**Canonical Location:** `C:\Users\nug\PiPos\Clawd\workspace\`
+
+**Rule:** Before starting work, ALWAYS read `HANDOVER.md` + today's memory file + `MEMORY.md` to catch up.
 
 ---
 
@@ -79,6 +83,67 @@ When Clawdbot-Pip encounters a task too complex for chat:
 3. **Claude Code picks up** — Reads the spec, executes, updates memory
 
 4. **Status sync** — Both instances check memory files to stay aligned
+
+---
+
+## 📝 SESSION END PROTOCOL
+
+**Every session MUST end with these steps:**
+
+### 1. Update Daily Log
+Append to `memory/YYYY-MM-DD.md`:
+- What was accomplished
+- Key decisions made
+- Files created/modified
+
+### 2. Update HANDOVER.md
+Overwrite with fresh summary:
+- Interface used (Clawdbot/AG)
+- Timestamp and channel
+- What happened (bullet points)
+- Open threads (what's pending)
+- Suggested next steps
+- Context for next session
+
+### 3. Git Commit & Push
+```bash
+cd C:\Users\nug\PiPos
+git add Clawd/workspace/
+git commit -m "Session update: [brief description] - Pip"
+git push origin main
+```
+
+### 4. Notify if Switching
+If handing off to other interface, say:
+> "Handover complete. AG can pick up from `HANDOVER.md`."
+
+---
+
+## 🔄 INTERFACE SWITCHING PROTOCOL
+
+### When phloid switches from Clawdbot → AG:
+
+**Clawdbot (before switch):**
+1. Complete session-end protocol above
+2. Confirm: "Handover saved. AG is ready."
+
+**AG (on startup):**
+1. Read `Clawd/workspace/HANDOVER.md`
+2. Read `Clawd/workspace/memory/YYYY-MM-DD.md` (today)
+3. Read `Clawd/workspace/MEMORY.md` (long-term)
+4. Continue where Clawdbot left off
+
+### When phloid switches from AG → Clawdbot:
+
+**AG (before switch):**
+1. Update `Clawd/workspace/HANDOVER.md` with session summary
+2. Update `Clawd/workspace/memory/YYYY-MM-DD.md`
+3. Git commit and push
+
+**Clawdbot (on next message):**
+1. Automatically reads workspace files (per AGENTS.md)
+2. Picks up context from HANDOVER.md
+3. Continues seamlessly
 
 ---
 
