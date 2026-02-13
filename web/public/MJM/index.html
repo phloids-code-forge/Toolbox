@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Makers Just Make | Premium Helmets & Props</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;600&family=Oswald:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="container nav-flex">
+            <a href="index.html" class="logo">
+                <img src="assets/images/logo-industrial.png" alt="Makers Just Make - Industrial Logo">
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="#helmets">Helmets</a></li>
+                    <li><a href="#weapons">Weapons</a></li>
+                    <li><a href="#props">Props</a></li>
+                    <li><a href="#custom">Custom Work</a></li>
+                </ul>
+            </nav>
+            <a href="#" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 1rem;">Cart (0)</a>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container hero-content">
+            <h1>Forged in Filament.<br>Finished by Hand.</h1>
+            <p>Museum-quality replicas from the worlds you love. Built to last. Painted to kill.</p>
+            <a href="#shop" class="btn btn-primary">Enter the Forge</a>
+        </div>
+    </section>
+
+    <!-- Featured Categories -->
+    <section class="collections container">
+        <h2 class="text-center" style="margin-bottom: var(--spacing-md);">Select Your Universe</h2>
+        <div class="collection-grid">
+            <!-- Star Wars -->
+            <a href="#" class="collection-card">
+                <img src="assets/images/hero-deathtrooper.jpg" alt="Star Wars Collection">
+                <div class="collection-overlay">
+                    <h3>Star Wars</h3>
+                    <p class="text-gold">Troopers, Mandalorians, Rebels</p>
+                </div>
+            </a>
+
+            <!-- Warhammer 40K -->
+            <a href="#" class="collection-card">
+                <img src="assets/images/product-bulwark-front.jpg" alt="Warhammer 40K Collection">
+                <div class="collection-overlay">
+                    <h3>Warhammer 40K</h3>
+                    <p class="text-gold">Astartes, Chaplains, Bolters</p>
+                </div>
+            </a>
+
+            <!-- Weapons & Props -->
+            <a href="#" class="collection-card">
+                <img src="assets/images/hero-gold-weathered.jpg" alt="Weapons and Props">
+                <div class="collection-overlay">
+                    <h3>Weapons & Props</h3>
+                    <p class="text-gold">Blasters, Swords, Relics</p>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <!-- The Craft Section -->
+    <section class="craft container">
+        <div class="craft-image">
+            <!-- Using side profile for dramatic effect -->
+            <img src="assets/images/hero-bulwark-side.jpg" alt="Detail of hand-painted weathering">
+        </div>
+        <div class="craft-text">
+            <h2>Not a Print Farm. <br><span class="text-crimson">A Workshop.</span></h2>
+            <p style="margin-bottom: 1rem; font-size: 1.1rem;">
+                Every piece that leaves this shop is hand-finished, sanded, primed, and painted by a human being who
+                cares about the lore as much as you do.
+            </p>
+            <p style="margin-bottom: 2rem; color: #aaa;">
+                We don't sell raw plastic (unless you ask for a kit). We sell heavy, weathered, battle-damaged artifacts
+                that look like they just fell off a transport ship. Real metal textures. Electronic integration. Leather
+                straps.
+            </p>
+            <a href="#about" class="btn">Meet the Maker</a>
+        </div>
+    </section>
+
+    <!-- Featured Products (Grid) -->
+    <section id="shop" class="featured">
+        <div class="container">
+            <h2 class="text-center">Fresh from the Bench</h2>
+            <div class="product-grid">
+
+                <!-- Product 1: Bulwark -->
+                <div class="product-card">
+                    <div class="product-image-wrapper">
+                        <img src="assets/images/product-bulwark-front.jpg" alt="Space Marine Bulwark">
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-title">Space Marine Bulwark</h3>
+                        <p class="product-price">$500.00</p>
+                        <p style="font-size: 0.9rem; color: #888; margin-top: 0.5rem;">Caribbean Blue / Gold Trim</p>
+                    </div>
+                </div>
+
+                <!-- Product 2: Chaplain -->
+                <div class="product-card">
+                    <div class="product-image-wrapper">
+                        <!-- Placeholder image logic: re-using regular marine if specific chaplain shot isn't perfect, but we have a chaplain filename mapped -->
+                        <img src="assets/images/product-marine-regular.jpg" alt="Space Marine Regular">
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-title">Space Marine Regular</h3>
+                        <p class="product-price">$425.00</p>
+                        <p style="font-size: 0.9rem; color: #888; margin-top: 0.5rem;">Full Metal Jacket Homage</p>
+                    </div>
+                </div>
+
+                <!-- Product 3: KoR -->
+                <div class="product-card">
+                    <div class="product-image-wrapper">
+                        <img src="assets/images/product-kor-helmet.jpg" alt="Knights of Ren Helmet">
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-title">Knights of Ren: Ap'Lek</h3>
+                        <p class="product-price">$400.00</p>
+                        <p style="font-size: 0.9rem; color: #888; margin-top: 0.5rem;">Heavy Weathering</p>
+                    </div>
+                </div>
+
+                <!-- Product 4: Death Trooper (using hero image as product shot proxy for demo) -->
+                <div class="product-card">
+                    <div class="product-image-wrapper">
+                        <img src="assets/images/hero-deathtrooper.jpg" alt="Death Trooper Armor">
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-title">Death Trooper (E-11D)</h3>
+                        <p class="product-price">$175.00</p>
+                        <p style="font-size: 0.9rem; color: #888; margin-top: 0.5rem;">Blaster Prop - Weathered</p>
+                    </div>
+                </div>
+
+            </div>
+            <div class="text-center" style="margin-top: var(--spacing-md);">
+                <a href="#" class="btn btn-primary">View Full Catalog</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Custom Work CTA -->
+    <section id="custom" class="custom-work">
+        <div class="container">
+            <div
+                style="background: rgba(0,0,0,0.7); padding: 3rem; display: inline-block; border: 1px solid var(--mjm-gold);">
+                <h2>Have a Vision?</h2>
+                <p
+                    style="font-size: 1.2rem; margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+                    We do full custom commissions. From specific battalion markings to complete helmet modifications.
+                    If you can dream it, we can forge it.
+                </p>
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <a href="#" class="btn btn-primary">Custom Paint ($650+)</a>
+                    <a href="#" class="btn">Full Mod + Paint ($900+)</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-content">
+            <div class="footer-col">
+                <img src="assets/images/logo-industrial.png" alt="MJM Logo" style="height: 50px; margin-bottom: 1rem;">
+                <p style="color: #666; font-size: 0.9rem;">
+                    &copy; 2026 Makers Just Make.<br>
+                    Forged in the USA.
+                </p>
+            </div>
+            <div class="footer-col">
+                <h3>Shop</h3>
+                <ul>
+                    <li><a href="#">Helmets</a></li>
+                    <li><a href="#">Weapons</a></li>
+                    <li><a href="#">Props</a></li>
+                    <li><a href="#">Custom Commissions</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Support</h3>
+                <ul>
+                    <li><a href="#">Shipping Policy</a></li>
+                    <li><a href="#">Returns (All Sales Final)</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Follow The Forge</h3>
+                <ul>
+                    <li><a href="#">Instagram</a></li>
+                    <li><a href="#">YouTube</a></li>
+                    <li><a href="#">TikTok</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+</body>
+
+</html>
