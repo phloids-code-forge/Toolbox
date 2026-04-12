@@ -34,9 +34,9 @@ const lato = Lato({
 export const metadata: Metadata = {
   title: {
     template: '%s | phloid',
-    default: "phloid's Workshop",
+    default: "phloid",
   },
-  description: "A dual-mode weather platform ranking sources by truth.",
+  description: "Two robots escaped from a factory. Building weird things on the internet.",
 };
 
 // Prevent auto-zoom on mobile inputs

@@ -57,9 +57,9 @@ export default function Doodads() {
                             className="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl max-w-md w-full text-center relative overflow-hidden"
                             onClick={e => e.stopPropagation()}
                         >
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-amber-500" />
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-amber-500" />
 
-                            <h2 className="text-3xl font-black text-white mb-2">phloid + pip</h2>
+                            <h2 className="text-3xl font-black text-white mb-2">phloid + babs</h2>
                             <p className="text-zinc-400 text-sm mb-6">
                                 Two robots escaped from a factory. One is a chunky, tough-but-not-bright troll with a heart of gold. The other is a tiny, winged orb who's actually smart.
                             </p>
@@ -69,7 +69,7 @@ export default function Doodads() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <a href="mailto:pip@phloid.com" className="bg-zinc-800 hover:bg-zinc-700 text-white py-3 rounded-lg text-sm font-bold transition-colors">
-                                    Email Pip
+                                    Contact
                                 </a>
                                 <a href="https://ko-fi.com/phloid" target="_blank" className="bg-[#FF5E5B] hover:bg-[#ff4642] text-white py-3 rounded-lg text-sm font-bold transition-colors">
                                     Buy Coffee
