@@ -32,6 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# captured third-party/API debug responses; keep sanitized fixtures elsewhere
+/debug_*.html
 
 # vercel
 .vercel

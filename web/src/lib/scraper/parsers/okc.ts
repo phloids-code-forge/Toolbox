@@ -23,7 +23,7 @@ export const KFOR_PARSER: ScraperDefinition = {
         "sec-fetch-site": "none",
         "sec-fetch-user": "?1",
         "upgrade-insecure-requests": "1",
-        "cookie": "_pxhd=f018fc579f48bcbbb5ca5d2ad61dc9e9dbdb1692c32975225358bcf14e64f9af:070a3bf7-effa-11f0-a673-e95af8c5f5c5; ndn=67f55307-8329-4cdf-a3fb-2df5a5892401-1768251759564; _pxvid=070a3bf7-effa-11f0-a673-e95af8c5f5c5; pxcts=0743109a-effa-11f0-8be6-0835cc28a9f7; last_visit_bc=1768251759866; OTGPPConsent=DBABLA~BVQqAAAAAACA.QA; usprivacy=1YNN; BCSessionID=c0ad2330-91c9-4661-8de0-624d0a1485d1; referralId=Direct; seg_sessionid=ffeaed16-1cd8-49c3-844b-72bee76220a4; sailthru_pageviews=1; _cb=H3diACyX7t5DNyyu6; _chartbeat2=.1768251760715.1768251760715.1.C6mYlwDtqePclKkFdGdt3KBVblfa.1; _cb_svref=external; s_ips=1352; nol_fpid=2sm2wkmsigyug95hhohhlhpamyij81768251760|1768251760999|1768251760999|1768251760999; sailthru_content=2d27d40e7eb9b359ea635eb127991816; sailthru_visitor=d13cb0a5-78a6-4733-8113-c353a19c5355; kndctr_19020C7354766EB60A4C98A4_AdobeOrg_cluster=or2; kndctr_19020C7354766EB60A4C98A4_AdobeOrg_identity=CiYxNTgwNTc1MDE5NTg3NzUxMDk4MTY0NDQ2ODgwMTEwNzgwMjQ0MRISCP%2D%5FkqC7MxABGAEqA09SMjAA8AH%5Fv5KguzM%3D; _px2=eyJ1IjoiMDc2ZjQzMDAtZWZmYS0xMWYwLTk4NWUtYWJjMGRmYmE2OTY2IiwidiI6IjA3MGEzYmY3LWVmZmEtMTFmMC1hNjczLWU5NWFmOGM1ZjVjNSIsInQiOjE3NjgyNTIwNjA3OTEsImgiOiI1MmM2ZmUwOWRhNmI1ZWYxNzk4MWZmMmFlNmZjYTRmYmUwMDllZGE2NzlhNGIzNjI1M2E5NDEwODhkM2NkOWY5In0=; _ga=GA1.2.284334207.1768251761; _gid=GA1.2.813985822.1768251761; permutive-id=7183cf8a-7135-4ef7-9be9-e832a68449f8; s_tp=4282; s_ppv=kfor%253Aweather%2C32%2C32%2C32%2C1352%2C3%2C1; s_plt=2.27%2Ckfor%3Aweather; repeat_visitor=1768251761814-250118; bob_session_id=1768251761814-259092; _gat_gtag_UA_27019157_1=1; OptanonConsent=isGpcEnabled=0&datestamp=Mon+Jan+12+2026+15%3A03%3A25+GMT-0600+(Central+Standard+Time)&version=202512.1.0&browserGpcFlag=0&isIABGlobal=false&hosts=&consentId=254717cf-5bd4-44fd-88cc-60d975ac6a1e&interactionCount=1&isAnonUser=1&landingPath=https%3A%2F%2Fkfor.com%2Fweather%2F&GPPCookiesCount=1&gppSid=7&groups=SSPD_BG%3A1%2CC0002%3A1%2CC0004%3A1%2CC0007%3A1%2CC0003%3A1%2CC0001%3A1&crTime=1768251805652"
+        // Do not commit browser session cookies or anti-bot tokens; rely on public headers only.
     },
     parser: (html: string) => {
         const $ = cheerio.load(html);
@@ -35,6 +35,7 @@ export const KFOR_PARSER: ScraperDefinition = {
         const lowText = $('.weather-today .low').first().text().trim();
 
         return {
+            currentTemp: parseInt(tempText) || undefined,
             high: parseInt(highText) || undefined,
             low: parseInt(lowText) || undefined,
             conditionText: $('.weather-current .condition').first().text().trim(),
