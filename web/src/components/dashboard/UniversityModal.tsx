@@ -62,16 +62,16 @@ export function UniversityModal({ topic, onClose }: UniversityModalProps) {
                     <div className="space-y-2">
                         <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest"> The Textbook Definition</h5>
                         <p className="text-slate-300 font-serif italic text-lg leading-relaxed border-l-2 border-slate-700 pl-4">
-                            "{lesson.def}"
+                            &ldquo;{lesson.def}&rdquo;
                         </p>
                     </div>
 
-                    {/* The Professor's Take */}
+                    {/* The Professor&apos;s Take */}
                     <div className="bg-emerald-900/10 rounded-xl p-4 border border-emerald-500/20 relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-4 opacity-10">
                             <GraduationCap className="w-24 h-24 text-emerald-500" />
                         </div>
-                        <h5 className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-2 relative z-10">The Professor's Take</h5>
+                        <h5 className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-2 relative z-10">The Professor&apos;s Take</h5>
                         <p className="text-emerald-100 font-medium leading-relaxed relative z-10">
                             {lesson.take}
                         </p>

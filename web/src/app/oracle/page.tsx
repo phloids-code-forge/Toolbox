@@ -208,7 +208,7 @@ export default function OracleDashboard() {
           className="text-center text-emerald-800 text-xs tracking-wider"
         >
           <p>PIP OS v1.0 • ORACLE INTERFACE</p>
-          <p className="mt-1">"I am listening. I am alive."</p>
+          <p className="mt-1">&ldquo;I am listening. I am alive.&rdquo;</p>
         </motion.footer>
 
       </div>

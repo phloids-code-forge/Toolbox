@@ -55,7 +55,7 @@ export default function DbDebugPage() {
                     </button>
 
                     <p className="text-xs text-slate-500 text-center">
-                        This will create the tables if they don't exist. It will NOT delete existing data.
+                        This will create the tables if they don&apos;t exist. It will NOT delete existing data.
                     </p>
                 </div>
             </FadeIn>

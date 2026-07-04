@@ -1,18 +1,22 @@
 import { NextResponse } from 'next/server';
+import { saveSnapshot } from '@/app/actions/db-manage';
+import { authorizeCronRequest } from '@/lib/cron-auth';
 import { runAllScrapers } from '@/lib/scraper/engine';
-import { saveSnapshot, checkDbStatus } from '@/app/actions/db-manage';
 import { runSentinel } from "@/lib/services/nws-sentinel";
-
 
 // Prevent Vercel from caching this route (it must run fresh every time)
 export const dynamic = 'force-dynamic';
 
+type SaveResult = {
+    id: string;
+    saved: boolean;
+    error?: string;
+    scrape_error?: string;
+};
+
 export async function GET(request: Request) {
-    // 1. Authorization Check (Basic Security)
-    const authHeader = request.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authError = authorizeCronRequest(request);
+    if (authError) return authError;
 
     try {
         const startTime = Date.now();
@@ -24,7 +28,7 @@ export async function GET(request: Request) {
             runSentinel()
         ]);
 
-        const saveResults: any[] = [];
+        const saveResults: SaveResult[] = [];
 
         // 3. Save Scraper Data
         for (const result of scrapeResults) {
@@ -45,8 +49,9 @@ export async function GET(request: Request) {
             sentinel: sentinelResults
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown cron error';
         console.error("Cron Fatal Error:", error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        return NextResponse.json({ success: false, error: message }, { status: 500 });
     }
 }

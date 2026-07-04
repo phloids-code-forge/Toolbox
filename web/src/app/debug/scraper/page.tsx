@@ -14,7 +14,7 @@ export default function ScraperDebugPage() {
         try {
             const data = await testScrapeFn(id);
             setResults(data);
-        } catch (e) {
+        } catch {
             setResults({ error: "Failed to invoke server action" });
         }
         setLoading(false);
@@ -81,11 +81,11 @@ export default function ScraperDebugPage() {
                                 🚧 Regarding Missing Sources
                             </h3>
                             <p className="text-slate-400 text-sm leading-relaxed italic">
-                                "We attempted to audit every major weather source. However, some providers are simply
+                                &ldquo;We attempted to audit every major weather source. However, some providers are simply
                                 <span className="text-amber-500 font-bold"> too chicken </span>
                                 to allow independent verification, hiding behind anti-bot armor. We have marked them as
                                 <span className="text-red-400 font-bold"> DNF</span>.
-                                (No offense to actual chickens 🐔)."
+                                (No offense to actual chickens 🐔).&rdquo;
                             </p>
                         </div>
                     </div>

@@ -61,7 +61,7 @@ export default function Doodads() {
 
                             <h2 className="text-3xl font-black text-white mb-2">phloid + babs</h2>
                             <p className="text-zinc-400 text-sm mb-6">
-                                Two robots escaped from a factory. One is a chunky, tough-but-not-bright troll with a heart of gold. The other is a tiny, winged orb who's actually smart.
+                                Two robots escaped from a factory. One is a chunky, tough-but-not-bright troll with a heart of gold. The other is a tiny, winged orb who&apos;s actually smart.
                             </p>
                             <p className="text-zinc-500 text-xs italic mb-8">
                                 Building weird things on the internet to learn how to be human.
