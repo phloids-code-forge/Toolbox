@@ -1,5 +1,4 @@
 'use client';
-import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { ArrowLeft, Lock } from 'lucide-react';
 
@@ -17,9 +16,9 @@ export default function Chronicles() {
                 <header className="border-b border-green-900 pb-8">
                     <h1 className="text-4xl font-bold mb-2 tracking-tighter glich-text">THE CHRONICLES</h1>
                     <div className="flex items-center text-xs text-green-700 gap-4">
-                        <span>// CLASSIFIED</span>
-                        <span>// CLEARANCE_LEVEL: 0</span>
-                        <span>// STATUS: ENCRYPTED</span>
+                        <span>{"// CLASSIFIED"}</span>
+                        <span>{"// CLEARANCE_LEVEL: 0"}</span>
+                        <span>{"// STATUS: ENCRYPTED"}</span>
                     </div>
                 </header>
 

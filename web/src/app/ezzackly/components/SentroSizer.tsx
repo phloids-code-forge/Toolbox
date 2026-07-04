@@ -115,7 +115,7 @@ export default function SentroSizer() {
 
                     <div className="relative z-10">
                         <div className="text-sm uppercase tracking-widest opacity-80 mb-3">
-                            {selectedSize.size} hat • {targetHeight}" tall
+                            {selectedSize.size} hat • {targetHeight}&quot; tall
                         </div>
                         <motion.div
                             key={calculatedRows}
@@ -132,7 +132,7 @@ export default function SentroSizer() {
 
                 {/* Formula */}
                 <div className="text-center text-[#3C2415]/30 text-sm font-mono">
-                    ({targetHeight}" ÷ {gaugeHeight}") × {gaugeRows} = {calculatedRows}
+                    ({targetHeight}&quot; ÷ {gaugeHeight}&quot;) × {gaugeRows} = {calculatedRows}
                 </div>
             </div>
         </div>
