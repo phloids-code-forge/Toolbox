@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "playwright test",
+    "test:demo": "playwright test tests/mike-rapp-demo",
+    "test:demo:production": "playwright test --config=playwright.production.config.ts tests/mike-rapp-demo"
   },
   "dependencies": {
     "@vercel/analytics": "^1.6.1",
@@ -24,6 +27,7 @@
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^20",
     "@types/react": "^19",
