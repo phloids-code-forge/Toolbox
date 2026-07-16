@@ -48,7 +48,7 @@ export default async function OpportunityLoginPage({ searchParams }: LoginPagePr
         <p className={styles.eyebrow}>Secure preview</p>
         <h1 id="login-title">Private opportunity workspace</h1>
         <p className={styles.lede}>
-          Sign in to review Mike&apos;s watches, durable fixture results, and truthful alert previews.
+          Sign in to review Mike&apos;s watches, hosted Craigslist intake, and truthful provider-disabled alert history.
         </p>
         {message ? <p className={styles.formError} role="alert">{message}</p> : null}
         <form className={styles.loginForm} action="/api/opportunity/session" method="post">
@@ -58,7 +58,7 @@ export default async function OpportunityLoginPage({ searchParams }: LoginPagePr
           <button type="submit">Sign in securely</button>
         </form>
         <p className={styles.safetyNote}>
-          Fixture data only. No live sources are connected and no alerts are sent.
+          Craigslist saved-search intake is isolated from delivery. No email or SMS alerts are sent.
         </p>
       </section>
     </main>

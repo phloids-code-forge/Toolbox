@@ -310,6 +310,46 @@ export class OpportunityRepository {
     return this.pool;
   }
 
+  async getSourceCursor(clientSlug: string, sourceType: string): Promise<number> {
+    const result = await this.pool.query<{ cursor_value: string }>(
+      `SELECT cursor_value::text
+       FROM opportunity_source_cursors cursor
+       JOIN opportunity_clients client ON client.id = cursor.client_id
+       WHERE client.slug = $1 AND cursor.source_type = $2`,
+      [clientSlug, sourceType],
+    );
+    const value = result.rows[0]?.cursor_value;
+    return value === undefined ? 0 : Number(value);
+  }
+
+  async advanceSourceCursor(
+    clientSlug: string,
+    sourceType: string,
+    cursorValue: number,
+    now = new Date(),
+  ): Promise<number> {
+    if (!Number.isSafeInteger(cursorValue) || cursorValue < 0) {
+      throw new Error('Source cursor must be a non-negative safe integer.');
+    }
+    const result = await this.pool.query<{ cursor_value: string }>(
+      `INSERT INTO opportunity_source_cursors (client_id, source_type, cursor_value, updated_at)
+       SELECT client.id, $2, $3, $4
+       FROM opportunity_clients client
+       WHERE client.slug = $1
+       ON CONFLICT (client_id, source_type) DO UPDATE SET
+         cursor_value = GREATEST(opportunity_source_cursors.cursor_value, EXCLUDED.cursor_value),
+         updated_at = CASE
+           WHEN EXCLUDED.cursor_value > opportunity_source_cursors.cursor_value THEN EXCLUDED.updated_at
+           ELSE opportunity_source_cursors.updated_at
+         END
+       RETURNING cursor_value::text`,
+      [clientSlug, sourceType, cursorValue, now],
+    );
+    const value = result.rows[0]?.cursor_value;
+    if (value === undefined) throw new Error('Client not found.');
+    return Number(value);
+  }
+
   async getWatch(clientSlug: string, watchId: string): Promise<WatchRecord | null> {
     const result = await this.pool.query<WatchRow>(
       `SELECT w.id, c.slug AS client_slug, w.slug, w.status, w.title, w.query,
@@ -949,6 +989,7 @@ export class OpportunityRepository {
     clientSlug: string,
     runKey: string,
     startedAt = new Date(),
+    runType: 'fixture' | 'scheduled' = 'fixture',
   ): Promise<WorkerRunRecord> {
     const staleBefore = new Date(startedAt.getTime() - WORKER_LEASE_MS);
     await this.pool.query(
@@ -961,11 +1002,11 @@ export class OpportunityRepository {
     );
     const inserted = await this.pool.query<WorkerRunRow>(
       `INSERT INTO opportunity_worker_runs (client_id, run_key, run_type, status, started_at)
-       SELECT c.id, $2, 'fixture', 'started', $3
+       SELECT c.id, $2, $4, 'started', $3
        FROM opportunity_clients c WHERE c.slug = $1
        ON CONFLICT (client_id, run_key) DO NOTHING
        RETURNING id, status, counts`,
-      [clientSlug, runKey, startedAt],
+      [clientSlug, runKey, startedAt, runType],
     );
     if (inserted.rows[0]) return { ...inserted.rows[0], reused: false };
 

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { isFixtureExecutionAllowed } from '../../src/lib/opportunity/fixture-policy';
+import { isFixtureControlVisible, isFixtureExecutionAllowed } from '../../src/lib/opportunity/fixture-policy';
 
 test('fixture execution fails closed in deployed production environments', () => {
   expect(isFixtureExecutionAllowed('https://www.phloid.com', {
@@ -25,4 +25,10 @@ test('fixture execution remains available only for development or explicit loopb
     NODE_ENV: 'production',
     OPPORTUNITY_LOCAL_FIXTURE_TEST: 'enabled',
   })).toBe(true);
+});
+
+test('fixture control is hidden from deployed production and visible only where execution can be intentional', () => {
+  expect(isFixtureControlVisible({ NODE_ENV: 'production', VERCEL_ENV: 'production' })).toBe(false);
+  expect(isFixtureControlVisible({ NODE_ENV: 'production', OPPORTUNITY_LOCAL_FIXTURE_TEST: 'enabled' })).toBe(true);
+  expect(isFixtureControlVisible({ NODE_ENV: 'development' })).toBe(true);
 });

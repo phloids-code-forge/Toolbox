@@ -10,6 +10,8 @@
   --metadata-text: #566b73;
   --focus-dark: #005f5a;
   --focus-light: #ffffff;
+  --warning-text: #7b2d20;
+  --warning-background: #fff1ed;
   min-height: 100vh;
   padding: 0 28px 80px;
   overflow: hidden;
@@ -353,6 +355,29 @@
   color: #aac0c5;
   font-size: 13px;
   line-height: 1.5;
+}
+
+.runPanel > div > .intakeStatus {
+  max-width: 680px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 680;
+  line-height: 1.5;
+}
+
+.runPanel > div > .intakeStatus.intakeWaiting {
+  border-color: #e5b9ae;
+  color: var(--warning-text);
+  background: var(--warning-background);
+}
+
+.runPanel > div > .intakeStatus.intakeReady {
+  border-color: #b6dcc4;
+  color: #174c32;
+  background: #edf8e9;
 }
 
 .runPanel button {

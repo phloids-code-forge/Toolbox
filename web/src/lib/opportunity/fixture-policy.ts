@@ -9,6 +9,12 @@ function isLoopbackHost(hostname: string): boolean {
   return hostname === '127.0.0.1' || hostname === 'localhost' || hostname === '[::1]';
 }
 
+export function isFixtureControlVisible(environment: FixtureEnvironment = process.env): boolean {
+  if (environment.NODE_ENV !== 'production') return true;
+  return environment.VERCEL_ENV === undefined
+    && environment.OPPORTUNITY_LOCAL_FIXTURE_TEST === 'enabled';
+}
+
 export function isFixtureExecutionAllowed(
   origin: string,
   environment: FixtureEnvironment = process.env,

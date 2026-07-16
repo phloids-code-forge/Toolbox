@@ -23,6 +23,7 @@ type RunWorkerInput = {
   repository: OpportunityRepository;
   clientSlug: string;
   runKey: string;
+  runType?: 'fixture' | 'scheduled';
   adapters: SourceAdapter[];
   now?: Date;
 };
@@ -81,10 +82,11 @@ export async function runOpportunityWorker({
   repository,
   clientSlug,
   runKey,
+  runType = 'fixture',
   adapters,
   now = new Date(),
 }: RunWorkerInput): Promise<WorkerResult> {
-  const run = await repository.startWorkerRun(clientSlug, runKey, now);
+  const run = await repository.startWorkerRun(clientSlug, runKey, now, runType);
   if (run.reused) {
     return {
       runId: run.id,

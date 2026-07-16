@@ -40,6 +40,13 @@ async function expectAccessibleRuntime(page: Page): Promise<void> {
     clippedControls: 0,
   });
   await expect(page.locator('body')).not.toContainText(/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i);
+  const intakeStatus = page.getByText('Craigslist intake is awaiting protected mailbox configuration in this environment.');
+  if (await intakeStatus.isVisible()) {
+    expect(await intakeStatus.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { color: style.color, backgroundColor: style.backgroundColor };
+    })).toEqual({ color: 'rgb(123, 45, 32)', backgroundColor: 'rgb(255, 241, 237)' });
+  }
 }
 
 async function expectVisibleTwoToneFocus(control: Locator): Promise<void> {

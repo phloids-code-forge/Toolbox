@@ -54,6 +54,8 @@ test('protected Mike navigation binds ownership and logout clears access', async
   await expect(page).toHaveURL(/\/portal\/mike-rapp$/);
   await expect(page.getByRole('heading', { name: "Mike's opportunity workspace" })).toBeVisible();
   await expect(page.getByText('Authenticated for Mike Rapp')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Hosted Craigslist intake' })).toBeVisible();
+  await expect(page.getByText('Craigslist saved-search intake only · alert provider disabled · nothing queued, sent, or delivered')).toBeVisible();
 
   await page.goto('/portal/synthetic-other-client');
   await expect(page).toHaveURL(/\/portal\/login\?next=%2Fportal%2Fsynthetic-other-client$/);
@@ -75,7 +77,7 @@ test('fixture run renders durable decisions, duplicate history, and truthful ale
   await page.getByRole('button', { name: 'Run checked-in fixture' }).click();
 
   await expect(page).toHaveURL(/\/portal\/mike-rapp\?run=complete$/);
-  await expect(page.getByRole('heading', { name: 'Durable fixture decisions' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Durable opportunity decisions' })).toBeVisible();
   await expect(page.getByText('2011 Toyota Land Cruiser · clean Georgia title')).toBeVisible();
   await expect(page.getByText('2 source records share this identity')).toBeVisible();
   await expect(page.getByText('Skipped — provider disabled').first()).toBeVisible();

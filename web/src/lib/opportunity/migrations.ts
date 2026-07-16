@@ -8,6 +8,7 @@ const MIGRATIONS = [
   '002_watch_criteria',
   '003_duplicate_identities',
   '004_login_rate_limits',
+  '005_source_cursors',
 ] as const;
 
 export async function applyOpportunityMigrations(pool: Pool): Promise<void> {
