@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { domainToASCII } from 'node:url';
 
 import { simpleParser } from 'mailparser';
 
@@ -22,6 +23,7 @@ function splitAuthenticationClauses(value: string): string[] | null {
       continue;
     }
     if (character === '\\') {
+      if (depth === 0 && !quoted) return null;
       current += character;
       escaped = true;
       continue;
@@ -56,6 +58,7 @@ function stripAuthenticationComments(value: string): string | null {
       continue;
     }
     if (character === '\\') {
+      if (depth === 0 && !quoted) return null;
       if (depth === 0) output += character;
       escaped = true;
       continue;
@@ -146,7 +149,8 @@ function parseAuthenticationClause(clause: string): AuthenticationProperty[] | n
 
 function normalizedDomain(value: string): string | null {
   const lower = value.toLowerCase();
-  const domain = lower.endsWith('.') ? lower.slice(0, -1) : lower;
+  const rootless = lower.endsWith('.') ? lower.slice(0, -1) : lower;
+  const domain = domainToASCII(rootless);
   if (domain.length === 0 || domain.length > 253 || domain.includes('..')) return null;
   const labels = domain.split('.');
   if (labels.length < 2 || !labels.every((label) => (
@@ -158,11 +162,12 @@ function normalizedDomain(value: string): string | null {
 }
 
 function validLocalPart(value: string): boolean {
-  if (value.length === 0 || value.length > 64 || /[\r\n\x00]/.test(value)) return false;
-  if (value.startsWith('"')) {
-    if (!value.endsWith('"') || value.length < 2) return false;
+  const local = value.normalize('NFC');
+  if (local.length === 0 || local.length > 64 || /[\r\n\x00]/.test(local)) return false;
+  if (local.startsWith('"')) {
+    if (!local.endsWith('"') || local.length < 2) return false;
     let escaped = false;
-    for (const character of value.slice(1, -1)) {
+    for (const character of local.slice(1, -1)) {
       if (escaped) {
         escaped = false;
         continue;
@@ -175,10 +180,10 @@ function validLocalPart(value: string): boolean {
     }
     return !escaped;
   }
-  return !value.startsWith('.')
-    && !value.endsWith('.')
-    && !value.includes('..')
-    && /^[\p{L}\p{N}.!#$%&'*+/=?^_`{|}~-]+$/u.test(value);
+  return !local.startsWith('.')
+    && !local.endsWith('.')
+    && !local.includes('..')
+    && /^[\p{L}\p{N}\p{M}.!#$%&'*+/=?^_`{|}~-]+$/u.test(local);
 }
 
 function mailboxDomain(value: string): string | null {
