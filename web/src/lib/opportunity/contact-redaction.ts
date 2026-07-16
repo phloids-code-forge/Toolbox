@@ -3,7 +3,7 @@ const REDACTED_CONTACT = '[contact redacted]';
 function consumeCfws(value: string, start: number): number | null {
   let index = start;
   while (index < value.length) {
-    if (value[index] === ' ' || value[index] === '\t') {
+    if (/\s/.test(value[index])) {
       index += 1;
       continue;
     }

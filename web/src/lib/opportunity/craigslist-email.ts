@@ -1,5 +1,4 @@
 import { createHash } from 'node:crypto';
-import { domainToASCII } from 'node:url';
 
 import { simpleParser } from 'mailparser';
 
@@ -88,6 +87,7 @@ function stripAuthenticationComments(value: string): string | null {
 type AuthenticationProperty = {
   key: string;
   value: string;
+  quoted: boolean;
 };
 
 function parseAuthenticationClause(clause: string): AuthenticationProperty[] | null {
@@ -113,7 +113,8 @@ function parseAuthenticationClause(clause: string): AuthenticationProperty[] | n
     if (index >= value.length) return null;
 
     let propertyValue = '';
-    if (value[index] === '"') {
+    const quotedProperty = value[index] === '"';
+    if (quotedProperty) {
       index += 1;
       let closed = false;
       while (index < value.length) {
@@ -142,16 +143,16 @@ function parseAuthenticationClause(clause: string): AuthenticationProperty[] | n
     }
 
     if (!propertyValue) return null;
-    properties.push({ key: key.toLowerCase(), value: propertyValue });
+    properties.push({ key: key.toLowerCase(), value: propertyValue, quoted: quotedProperty });
   }
 
   return properties.length > 0 ? properties : null;
 }
 
 function normalizedDomain(value: string): string | null {
+  if (!/^[\x00-\x7f]+$/.test(value) || Buffer.byteLength(value, 'utf8') > 254) return null;
   const lower = value.toLowerCase();
-  const rootless = lower.endsWith('.') ? lower.slice(0, -1) : lower;
-  const domain = domainToASCII(rootless);
+  const domain = lower.endsWith('.') ? lower.slice(0, -1) : lower;
   if (domain.length === 0 || domain.length > 253 || domain.includes('..')) return null;
   const labels = domain.split('.');
   if (labels.length < 2 || !labels.every((label) => (
@@ -163,33 +164,15 @@ function normalizedDomain(value: string): string | null {
 }
 
 function validLocalPart(value: string): boolean {
-  const local = value.normalize('NFC');
   if (
-    local.length === 0
+    value.length === 0
+    || !/^[\x21-\x7e]+$/.test(value)
     || Buffer.byteLength(value, 'utf8') > 64
-    || Buffer.byteLength(local, 'utf8') > 64
-    || /[\r\n\x00]/.test(local)
   ) return false;
-  if (local.startsWith('"')) {
-    if (!local.endsWith('"') || local.length < 2) return false;
-    let escaped = false;
-    for (const character of local.slice(1, -1)) {
-      if (escaped) {
-        escaped = false;
-        continue;
-      }
-      if (character === '\\') {
-        escaped = true;
-        continue;
-      }
-      if (character === '"' || /[\x01-\x1f\x7f]/.test(character)) return false;
-    }
-    return !escaped;
-  }
-  return !local.startsWith('.')
-    && !local.endsWith('.')
-    && !local.includes('..')
-    && /^[\p{L}\p{N}\p{M}.!#$%&'*+/=?^_`{|}~-]+$/u.test(local);
+  return !value.startsWith('.')
+    && !value.endsWith('.')
+    && !value.includes('..')
+    && /^[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+$/i.test(value);
 }
 
 function mailboxDomain(value: string): string | null {
@@ -237,29 +220,40 @@ function isCraigslistDomain(domain: string | null): boolean {
 
 function passingAlignedClause(clause: string, method: 'dmarc' | 'dkim' | 'spf'): boolean {
   const properties = parseAuthenticationClause(clause);
-  if (!properties || properties[0].key !== method || properties[0].value.toLowerCase() !== 'pass') return false;
+  if (
+    !properties
+    || properties[0].key !== method
+    || properties[0].quoted
+    || properties[0].value.toLowerCase() !== 'pass'
+  ) return false;
   const propertyName = method === 'dmarc'
     ? 'header.from'
     : method === 'dkim'
       ? 'header.d'
       : 'smtp.mailfrom';
   const identities = properties.filter((property) => property.key === propertyName);
-  if (identities.length !== 1) return false;
+  if (identities.length !== 1 || identities[0].quoted) return false;
   return isCraigslistDomain(method === 'spf' ? mailboxDomain(identities[0].value) : identities[0].value);
 }
 
-function authenticatedByFastmail(rawMime: Buffer): boolean {
+function unfoldedHeaderLines(rawMime: Buffer): string[] | null {
   const boundaryScan = rawMime
     .subarray(0, Math.min(rawMime.length, 65_540))
     .toString('latin1');
   const boundary = boundaryScan.match(/(?:\r\n|(?<!\r)\n|\r(?!\n))(?:\r\n|(?<!\r)\n|\r(?!\n))/);
-  if (boundary?.index === undefined || boundary.index > 65_536) return false;
+  if (boundary?.index === undefined || boundary.index > 65_536) return null;
   const headerText = rawMime.subarray(0, boundary.index).toString('utf8');
-  if (/\r(?!\n)/.test(headerText)) return false;
-  const unfoldedHeaders = headerText
-    .replace(/\r?\n[\t ]+/g, ' ');
-  const headerLines = unfoldedHeaders.split(/\r?\n/);
-  if (headerLines.some((line) => !/^[!#$%&'*+\-.^_`|~0-9A-Z]+:/i.test(line))) return false;
+  if (/\r(?!\n)/.test(headerText)) return null;
+  const headerLines = headerText
+    .replace(/\r?\n[\t ]+/g, ' ')
+    .split(/\r?\n/);
+  if (headerLines.some((line) => !/^[!#$%&'*+\-.^_`|~0-9A-Z]+:/i.test(line))) return null;
+  return headerLines;
+}
+
+function authenticatedByFastmail(rawMime: Buffer): boolean {
+  const headerLines = unfoldedHeaderLines(rawMime);
+  if (!headerLines) return false;
   const authenticationHeader = headerLines.find((line) => /^Authentication-Results:/i.test(line));
   const firstAuthenticationResult = authenticationHeader
     ?.match(/^Authentication-Results:[\t ]*([^\r\n]+)$/i)?.[1];
@@ -278,6 +272,19 @@ function authenticatedByFastmail(rawMime: Buffer): boolean {
     passingAlignedClause(clause, 'dkim') || passingAlignedClause(clause, 'spf')
   ));
   return alignedDmarc && alignedDkimOrSpf;
+}
+
+function trustedCraigslistRawFrom(rawMime: Buffer): boolean {
+  const headerLines = unfoldedHeaderLines(rawMime);
+  if (!headerLines) return false;
+  const fromHeaders = headerLines.filter((line) => /^From:/i.test(line));
+  if (fromHeaders.length !== 1) return false;
+  const rawValue = fromHeaders[0].replace(/^From:[\t ]*/i, '');
+  if (!/^[\x00-\x7f]+$/.test(rawValue) || /=\?/.test(rawValue)) return false;
+
+  const angleAddress = rawValue.match(/^[^<>]*<([^<>]+)>[\t ]*$/)?.[1];
+  const address = (angleAddress ?? rawValue).trim();
+  return isCraigslistDomain(mailboxDomain(address));
 }
 
 function trustedCraigslistAddress(address: string | undefined): boolean {
@@ -387,6 +394,7 @@ function listingFromLines(lines: string[], urlIndex: number, sourceUrl: string, 
 
 export async function parseCraigslistAlertMime(rawMime: Buffer): Promise<ParsedCraigslistAlert> {
   if (!authenticatedByFastmail(rawMime)) throw new Error('unauthenticated_sender');
+  if (!trustedCraigslistRawFrom(rawMime)) throw new Error('untrusted_sender');
   const message = await simpleParser(rawMime, { skipImageLinks: true });
   const senders = message.from?.value.map((entry) => entry.address) ?? [];
   if (senders.length === 0 || !senders.every(trustedCraigslistAddress)) {
