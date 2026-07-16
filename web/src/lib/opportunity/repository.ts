@@ -88,7 +88,8 @@ export type ListingInput = {
 function stripContactText(value: string | null): string | null {
   if (value === null) return null;
   return value
-    .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, '[contact redacted]')
+    .replace(/(?:"[^"\r\n]{1,64}"|[\p{L}\p{N}.!#$%&'*+/=?^_`{|}~-]+)@(?:[\p{L}\p{N}](?:[\p{L}\p{N}.-]{0,251}[\p{L}\p{N}])?)/gu, '[contact redacted]')
+    .replace(/(?<!\w)\+(?:\d[\d().\s-]{6,}\d)(?!\w)/g, '[contact redacted]')
     .replace(/(?<!\d)(?:\+?1[-.\s]?)?\(?[2-9]\d{2}\)?[-.\s]\d{3}[-.\s]\d{4}(?!\d)/g, '[contact redacted]')
     .replace(/\s+/g, ' ')
     .trim();

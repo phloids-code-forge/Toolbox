@@ -842,14 +842,16 @@ test('adapter persistence strips query data, contact text, raw identities, and u
   const pool = new Pool({ connectionString: databaseUrl });
   const repository = new OpportunityRepository(pool);
   const syntheticEmail = ['seller', 'private.invalid'].join('@');
+  const syntheticUnicodeEmail = ['josé', 'example.com'].join('@');
   const syntheticPhone = ['404', '555', '0199'].join('-');
+  const syntheticInternationalPhone = ['+44', '20', '7946', '0958'].join(' ');
   const listing = {
     ...matchingListing,
     canonicalKey: 'fixture:sanitized-persistence',
     sourceItemId: 'sanitized-persistence',
     sourceUrl: 'https://example.test/item/42?token=synthetic-sensitive#contact',
-    title: `2011 Toyota Land Cruiser contact ${syntheticEmail}`,
-    locationText: `Atlanta ${syntheticPhone}`,
+    title: `2011 Toyota Land Cruiser contact ${syntheticEmail} ${syntheticUnicodeEmail}`,
+    locationText: `Atlanta ${syntheticPhone} ${syntheticInternationalPhone}`,
     duplicateIdentity: { type: 'vin', value: 'synthetic-private-identity' },
     privateContact: 'synthetic-extra-secret',
   };
@@ -907,7 +909,9 @@ test('adapter persistence strips query data, contact text, raw identities, and u
     expect(serialized).not.toContain('synthetic-extra-secret');
     expect(serialized).not.toContain('synthetic-private-identity');
     expect(serialized).not.toContain(syntheticEmail);
+    expect(serialized).not.toContain(syntheticUnicodeEmail);
     expect(serialized).not.toContain(syntheticPhone);
+    expect(serialized).not.toContain(syntheticInternationalPhone);
     expect(persisted.rows[0].payload_hash).toMatch(/^[a-f0-9]{64}$/);
     expect(persisted.rows[0].payload_hash).not.toBe(
       createHash('sha256').update(JSON.stringify(listing)).digest('hex'),

@@ -70,12 +70,20 @@ test('Craigslist MIME parser emits allowlisted sanitized listings without duplic
     messageKey: 'message-id:alert-42@craigslist.org',
   });
 
+  const absoluteAndQuotedMailbox = multipartAlert.replace(
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org; spf=pass smtp.mailfrom=noreply@craigslist.org',
+    'Authentication-Results: mx1.messagingengine.com.; dmarc=pass header.from=craigslist.org.; dkim=fail header.d=evil.example; spf=pass smtp.mailfrom="\\"noreply alerts\\"@craigslist.org."',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(absoluteAndQuotedMailbox))).resolves.toMatchObject({
+    messageKey: 'message-id:alert-42@craigslist.org',
+  });
+
   const contactHeadline = multipartAlert
     .replace('1985 Toyota Supra P-Type - $18,500', '1985 Toyota Supra P-Type +44 20 7946 0958 - $18,500')
-    .replace('(Atlanta, GA)', '(sales+atl@example.co.uk)');
+    .replace('(Atlanta, GA)', '(josé@example.com)');
   const contactSafe = await parseCraigslistAlertMime(Buffer.from(contactHeadline));
   expect(JSON.stringify(contactSafe)).not.toContain('+44 20 7946 0958');
-  expect(JSON.stringify(contactSafe)).not.toContain('sales+atl@example.co.uk');
+  expect(JSON.stringify(contactSafe)).not.toContain('josé@example.com');
 });
 
 test('Craigslist MIME parser supports HTML-only saved-search alerts without trusting arbitrary links', async () => {
@@ -173,6 +181,12 @@ test('Craigslist MIME parser rejects unauthenticated mail, non-Craigslist sender
     'dmarc=pass reason="unterminated header.from=craigslist.org',
   );
   await expect(parseCraigslistAlertMime(Buffer.from(unbalancedQuote))).rejects.toThrow('unauthenticated_sender');
+
+  const unmatchedClosingComment = multipartAlert.replace(
+    'dmarc=pass header.from=craigslist.org',
+    'dmarc=pass reason=ok) header.from=craigslist.org',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(unmatchedClosingComment))).rejects.toThrow('unauthenticated_sender');
 
   const missingAuthentication = multipartAlert.replace(/^Authentication-Results:.*\r\n/m, '');
   await expect(parseCraigslistAlertMime(Buffer.from(missingAuthentication))).rejects.toThrow('unauthenticated_sender');

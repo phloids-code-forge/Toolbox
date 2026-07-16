@@ -28,7 +28,10 @@ function splitAuthenticationClauses(value: string): string[] | null {
     }
     if (character === '"' && depth === 0) quoted = !quoted;
     if (!quoted && character === '(') depth += 1;
-    if (!quoted && character === ')' && depth > 0) depth -= 1;
+    if (!quoted && character === ')') {
+      if (depth === 0) return null;
+      depth -= 1;
+    }
     if (character === ';' && depth === 0 && !quoted) {
       clauses.push(current);
       current = '';
@@ -67,7 +70,8 @@ function stripAuthenticationComments(value: string): string | null {
       depth += 1;
       continue;
     }
-    if (!quoted && character === ')' && depth > 0) {
+    if (!quoted && character === ')') {
+      if (depth === 0) return null;
       depth -= 1;
       continue;
     }
@@ -140,37 +144,78 @@ function parseAuthenticationClause(clause: string): AuthenticationProperty[] | n
   return properties.length > 0 ? properties : null;
 }
 
-function validDomain(value: string): boolean {
-  if (value.length === 0 || value.length > 253 || value.includes('..')) return false;
-  const labels = value.split('.');
-  return labels.length >= 2 && labels.every((label) => (
+function normalizedDomain(value: string): string | null {
+  const lower = value.toLowerCase();
+  const domain = lower.endsWith('.') ? lower.slice(0, -1) : lower;
+  if (domain.length === 0 || domain.length > 253 || domain.includes('..')) return null;
+  const labels = domain.split('.');
+  if (labels.length < 2 || !labels.every((label) => (
     label.length >= 1
     && label.length <= 63
     && /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i.test(label)
-  ));
-}
-
-function mailboxDomain(value: string): string | null {
-  if (value.length > 254 || /[\s\x00-\x1f\x7f]/.test(value)) return null;
-  const firstSeparator = value.indexOf('@');
-  if (firstSeparator <= 0 || firstSeparator !== value.lastIndexOf('@')) return null;
-  const localPart = value.slice(0, firstSeparator);
-  const domain = value.slice(firstSeparator + 1).toLowerCase();
-  if (
-    localPart.length > 64
-    || localPart.startsWith('.')
-    || localPart.endsWith('.')
-    || localPart.includes('..')
-    || !/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+$/i.test(localPart)
-    || !validDomain(domain)
-  ) return null;
+  ))) return null;
   return domain;
 }
 
+function validLocalPart(value: string): boolean {
+  if (value.length === 0 || value.length > 64 || /[\r\n\x00]/.test(value)) return false;
+  if (value.startsWith('"')) {
+    if (!value.endsWith('"') || value.length < 2) return false;
+    let escaped = false;
+    for (const character of value.slice(1, -1)) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (character === '\\') {
+        escaped = true;
+        continue;
+      }
+      if (character === '"' || /[\x01-\x1f\x7f]/.test(character)) return false;
+    }
+    return !escaped;
+  }
+  return !value.startsWith('.')
+    && !value.endsWith('.')
+    && !value.includes('..')
+    && /^[\p{L}\p{N}.!#$%&'*+/=?^_`{|}~-]+$/u.test(value);
+}
+
+function mailboxDomain(value: string): string | null {
+  if (value.length > 254 || /[\r\n\x00]/.test(value)) return null;
+  let quoted = false;
+  let escaped = false;
+  let separator = -1;
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (quoted && character === '\\') {
+      escaped = true;
+      continue;
+    }
+    if (character === '"') {
+      quoted = !quoted;
+      continue;
+    }
+    if (character === '@' && !quoted) {
+      if (separator !== -1) return null;
+      separator = index;
+    }
+  }
+  if (quoted || escaped || separator <= 0 || separator >= value.length - 1) return null;
+  const localPart = value.slice(0, separator);
+  if (!validLocalPart(localPart)) return null;
+  return normalizedDomain(value.slice(separator + 1));
+}
+
 function isCraigslistDomain(domain: string | null): boolean {
-  return domain !== null
-    && validDomain(domain)
-    && (domain === 'craigslist.org' || domain.endsWith('.craigslist.org'));
+  if (domain === null) return false;
+  const normalized = normalizedDomain(domain);
+  return normalized !== null
+    && (normalized === 'craigslist.org' || normalized.endsWith('.craigslist.org'));
 }
 
 function passingAlignedClause(clause: string, method: 'dmarc' | 'dkim' | 'spf'): boolean {
@@ -198,8 +243,9 @@ function authenticatedByFastmail(rawMime: Buffer): boolean {
   const splitClauses = splitAuthenticationClauses(firstAuthenticationResult);
   if (!splitClauses) return false;
   const clauses = splitClauses;
-  const authenticationServer = (clauses.shift()?.trim() ?? '').toLowerCase();
-  if (!validDomain(authenticationServer)) return false;
+  const rawAuthenticationServer = clauses.shift()?.trim() ?? '';
+  const authenticationServer = normalizedDomain(rawAuthenticationServer);
+  if (!authenticationServer) return false;
   if (!(authenticationServer === 'messagingengine.com' || authenticationServer.endsWith('.messagingengine.com'))) return false;
 
   const alignedDmarc = clauses.some((clause) => passingAlignedClause(clause, 'dmarc'));
@@ -216,7 +262,7 @@ function trustedCraigslistAddress(address: string | undefined): boolean {
 
 function sanitizedText(value: string): string {
   return value
-    .replace(/(?:"[^"\r\n]{1,64}"|[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+)@[A-Z0-9](?:[A-Z0-9.-]{0,251}[A-Z0-9])?/gi, '[contact redacted]')
+    .replace(/(?:"[^"\r\n]{1,64}"|[\p{L}\p{N}.!#$%&'*+/=?^_`{|}~-]+)@(?:[\p{L}\p{N}](?:[\p{L}\p{N}.-]{0,251}[\p{L}\p{N}])?)/gu, '[contact redacted]')
     .replace(/(?<!\w)\+(?:\d[\d().\s-]{6,}\d)(?!\w)/g, '[contact redacted]')
     .replace(/(?<!\d)(?:\+?1[-.\s]?)?\(?[2-9]\d{2}\)?[-.\s]\d{3}[-.\s]\d{4}(?!\d)/g, '[contact redacted]')
     .replace(/\s+/g, ' ')
