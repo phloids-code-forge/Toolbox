@@ -1,0 +1,812 @@
+.shell {
+  --ink: #102b37;
+  --muted: #64767d;
+  --line: #dbe5e3;
+  --paper: #f4f7f3;
+  --card: #ffffff;
+  --navy: #0d3140;
+  --teal: #087a70;
+  --lime: #c9f45b;
+  --metadata-text: #566b73;
+  --focus-dark: #005f5a;
+  --focus-light: #ffffff;
+  min-height: 100vh;
+  padding: 0 28px 80px;
+  overflow: hidden;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 92% 4%, rgba(201, 244, 91, 0.22), transparent 28rem),
+    linear-gradient(180deg, #fbfcf8, var(--paper));
+  color-scheme: light;
+  font-family: var(--font-geist-sans), Arial, sans-serif;
+}
+
+:global(body:has(#opportunity-portal) > a[href='https://ko-fi.com/phloid']),
+:global(body:has(#opportunity-portal) > div.fixed.bottom-4) {
+  display: none !important;
+}
+
+.topbar,
+.hero,
+.section,
+.truthStrip {
+  width: min(1120px, 100%);
+  margin-inline: auto;
+}
+
+.topbar {
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid rgba(16, 43, 55, 0.11);
+}
+
+.brandRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: #294853;
+  font-size: 14px;
+  font-weight: 680;
+}
+
+.brandMark {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--lime);
+  background: var(--navy);
+  font-weight: 800;
+}
+
+.hero {
+  padding: 76px 0 56px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 44px;
+}
+
+.eyebrow {
+  color: var(--teal);
+  font-size: 11px;
+  font-weight: 780;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.hero h1,
+.loginCard h1 {
+  max-width: 720px;
+  margin-top: 12px;
+  color: #0b2935;
+  font-size: clamp(42px, 6vw, 70px);
+  line-height: 0.99;
+  letter-spacing: -0.055em;
+  font-weight: 640;
+}
+
+.lede {
+  max-width: 650px;
+  margin-top: 20px;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.authBadge {
+  flex: 0 0 auto;
+  padding: 12px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid #cfe2d8;
+  border-radius: 999px;
+  color: #316452;
+  background: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.authBadge span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2b9a66;
+  box-shadow: 0 0 0 4px rgba(43, 154, 102, 0.12);
+}
+
+.section {
+  padding: 34px 0 18px;
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 24px;
+}
+
+.sectionHeading h2 {
+  margin-top: 7px;
+  font-size: 34px;
+  letter-spacing: -0.04em;
+}
+
+.sectionHeading > p {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.watchGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.watchCard {
+  min-width: 0;
+  padding: 23px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 20px 50px -44px rgba(6, 50, 61, 0.55);
+}
+
+.cardTopline {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--teal);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.watchCard h3 {
+  min-height: 54px;
+  margin-top: 22px;
+  font-size: 21px;
+  line-height: 1.25;
+  letter-spacing: -0.035em;
+}
+
+.watchCard dl {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--line);
+}
+
+.watchCard dl div {
+  min-width: 0;
+  padding: 14px 8px 4px 0;
+}
+
+.watchCard dt {
+  color: var(--metadata-text);
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.watchCard dd {
+  margin-top: 4px;
+  color: #38535d;
+  font-size: 12px;
+  font-weight: 680;
+}
+
+.watchEditor {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.createWatch {
+  margin: 0 0 16px;
+  padding: 0 18px 4px;
+  border: 1px dashed #aebfbc;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.createWatch[open] {
+  padding-bottom: 18px;
+}
+
+.createWatch summary {
+  color: #326451;
+}
+
+.watchEditor summary {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  list-style: none;
+}
+
+.watchEditor summary::-webkit-details-marker {
+  display: none;
+}
+
+.watchEditor form {
+  padding-top: 8px;
+  display: grid;
+  gap: 11px;
+}
+
+.watchEditor label {
+  display: grid;
+  gap: 5px;
+  color: #5e737a;
+  font-size: 10px;
+  font-weight: 680;
+}
+
+.watchEditor input,
+.watchEditor select {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  border: 1px solid #c7d4d2;
+  border-radius: 8px;
+  padding: 0 10px;
+  color: var(--ink);
+  background: white;
+  font: inherit;
+  font-size: 13px;
+}
+
+.editorGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.watchEditor .checkRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.watchEditor .checkRow input {
+  width: 17px;
+  min-height: 17px;
+}
+
+.watchEditor button {
+  min-height: 43px;
+  border: 0;
+  border-radius: 9px;
+  color: white;
+  background: var(--teal);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.successMessageLight {
+  margin: 0 0 16px;
+  padding: 11px 13px;
+  border: 1px solid #cfe2d2;
+  border-radius: 10px;
+  color: #34644e;
+  background: #eff8e9;
+  font-size: 12px;
+}
+
+.section > .formError {
+  margin: 0 0 16px;
+}
+
+.truthStrip {
+  margin-top: 36px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-radius: 14px;
+  color: #dcebec;
+  background: var(--navy);
+  font-size: 12px;
+}
+
+.truthStrip strong {
+  color: var(--lime);
+}
+
+.runPanel {
+  width: min(1120px, 100%);
+  margin: 0 auto 18px;
+  padding: 25px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 22px;
+  border: 1px solid rgba(201, 244, 91, 0.2);
+  border-radius: 18px;
+  color: white;
+  background: var(--navy);
+}
+
+.runPanel h2 {
+  margin-top: 6px;
+  font-size: 25px;
+  letter-spacing: -0.035em;
+}
+
+.runPanel > div > p:last-child {
+  max-width: 680px;
+  margin-top: 8px;
+  color: #aac0c5;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.runPanel button {
+  min-height: 48px;
+  border: 0;
+  border-radius: 11px;
+  padding: 0 18px;
+  color: #18372f;
+  background: var(--lime);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 780;
+  cursor: pointer;
+}
+
+.successMessage {
+  grid-column: 1 / -1;
+  color: #dff6b2;
+  font-size: 12px;
+}
+
+.decisionList {
+  display: grid;
+  gap: 14px;
+}
+
+.decisionCard {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.acceptedCard {
+  border-color: #cce0d2;
+  box-shadow: 0 22px 55px -48px rgba(8, 94, 76, 0.72);
+}
+
+.reviewCard {
+  border-color: #eadbd5;
+  background: rgba(255, 252, 250, 0.92);
+}
+
+.decisionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.decisionHeader > div:first-child {
+  min-width: 0;
+}
+
+.decisionHeader h3 {
+  margin-top: 12px;
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: -0.038em;
+}
+
+.decisionHeader p {
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.scoreBadge {
+  flex: 0 0 62px;
+  min-height: 62px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  border-radius: 14px;
+  color: var(--lime);
+  background: var(--navy);
+}
+
+.scoreBadge strong {
+  font-size: 25px;
+  line-height: 1;
+}
+
+.scoreBadge span {
+  margin-top: 3px;
+  color: #aac0c5;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.factGrid {
+  margin-top: 21px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.factGrid > div {
+  min-width: 0;
+  padding: 13px;
+  display: grid;
+  gap: 5px;
+}
+
+.factGrid > div + div {
+  border-left: 1px solid var(--line);
+}
+
+.factGrid span,
+.historyRow strong,
+.alertState strong {
+  color: var(--metadata-text);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.factGrid strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #405c65;
+  font-size: 11px;
+}
+
+.reasonList {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+}
+
+.reasonList li {
+  padding: 7px 9px;
+  border-radius: 8px;
+  color: #46675a;
+  background: #edf6ef;
+  font-size: 10px;
+}
+
+.reviewCard .reasonList li {
+  color: #814b40;
+  background: #faeeea;
+}
+
+.historyRow {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: #60757c;
+  font-size: 10px;
+}
+
+.historyRow > span {
+  padding: 9px 10px;
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #f8faf8;
+}
+
+.historyRow .duplicateNote {
+  color: #2f6855;
+  background: #eff8e5;
+}
+
+.alertState {
+  margin-top: 16px;
+  padding-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--line);
+  color: #526a71;
+  font-size: 11px;
+}
+
+.emptyState {
+  padding: 24px;
+  border: 1px dashed #bdccca;
+  border-radius: 14px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
+}
+
+.runStatusCard {
+  padding: 22px;
+  display: grid;
+  grid-template-columns: 0.75fr 1.5fr 0.9fr;
+  align-items: center;
+  gap: 24px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.runStatusCard > div:first-child {
+  display: grid;
+  gap: 9px;
+  color: #526970;
+  font-size: 11px;
+}
+
+.statusPill {
+  width: fit-content;
+  padding: 6px 8px;
+  border-radius: 999px;
+  color: #32624f;
+  background: #e9f7dd;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.runStatusCard dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  overflow: hidden;
+}
+
+.runStatusCard dl div {
+  padding: 11px;
+  display: grid;
+  gap: 5px;
+}
+
+.runStatusCard dl div + div {
+  border-left: 1px solid var(--line);
+}
+
+.runStatusCard dt {
+  color: var(--metadata-text);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.runStatusCard dd {
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 750;
+}
+
+.runStatusCard ul {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+}
+
+.runStatusCard li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #587078;
+  font-size: 10px;
+}
+
+.secondaryButton,
+.loginForm button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 10px;
+  padding: 0 16px;
+  color: white;
+  background: var(--navy);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 720;
+  cursor: pointer;
+}
+
+.loginCard {
+  width: min(520px, 100%);
+  margin: max(72px, 10vh) auto 0;
+  padding: 36px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 35px 90px -52px rgba(7, 48, 60, 0.62);
+}
+
+.loginCard .brandRow {
+  margin-bottom: 42px;
+}
+
+.loginCard h1 {
+  font-size: clamp(38px, 8vw, 56px);
+}
+
+.loginForm {
+  margin-top: 28px;
+  display: grid;
+  gap: 10px;
+}
+
+.loginForm label {
+  color: #45616b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.loginForm input[type='password'] {
+  min-height: 50px;
+  border: 1px solid #bfcfcd;
+  border-radius: 10px;
+  padding: 0 14px;
+  color: var(--ink);
+  background: white;
+  font: inherit;
+  font-size: 16px;
+}
+
+.loginForm button {
+  min-height: 50px;
+  margin-top: 5px;
+  background: var(--teal);
+}
+
+.formError {
+  margin-top: 20px;
+  padding: 12px 14px;
+  border: 1px solid #efd0c8;
+  border-radius: 10px;
+  color: #884336;
+  background: #fff6f3;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.safetyNote {
+  margin-top: 22px;
+  color: var(--metadata-text);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.secondaryButton:focus-visible,
+.runPanel button:focus-visible,
+.watchEditor summary:focus-visible,
+.watchEditor input:focus-visible,
+.watchEditor select:focus-visible,
+.watchEditor button:focus-visible,
+.loginForm button:focus-visible,
+.loginForm input:focus-visible {
+  outline: 3px solid var(--focus-dark);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px var(--focus-light);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell *,
+  .shell *::before,
+  .shell *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .shell {
+    padding: 0 18px 56px;
+  }
+
+  .topbar {
+    min-height: 68px;
+  }
+
+  .topbar .brandRow span:last-child {
+    max-width: 180px;
+    line-height: 1.25;
+  }
+
+  .hero {
+    padding: 54px 0 34px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 26px;
+  }
+
+  .hero h1 {
+    font-size: clamp(42px, 13vw, 58px);
+  }
+
+  .lede {
+    font-size: 15px;
+  }
+
+  .watchGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .runPanel,
+  .runStatusCard {
+    grid-template-columns: 1fr;
+  }
+
+  .runPanel form,
+  .runPanel button {
+    width: 100%;
+  }
+
+  .decisionCard {
+    padding: 19px;
+  }
+
+  .decisionHeader h3 {
+    font-size: 20px;
+  }
+
+  .factGrid,
+  .runStatusCard dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .factGrid > div:nth-child(3),
+  .runStatusCard dl div:nth-child(3) {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .factGrid > div:nth-child(4),
+  .runStatusCard dl div:nth-child(4) {
+    border-top: 1px solid var(--line);
+  }
+
+  .alertState {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .watchCard h3 {
+    min-height: 0;
+  }
+
+  .sectionHeading,
+  .truthStrip {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .loginCard {
+    margin-top: 28px;
+    padding: 27px 22px;
+  }
+}

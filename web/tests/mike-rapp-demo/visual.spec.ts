@@ -2,22 +2,45 @@ import { expect, test } from '@playwright/test';
 
 const demoPath = '/demo/mike-rapp';
 
+function isInheritedVercelTelemetry(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.pathname === '/_vercel/insights/script.js'
+      || (parsed.hostname === 'va.vercel-scripts.com' && parsed.pathname === '/v1/script.debug.js');
+  } catch {
+    return false;
+  }
+}
+
 function watchRuntimeErrors(page: import('@playwright/test').Page) {
   const errors: string[] = [];
   page.on('console', (message) => {
-    if (message.type() === 'error' && !message.text().startsWith('Failed to load resource:')) {
+    const inheritedGeolocationNotice = message.text().startsWith(
+      'Permissions policy violation: Geolocation access has been blocked',
+    );
+    if (
+      message.type() === 'error'
+      && !message.text().startsWith('Failed to load resource:')
+      && !inheritedGeolocationNotice
+    ) {
       errors.push(message.text());
     }
   });
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('response', (response) => {
-    if (response.status() >= 400 && !response.url().includes('/_vercel/insights/script.js')) {
+    if (response.status() >= 400 && !isInheritedVercelTelemetry(response.url())) {
       errors.push(`HTTP ${response.status()} ${response.url()}`);
     }
   });
   page.on('requestfailed', (request) => {
-    if (!request.url().includes('/_vercel/insights/script.js')) {
-      errors.push(`Request failed ${request.url()}`);
+    const parsedRequestUrl = new URL(request.url());
+    const expectedWeatherWarsRscCancellation = request.resourceType() === 'fetch'
+      && request.failure()?.errorText === 'net::ERR_ABORTED'
+      && parsedRequestUrl.pathname === '/weatherwars';
+    if (!isInheritedVercelTelemetry(request.url()) && !expectedWeatherWarsRscCancellation) {
+      errors.push(
+        `Request failed ${request.resourceType()} ${request.failure()?.errorText ?? 'unknown'} ${request.url()}`,
+      );
     }
   });
   return errors;
