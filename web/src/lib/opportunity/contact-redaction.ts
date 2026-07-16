@@ -140,7 +140,10 @@ function mailboxEnd(value: string, start: number, hasLeadingCfws = false): numbe
   const domainLabels: string[] = [];
   while (domainEnd < value.length) {
     const atomStart = domainEnd;
-    while (domainEnd < value.length && !/[\s@().]/.test(value[domainEnd])) domainEnd += 1;
+    while (domainEnd < value.length && /[\p{L}\p{N}\p{M}-]/u.test(value[domainEnd])) {
+      domainEnd += 1;
+    }
+    while (domainEnd > atomStart && value[domainEnd - 1] === '-') domainEnd -= 1;
     if (domainEnd === atomStart) return null;
     const label = value.slice(atomStart, domainEnd);
     if (!/^[\p{L}\p{N}\p{M}](?:[\p{L}\p{N}\p{M}-]*[\p{L}\p{N}\p{M}])?$/u.test(label)) return null;

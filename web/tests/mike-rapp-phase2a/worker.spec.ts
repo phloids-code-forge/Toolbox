@@ -846,14 +846,14 @@ test('adapter persistence strips query data, contact text, raw identities, and u
   const syntheticDecomposedEmail = [`e\u0301`, 'example.com'].join('@');
   const syntheticSymbolEmail = ['🚗', '[IPv6:2001:db8::1]'].join('@');
   const syntheticCfwsEmails = [
-    '"j d" @e.co',
-    'j. (p) d@e.co',
-    'x(c)."y z".q@e.co',
-    'x@e. (p) co',
-    '"foldedprivate\r\n \tlocalword"@e.co',
-    '(lead)x@e.co',
-    'x@[a\\]priv](trail)',
-    '"p n" (s) @ (i) localhost',
+    '"j d" @e.co,',
+    'j. (p) d@e.co;',
+    'x(c)."y z".q@e.co!',
+    'x@e. (p) co:',
+    '"foldedprivate\r\n \tlocalword"@e.co,',
+    '(lead)x@e.co;',
+    'x@[a\\]priv](trail)!',
+    '"p n" (s) @ (i) localhost:',
   ];
   const syntheticPhone = ['404', '555', '0199'].join('-');
   const syntheticInternationalPhone = ['+44', '20', '7946', '0958'].join(' ');
@@ -862,7 +862,7 @@ test('adapter persistence strips query data, contact text, raw identities, and u
     canonicalKey: 'fixture:sanitized-persistence',
     sourceItemId: 'sanitized-persistence',
     sourceUrl: 'https://example.test/item/42?token=synthetic-sensitive#contact',
-    title: `2011 Toyota Land Cruiser contact ${syntheticEmail} ${syntheticUnicodeEmail} ${syntheticDecomposedEmail} ${syntheticSymbolEmail} ${syntheticCfwsEmails.join(' ')}`,
+    title: `2011 Toyota Land Cruiser contact <${syntheticEmail}> ${syntheticUnicodeEmail}, ${syntheticDecomposedEmail}; ${syntheticSymbolEmail}! ${syntheticCfwsEmails.join(' ')}`,
     locationText: `Atlanta Meet@noon cars@home 2@3 Meet @ noon x @ y foo @ bar @ baz ${syntheticPhone} ${syntheticInternationalPhone}`,
     duplicateIdentity: { type: 'vin', value: 'synthetic-private-identity' },
     privateContact: 'synthetic-extra-secret',
