@@ -33,50 +33,54 @@ function consumeCfws(value: string, start: number): number | null {
   return index;
 }
 
+function consumeQuotedWord(value: string, start: number): number | null {
+  if (value[start] !== '"') return null;
+  let index = start + 1;
+  let escaped = false;
+  while (index < value.length) {
+    const character = value[index];
+    index += 1;
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (character === '\\') {
+      escaped = true;
+      continue;
+    }
+    if (character === '"') return index;
+    if (character === '\r' || character === '\n') return null;
+  }
+  return null;
+}
+
 function mailboxEnd(value: string, start: number): number | null {
   let index = start;
-  if (value[start] === '"') {
-    index += 1;
-    let escaped = false;
-    let closed = false;
-    while (index < value.length) {
-      const character = value[index];
-      index += 1;
-      if (escaped) {
-        escaped = false;
-        continue;
-      }
-      if (character === '\\') {
-        escaped = true;
-        continue;
-      }
-      if (character === '"') {
-        closed = true;
-        break;
-      }
-      if (character === '\r' || character === '\n') return null;
+  let consumedWord = false;
+
+  while (index < value.length) {
+    if (value[index] === '"') {
+      const quotedEnd = consumeQuotedWord(value, index);
+      if (quotedEnd === null) return null;
+      index = quotedEnd;
+    } else {
+      const atomStart = index;
+      while (index < value.length && !/[\s@()."]/.test(value[index])) index += 1;
+      if (index === atomStart) return null;
     }
-    if (!closed || escaped) return null;
-  } else {
-    let consumedAtom = false;
-    while (index < value.length) {
-      const segmentStart = index;
-      while (index < value.length && !/[\s@().]/.test(value[index])) index += 1;
-      if (index > segmentStart) consumedAtom = true;
-      const afterCfws = consumeCfws(value, index);
-      if (afterCfws === null) return null;
-      index = afterCfws;
-      if (value[index] === '.') {
-        index += 1;
-        const afterDotCfws = consumeCfws(value, index);
-        if (afterDotCfws === null) return null;
-        index = afterDotCfws;
-        continue;
-      }
-      break;
-    }
-    if (!consumedAtom) return null;
+    consumedWord = true;
+
+    const afterWordCfws = consumeCfws(value, index);
+    if (afterWordCfws === null) return null;
+    index = afterWordCfws;
+    if (value[index] !== '.') break;
+
+    const afterDotCfws = consumeCfws(value, index + 1);
+    if (afterDotCfws === null) return null;
+    index = afterDotCfws;
   }
+
+  if (!consumedWord) return null;
 
   const atIndex = consumeCfws(value, index);
   if (atIndex === null || value[atIndex] !== '@') return null;
