@@ -27,6 +27,7 @@ export type ImapClientLike = {
   getMailboxLock: (mailbox: string) => Promise<{ uidValidity: string; release: () => void }>;
   search: (query: SearchQuery, options: { uid: true }) => Promise<number[] | false>;
   fetchOne: (uid: number, query: FetchQuery, options: { uid: true }) => Promise<FetchResult>;
+  close: () => void;
   logout: () => Promise<void>;
 };
 
@@ -80,8 +81,39 @@ function defaultClientFactory(config: CraigslistImapConfig): ImapClientLike {
       const message = await client.fetchOne(uid, query, options);
       return message ? { uid: message.uid, source: message.source } : false;
     },
+    close: () => client.close(),
     logout: () => client.logout(),
   };
+}
+
+class ImapDeadlineError extends Error {
+  constructor() {
+    super('imap_deadline_exceeded');
+  }
+}
+
+async function withImapDeadline<T>(
+  operation: () => Promise<T>,
+  deadlineAt: number,
+  close: () => void,
+): Promise<T> {
+  const remaining = deadlineAt - Date.now();
+  if (remaining <= 0) {
+    close();
+    throw new ImapDeadlineError();
+  }
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => {
+      close();
+      reject(new ImapDeadlineError());
+    }, remaining);
+  });
+  try {
+    return await Promise.race([operation(), timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 export class FastmailCraigslistMailbox implements CraigslistMailbox {
@@ -90,43 +122,53 @@ export class FastmailCraigslistMailbox implements CraigslistMailbox {
     private readonly createClient: ClientFactory = defaultClientFactory,
   ) {}
 
-  async fetchAfter(cursor: SourceCursor | null): Promise<CraigslistMailboxBatch> {
+  async fetchAfter(cursor: SourceCursor | null, deadlineAt = Date.now() + 35_000): Promise<CraigslistMailboxBatch> {
     if (cursor && (!Number.isSafeInteger(cursor.value) || cursor.value < 0)) {
       throw new Error('imap_invalid_cursor');
     }
     const client = this.createClient(this.config);
+    const bounded = <T>(operation: () => Promise<T>) => withImapDeadline(operation, deadlineAt, () => client.close());
     let lock: { uidValidity: string; release: () => void } | null = null;
     try {
-      await client.connect();
-      lock = await client.getMailboxLock(this.config.mailbox);
+      await bounded(() => client.connect());
+      lock = await bounded(() => client.getMailboxLock(this.config.mailbox));
       const effectiveCursor = cursor?.generation === lock.uidValidity ? cursor.value : 0;
-      const found = await client.search({
+      const found = await bounded(() => client.search({
         uid: `${effectiveCursor + 1}:*`,
         from: 'craigslist.org',
         to: this.config.address,
-      }, { uid: true });
+      }, { uid: true }));
       const uids = [...(found || [])]
         .filter((uid) => Number.isSafeInteger(uid) && uid > effectiveCursor)
         .sort((left, right) => left - right)
         .slice(0, this.config.maxMessages);
       const messages: CraigslistMailboxMessage[] = [];
       for (const uid of uids) {
-        const message = await client.fetchOne(uid, { source: { maxLength: 2_000_000 } }, { uid: true });
-        if (!message || !message.source) {
-          messages.push({ uid, failureCode: 'message_unavailable' });
-        } else if (message.source.length >= 2_000_000) {
-          messages.push({ uid, failureCode: 'message_too_large' });
-        } else {
-          messages.push({ uid, rawMime: message.source });
+        try {
+          const message = await bounded(() => client.fetchOne(
+            uid,
+            { source: { maxLength: 2_000_000 } },
+            { uid: true },
+          ));
+          if (!message || !message.source) {
+            messages.push({ uid, failureCode: 'message_unavailable' });
+          } else if (message.source.length >= 2_000_000) {
+            messages.push({ uid, failureCode: 'message_too_large' });
+          } else {
+            messages.push({ uid, rawMime: message.source });
+          }
+        } catch (error) {
+          if (error instanceof ImapDeadlineError) throw error;
+          messages.push({ uid, failureCode: 'message_fetch_failed' });
         }
       }
       return { generation: lock.uidValidity, messages };
     } finally {
       lock?.release();
       try {
-        await client.logout();
+        await bounded(() => client.logout());
       } catch {
-        // The connection may already be closed; no credential or provider detail is surfaced.
+        client.close();
       }
     }
   }

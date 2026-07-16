@@ -7,7 +7,7 @@ import { runOpportunityWorker } from './worker';
 export type CraigslistMailboxMessage = {
   uid: number;
   rawMime?: Buffer;
-  failureCode?: 'message_too_large' | 'message_unavailable';
+  failureCode?: 'message_too_large' | 'message_unavailable' | 'message_fetch_failed';
 };
 
 export type CraigslistMailboxBatch = {
@@ -16,7 +16,7 @@ export type CraigslistMailboxBatch = {
 };
 
 export type CraigslistMailbox = {
-  fetchAfter: (cursor: SourceCursor | null) => Promise<CraigslistMailboxBatch>;
+  fetchAfter: (cursor: SourceCursor | null, deadlineAt?: number) => Promise<CraigslistMailboxBatch>;
 };
 
 type RunCraigslistEmailIntakeInput = {
@@ -46,6 +46,7 @@ function failureCode(error: unknown): string {
     'worker_not_ok',
     'message_too_large',
     'message_unavailable',
+    'message_fetch_failed',
   ]);
   return known.has(error.message) ? error.message : 'unknown_intake_error';
 }
@@ -77,7 +78,7 @@ export async function runCraigslistEmailIntake({
     let listings = 0;
     let batch: CraigslistMailboxBatch;
     try {
-      batch = await mailbox.fetchAfter(cursor);
+      batch = await mailbox.fetchAfter(cursor, deadlineAt);
     } catch {
       return {
         status: 'failed', processedMessages, failedMessages: 1, quarantinedMessages,

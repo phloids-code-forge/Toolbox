@@ -9,6 +9,92 @@ export type ParsedCraigslistAlert = {
   listings: ListingInput[];
 };
 
+function splitAuthenticationClauses(value: string): string[] {
+  const clauses: string[] = [];
+  let current = '';
+  let depth = 0;
+  let quoted = false;
+  let escaped = false;
+  for (const character of value) {
+    if (escaped) {
+      current += character;
+      escaped = false;
+      continue;
+    }
+    if (character === '\\') {
+      current += character;
+      escaped = true;
+      continue;
+    }
+    if (character === '"' && depth === 0) quoted = !quoted;
+    if (!quoted && character === '(') depth += 1;
+    if (!quoted && character === ')' && depth > 0) depth -= 1;
+    if (character === ';' && depth === 0 && !quoted) {
+      clauses.push(current);
+      current = '';
+    } else {
+      current += character;
+    }
+  }
+  clauses.push(current);
+  return clauses;
+}
+
+function stripAuthenticationComments(value: string): string {
+  let output = '';
+  let depth = 0;
+  let quoted = false;
+  let escaped = false;
+  for (const character of value) {
+    if (escaped) {
+      if (depth === 0) output += character;
+      escaped = false;
+      continue;
+    }
+    if (character === '\\') {
+      if (depth === 0) output += character;
+      escaped = true;
+      continue;
+    }
+    if (character === '"' && depth === 0) {
+      quoted = !quoted;
+      output += character;
+      continue;
+    }
+    if (!quoted && character === '(') {
+      depth += 1;
+      continue;
+    }
+    if (!quoted && character === ')' && depth > 0) {
+      depth -= 1;
+      continue;
+    }
+    if (depth === 0) output += character;
+  }
+  return output;
+}
+
+function authenticationIdentity(clause: string, property: string): string | null {
+  const escapedProperty = property.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const matches = [...clause.matchAll(new RegExp(`(?:^|\\s)${escapedProperty}\\s*=\\s*(?:"([^"]*)"|([^\\s;]+))`, 'gi'))];
+  if (matches.length !== 1) return null;
+  return (matches[0][1] ?? matches[0][2] ?? '').trim().toLowerCase();
+}
+
+function isCraigslistIdentity(value: string | null, mailbox = false): boolean {
+  if (!value) return false;
+  const domain = mailbox ? value.split('@').at(-1) ?? '' : value;
+  return domain === 'craigslist.org' || domain.endsWith('.craigslist.org');
+}
+
+function passingAlignedClause(clause: string, method: 'dmarc' | 'dkim' | 'spf'): boolean {
+  const cleaned = stripAuthenticationComments(clause).trim();
+  if (!new RegExp(`^${method}\\s*=\\s*pass(?:\\s|$)`, 'i').test(cleaned)) return false;
+  if (method === 'dmarc') return isCraigslistIdentity(authenticationIdentity(cleaned, 'header.from'));
+  if (method === 'dkim') return isCraigslistIdentity(authenticationIdentity(cleaned, 'header.d'));
+  return isCraigslistIdentity(authenticationIdentity(cleaned, 'smtp.mailfrom'), true);
+}
+
 function authenticatedByFastmail(rawMime: Buffer): boolean {
   const headerBoundary = rawMime.indexOf(Buffer.from('\r\n\r\n'));
   const fallbackBoundary = rawMime.indexOf(Buffer.from('\n\n'));
@@ -18,16 +104,15 @@ function authenticatedByFastmail(rawMime: Buffer): boolean {
   const firstAuthenticationResult = unfoldedHeaders.match(/^Authentication-Results:\s*(.+)$/im)?.[1];
   if (!firstAuthenticationResult) return false;
 
-  const [authenticationServer = ''] = firstAuthenticationResult.split(';', 1);
-  if (!/(^|\.)messagingengine\.com$/i.test(authenticationServer.trim())) return false;
+  const clauses = splitAuthenticationClauses(firstAuthenticationResult);
+  const authenticationServer = clauses.shift()?.trim() ?? '';
+  if (!(authenticationServer === 'messagingengine.com' || authenticationServer.endsWith('.messagingengine.com'))) return false;
 
-  const alignedDmarc = /\bdmarc=pass\b/i.test(firstAuthenticationResult)
-    && /\bheader\.from=(?:[a-z0-9-]+\.)*craigslist\.org\b/i.test(firstAuthenticationResult);
-  const alignedDkim = /\bdkim=pass\b/i.test(firstAuthenticationResult)
-    && /\bheader\.d=(?:[a-z0-9-]+\.)*craigslist\.org\b/i.test(firstAuthenticationResult);
-  const alignedSpf = /\bspf=pass\b/i.test(firstAuthenticationResult)
-    && /\bsmtp\.mailfrom=(?:[^;\s@]+@)?(?:[a-z0-9-]+\.)*craigslist\.org\b/i.test(firstAuthenticationResult);
-  return alignedDmarc && (alignedDkim || alignedSpf);
+  const alignedDmarc = clauses.some((clause) => passingAlignedClause(clause, 'dmarc'));
+  const alignedDkimOrSpf = clauses.some((clause) => (
+    passingAlignedClause(clause, 'dkim') || passingAlignedClause(clause, 'spf')
+  ));
+  return alignedDmarc && alignedDkimOrSpf;
 }
 
 function trustedCraigslistAddress(address: string | undefined): boolean {

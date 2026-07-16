@@ -47,6 +47,7 @@ test('Fastmail mailbox searches only the current UID generation and fetches boun
       calls.push(['fetch', uid, query, options]);
       return { uid: Number(uid), source: Buffer.from(`mime-${uid}`) };
     },
+    close: () => { calls.push('close'); },
     logout: async () => { calls.push('logout'); },
   };
   const mailbox = new FastmailCraigslistMailbox(
@@ -78,6 +79,7 @@ test('Fastmail mailbox restarts at UID one when UIDVALIDITY changes', async () =
     getMailboxLock: async () => ({ uidValidity: 'new-mailbox', release: () => {} }),
     search: async (query) => { searches.push(query); return []; },
     fetchOne: async () => false,
+    close: () => {},
     logout: async () => {},
   };
   const mailbox = new FastmailCraigslistMailbox(readCraigslistImapConfig(completeEnvironment), () => client);
@@ -94,9 +96,11 @@ test('Fastmail mailbox returns a bounded per-message failure instead of starving
     connect: async () => {},
     getMailboxLock: async () => ({ uidValidity: '9002', release: () => {} }),
     search: async () => [20, 21],
-    fetchOne: async (uid) => uid === 20
-      ? { uid, source: Buffer.alloc(2_000_000) }
-      : { uid, source: Buffer.from('safe') },
+    fetchOne: async (uid) => {
+      if (uid === 20) throw new Error('provider_fetch_failed');
+      return { uid, source: Buffer.from('safe') };
+    },
+    close: () => {},
     logout: async () => {},
   };
   const mailbox = new FastmailCraigslistMailbox(readCraigslistImapConfig(completeEnvironment), () => client);
@@ -104,8 +108,24 @@ test('Fastmail mailbox returns a bounded per-message failure instead of starving
   await expect(mailbox.fetchAfter(null)).resolves.toEqual({
     generation: '9002',
     messages: [
-      { uid: 20, failureCode: 'message_too_large' },
+      { uid: 20, failureCode: 'message_fetch_failed' },
       { uid: 21, rawMime: Buffer.from('safe') },
     ],
   });
+});
+
+test('Fastmail mailbox closes a hung provider operation at the route deadline', async () => {
+  let closed = false;
+  const client: ImapClientLike = {
+    connect: async () => new Promise<void>(() => {}),
+    getMailboxLock: async () => ({ uidValidity: 'never', release: () => {} }),
+    search: async () => [],
+    fetchOne: async () => false,
+    close: () => { closed = true; },
+    logout: async () => {},
+  };
+  const mailbox = new FastmailCraigslistMailbox(readCraigslistImapConfig(completeEnvironment), () => client);
+
+  await expect(mailbox.fetchAfter(null, Date.now() + 20)).rejects.toThrow('imap_deadline_exceeded');
+  expect(closed).toBe(true);
 });

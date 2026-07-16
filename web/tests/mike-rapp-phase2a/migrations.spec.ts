@@ -46,6 +46,44 @@ test('schema initialization and Mike seed are idempotent in isolated Postgres', 
   }
 });
 
+test('migration 006 upgrades a database that already recorded the original migration 005', async () => {
+  expect(databaseUrl).toContain('127.0.0.1:55432/mike_phase2a');
+  const pool = new Pool({ connectionString: databaseUrl });
+
+  try {
+    await applyOpportunityMigrations(pool);
+    await pool.query('DROP TABLE IF EXISTS opportunity_source_failures');
+    await pool.query('ALTER TABLE opportunity_source_cursors DROP COLUMN IF EXISTS cursor_generation');
+    await pool.query(
+      `DELETE FROM opportunity_schema_migrations WHERE version = '006_source_cursor_generations_and_failures'`,
+    );
+
+    await applyOpportunityMigrations(pool);
+
+    const generationColumn = await pool.query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count
+       FROM information_schema.columns
+       WHERE table_schema = 'public'
+         AND table_name = 'opportunity_source_cursors'
+         AND column_name = 'cursor_generation'
+         AND is_nullable = 'NO'`,
+    );
+    const failureTable = await pool.query<{ table_name: string | null }>(
+      `SELECT to_regclass('public.opportunity_source_failures')::text AS table_name`,
+    );
+    const ledger = await pool.query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count FROM opportunity_schema_migrations
+       WHERE version = '006_source_cursor_generations_and_failures'`,
+    );
+
+    expect(generationColumn.rows[0].count).toBe('1');
+    expect(failureTable.rows[0].table_name).toBe('opportunity_source_failures');
+    expect(ledger.rows[0].count).toBe('1');
+  } finally {
+    await pool.end();
+  }
+});
+
 test('cold initialization preserves edited watches while restoring missing starter rows', async () => {
   expect(databaseUrl).toContain('127.0.0.1:55432/mike_phase2a');
   const pool = new Pool({ connectionString: databaseUrl });

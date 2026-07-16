@@ -61,6 +61,14 @@ test('Craigslist MIME parser emits allowlisted sanitized listings without duplic
   expect(JSON.stringify(parsed)).not.toContain('seller@example.com');
   expect(JSON.stringify(parsed)).not.toContain('404-555-0111');
   expect(JSON.stringify(parsed)).not.toContain('evil.example');
+
+  const quotedAuthentication = multipartAlert.replace(
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org; spf=pass smtp.mailfrom=noreply@craigslist.org',
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass (p=none) header.from="craigslist.org"; dkim=pass header.d="mail.craigslist.org"',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(quotedAuthentication))).resolves.toMatchObject({
+    messageKey: 'message-id:alert-42@craigslist.org',
+  });
 });
 
 test('Craigslist MIME parser supports HTML-only saved-search alerts without trusting arbitrary links', async () => {
@@ -96,10 +104,34 @@ test('Craigslist MIME parser rejects unauthenticated mail, non-Craigslist sender
   const misleadingDomain = multipartAlert.replace(/craigslist\.org/g, 'evilcraigslist.org');
   await expect(parseCraigslistAlertMime(Buffer.from(misleadingDomain))).rejects.toThrow('unauthenticated_sender');
 
+  const mixedClauses = multipartAlert.replace(
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org; spf=pass smtp.mailfrom=noreply@craigslist.org',
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=evil.example; dmarc=fail header.from=craigslist.org; dkim=pass header.d=craigslist.org',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(mixedClauses))).rejects.toThrow('unauthenticated_sender');
+
+  const duplicateIdentity = multipartAlert.replace(
+    'dmarc=pass header.from=craigslist.org',
+    'dmarc=pass header.from=evil.example header.from=craigslist.org',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(duplicateIdentity))).rejects.toThrow('unauthenticated_sender');
+
+  const suffixIdentity = multipartAlert.replace(/craigslist\.org/g, 'craigslist.org.evil.example');
+  await expect(parseCraigslistAlertMime(Buffer.from(suffixIdentity))).rejects.toThrow('unauthenticated_sender');
+
+  const commentInjection = multipartAlert.replace(
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org; spf=pass smtp.mailfrom=noreply@craigslist.org',
+    'Authentication-Results: mx1.messagingengine.com; dmarc=fail header.from=evil.example (ignored; dmarc=pass header.from=craigslist.org); dkim=pass header.d=craigslist.org',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(commentInjection))).rejects.toThrow('unauthenticated_sender');
+
   const missingAuthentication = multipartAlert.replace(/^Authentication-Results:.*\r\n/m, '');
   await expect(parseCraigslistAlertMime(Buffer.from(missingAuthentication))).rejects.toThrow('unauthenticated_sender');
 
-  const forged = multipartAlert.replace('noreply@craigslist.org', 'noreply@example.com');
+  const forged = multipartAlert.replace(
+    'From: craigslist alerts <noreply@craigslist.org>',
+    'From: craigslist alerts <noreply@example.com>',
+  );
   await expect(parseCraigslistAlertMime(Buffer.from(forged))).rejects.toThrow('untrusted_sender');
 
   const empty = multipartAlert

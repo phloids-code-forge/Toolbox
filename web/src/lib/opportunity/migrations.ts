@@ -9,6 +9,7 @@ const MIGRATIONS = [
   '003_duplicate_identities',
   '004_login_rate_limits',
   '005_source_cursors',
+  '006_source_cursor_generations_and_failures',
 ] as const;
 
 export async function applyOpportunityMigrations(pool: Pool): Promise<void> {
