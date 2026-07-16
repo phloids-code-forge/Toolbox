@@ -91,6 +91,8 @@ test('Craigslist MIME parser emits allowlisted sanitized listings without duplic
     '"jim doe"@ example.com',
     '"jill doe"(seller)@(domain)example.com',
     'jack.doe (seller) @ (domain) example.com',
+    'jack(comment).doe@example.com',
+    'jack(a(b\\)c)).doe@example.com',
     '"folded name"\r\n \t@example.com',
   ];
   const contactHeadline = multipartAlert
@@ -226,6 +228,18 @@ test('Craigslist MIME parser rejects unauthenticated mail, non-Craigslist sender
     'dmarc=pass reason=bad\\escape header.from=craigslist.org',
   );
   await expect(parseCraigslistAlertMime(Buffer.from(bareBackslash))).rejects.toThrow('unauthenticated_sender');
+
+  const verticalTabSeparator = multipartAlert.replace(
+    'dmarc=pass header.from=craigslist.org',
+    'dmarc=pass\vheader.from=craigslist.org',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(verticalTabSeparator))).rejects.toThrow('unauthenticated_sender');
+
+  const nulInAuthentication = multipartAlert.replace(
+    'dmarc=pass header.from=craigslist.org',
+    'dmarc=pass\0header.from=craigslist.org',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(nulInAuthentication))).rejects.toThrow('unauthenticated_sender');
 
   const missingAuthentication = multipartAlert.replace(/^Authentication-Results:.*\r\n/m, '');
   await expect(parseCraigslistAlertMime(Buffer.from(missingAuthentication))).rejects.toThrow('unauthenticated_sender');

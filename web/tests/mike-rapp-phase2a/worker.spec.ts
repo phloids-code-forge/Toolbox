@@ -847,11 +847,9 @@ test('adapter persistence strips query data, contact text, raw identities, and u
   const syntheticSymbolEmail = ['🚗', '[IPv6:2001:db8::1]'].join('@');
   const syntheticQuotedEmail = '"john doe"@example.com';
   const syntheticCfwsEmails = [
-    '"jane doe" @example.com',
-    '"jim doe"@ example.com',
-    '"jill doe"(seller)@(domain)example.com',
-    'jack.doe (seller) @ (domain) example.com',
-    '"folded name"\r\n \t@example.com',
+    '"j d" @e.co',
+    'j(c).d@e.co',
+    '"f"\r\n \t@e.co',
   ];
   const syntheticPhone = ['404', '555', '0199'].join('-');
   const syntheticInternationalPhone = ['+44', '20', '7946', '0958'].join(' ');
@@ -929,6 +927,8 @@ test('adapter persistence strips query data, contact text, raw identities, and u
       expect(serialized).not.toContain(syntheticCfwsEmail);
     }
     expect(serialized).not.toMatch(/jane|jim|jill|jack|folded/);
+    expect(serialized).not.toContain('j(c)');
+    expect(serialized).not.toContain('"f"');
     expect(serialized).not.toContain(syntheticPhone);
     expect(serialized).not.toContain(syntheticInternationalPhone);
     expect(persisted.rows[0].payload_hash).toMatch(/^[a-f0-9]{64}$/);

@@ -98,7 +98,7 @@ function parseAuthenticationClause(clause: string): AuthenticationProperty[] | n
   let index = 0;
 
   while (index < value.length) {
-    while (/\s/.test(value[index] ?? '')) index += 1;
+    while (/[\t ]/.test(value[index] ?? '')) index += 1;
     if (index >= value.length) break;
 
     const keyStart = index;
@@ -106,10 +106,10 @@ function parseAuthenticationClause(clause: string): AuthenticationProperty[] | n
     if (keyStart === index) return null;
     const key = value.slice(keyStart, index).toLowerCase();
 
-    while (/\s/.test(value[index] ?? '')) index += 1;
+    while (/[\t ]/.test(value[index] ?? '')) index += 1;
     if (value[index] !== '=') return null;
     index += 1;
-    while (/\s/.test(value[index] ?? '')) index += 1;
+    while (/[\t ]/.test(value[index] ?? '')) index += 1;
     if (index >= value.length) return null;
 
     let propertyValue = '';
@@ -135,10 +135,10 @@ function parseAuthenticationClause(clause: string): AuthenticationProperty[] | n
         index += 1;
       }
       if (!closed) return null;
-      if (index < value.length && !/\s/.test(value[index])) return null;
+      if (index < value.length && !/[\t ]/.test(value[index])) return null;
     } else {
       const valueStart = index;
-      while (index < value.length && !/\s/.test(value[index])) index += 1;
+      while (index < value.length && !/[\t ]/.test(value[index])) index += 1;
       propertyValue = value.slice(valueStart, index);
     }
 
@@ -243,7 +243,7 @@ function unfoldedHeaderLines(rawMime: Buffer): string[] | null {
   const boundary = boundaryScan.match(/(?:\r\n|(?<!\r)\n|\r(?!\n))(?:\r\n|(?<!\r)\n|\r(?!\n))/);
   if (boundary?.index === undefined || boundary.index > 65_536) return null;
   const headerText = rawMime.subarray(0, boundary.index).toString('utf8');
-  if (/\r(?!\n)/.test(headerText)) return null;
+  if (/\r(?!\n)/.test(headerText) || /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(headerText)) return null;
   const headerLines = headerText
     .replace(/\r?\n[\t ]+/g, ' ')
     .split(/\r?\n/);

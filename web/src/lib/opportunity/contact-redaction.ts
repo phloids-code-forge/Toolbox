@@ -58,11 +58,24 @@ function mailboxEnd(value: string, start: number): number | null {
     }
     if (!closed || escaped) return null;
   } else {
-    while (
-      index < value.length
-      && !/[\s@()]/.test(value[index])
-    ) index += 1;
-    if (index === start) return null;
+    let consumedAtom = false;
+    while (index < value.length) {
+      const segmentStart = index;
+      while (index < value.length && !/[\s@()]/.test(value[index])) index += 1;
+      if (index > segmentStart) consumedAtom = true;
+      const afterCfws = consumeCfws(value, index);
+      if (afterCfws === null) return null;
+      index = afterCfws;
+      if (value[index] === '.') {
+        index += 1;
+        const afterDotCfws = consumeCfws(value, index);
+        if (afterDotCfws === null) return null;
+        index = afterDotCfws;
+        continue;
+      }
+      break;
+    }
+    if (!consumedAtom) return null;
   }
 
   const atIndex = consumeCfws(value, index);
