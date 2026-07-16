@@ -213,6 +213,12 @@ test('Craigslist MIME parser rejects unauthenticated mail, non-Craigslist sender
   );
   await expect(parseCraigslistAlertMime(Buffer.from(escapedUnmatchedClosingComment))).rejects.toThrow('unauthenticated_sender');
 
+  const bareBackslash = multipartAlert.replace(
+    'dmarc=pass header.from=craigslist.org',
+    'dmarc=pass reason=bad\\escape header.from=craigslist.org',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(bareBackslash))).rejects.toThrow('unauthenticated_sender');
+
   const missingAuthentication = multipartAlert.replace(/^Authentication-Results:.*\r\n/m, '');
   await expect(parseCraigslistAlertMime(Buffer.from(missingAuthentication))).rejects.toThrow('unauthenticated_sender');
 
