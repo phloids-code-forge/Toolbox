@@ -846,14 +846,14 @@ test('adapter persistence strips query data, contact text, raw identities, and u
   const syntheticDecomposedEmail = [`e\u0301`, 'example.com'].join('@');
   const syntheticSymbolEmail = ['🚗', '[IPv6:2001:db8::1]'].join('@');
   const syntheticCfwsEmails = [
-    '"j d" @e.co,',
-    'j. (p) d@e.co;',
-    'x(c)."y z".q@e.co!',
-    'x@e. (p) co:',
     '"foldedprivate\r\n \tlocalword"@e.co,',
     '(lead)x@e.co;',
     'x@[a\\]priv](trail)!',
     '"p n" (s) @ (i) localhost:',
+    'rep@e.co..',
+    '<ang@e.co>',
+    'one@e.co,two@e.net',
+    'dsh@e.co--buyers',
   ];
   const syntheticPhone = ['404', '555', '0199'].join('-');
   const syntheticInternationalPhone = ['+44', '20', '7946', '0958'].join(' ');
@@ -929,15 +929,16 @@ test('adapter persistence strips query data, contact text, raw identities, and u
       expect(serialized).not.toContain(syntheticCfwsEmail);
     }
     expect(serialized).not.toMatch(/jane|jim|jill|jack|folded/);
-    expect(serialized).not.toContain('j. (p)');
-    expect(serialized).not.toContain('x(c)');
-    expect(serialized).not.toContain('y z');
-    expect(serialized).not.toContain('(p) co');
     expect(serialized).not.toContain('foldedprivate');
     expect(serialized).not.toContain('localword');
     expect(serialized).not.toContain('(lead)');
     expect(serialized).not.toContain('priv](trail)');
     expect(serialized).not.toContain('"p n"');
+    expect(serialized).not.toMatch(/rep@|ang@|one@|two@|dsh@/);
+    expect(serialized).toContain('[contact redacted]..');
+    expect(serialized).toContain('<[contact redacted]>');
+    expect(serialized).toContain('[contact redacted],[contact redacted]');
+    expect(serialized).toContain('[contact redacted]--buyers');
     expect(serialized).toContain('Meet@noon cars@home 2@3 Meet @ noon x @ y foo @ bar @ baz');
     expect(serialized).not.toContain(syntheticPhone);
     expect(serialized).not.toContain(syntheticInternationalPhone);

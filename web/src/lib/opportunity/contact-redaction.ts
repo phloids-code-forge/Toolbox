@@ -101,7 +101,10 @@ function mailboxEnd(value: string, start: number, hasLeadingCfws = false): numbe
       index = quotedEnd;
     } else {
       const atomStart = index;
-      while (index < value.length && !/[\s@()."]/.test(value[index])) index += 1;
+      while (
+        index < value.length
+        && !/[\s.@()<>,;:"]/.test(value[index])
+      ) index += 1;
       if (index === atomStart) return null;
     }
     consumedWord = true;
@@ -141,6 +144,10 @@ function mailboxEnd(value: string, start: number, hasLeadingCfws = false): numbe
   while (domainEnd < value.length) {
     const atomStart = domainEnd;
     while (domainEnd < value.length && /[\p{L}\p{N}\p{M}-]/u.test(value[domainEnd])) {
+      const doubleDash = value[domainEnd] === '-' && value[domainEnd + 1] === '-';
+      const punycodePrefix = domainEnd - atomStart === 2
+        && value.slice(atomStart, domainEnd).toLowerCase() === 'xn';
+      if (doubleDash && !punycodePrefix) break;
       domainEnd += 1;
     }
     while (domainEnd > atomStart && value[domainEnd - 1] === '-') domainEnd -= 1;
@@ -162,6 +169,9 @@ function mailboxEnd(value: string, start: number, hasLeadingCfws = false): numbe
     const domainDotEnd = domainEnd + 1;
     const afterDomainDotCfws = consumeCfws(value, domainDotEnd);
     if (afterDomainDotCfws === null) return null;
+    if (!/[\p{L}\p{N}\p{M}]/u.test(value[afterDomainDotCfws] ?? '')) {
+      return domainLabels.length >= 2 || hasMailboxSyntax ? domainEnd : null;
+    }
     if (hasStrongCfws(value, domainDotEnd, afterDomainDotCfws)) hasMailboxSyntax = true;
     domainEnd = afterDomainDotCfws;
   }
