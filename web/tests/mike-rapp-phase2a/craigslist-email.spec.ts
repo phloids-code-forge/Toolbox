@@ -125,6 +125,18 @@ test('Craigslist MIME parser rejects unauthenticated mail, non-Craigslist sender
   );
   await expect(parseCraigslistAlertMime(Buffer.from(commentInjection))).rejects.toThrow('unauthenticated_sender');
 
+  const quotedPropertyInjection = multipartAlert.replace(
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org; spf=pass smtp.mailfrom=noreply@craigslist.org',
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass reason="x; header.from=craigslist.org" header.from=evil.example; dkim=pass header.d=craigslist.org',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(quotedPropertyInjection))).rejects.toThrow('unauthenticated_sender');
+
+  const quotedDkimInjection = multipartAlert.replace(
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org; spf=pass smtp.mailfrom=noreply@craigslist.org',
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass reason="header.d=craigslist.org" header.d=evil.example',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(quotedDkimInjection))).rejects.toThrow('unauthenticated_sender');
+
   const missingAuthentication = multipartAlert.replace(/^Authentication-Results:.*\r\n/m, '');
   await expect(parseCraigslistAlertMime(Buffer.from(missingAuthentication))).rejects.toThrow('unauthenticated_sender');
 

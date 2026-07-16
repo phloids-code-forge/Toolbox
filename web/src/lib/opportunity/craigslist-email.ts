@@ -74,11 +74,64 @@ function stripAuthenticationComments(value: string): string {
   return output;
 }
 
-function authenticationIdentity(clause: string, property: string): string | null {
-  const escapedProperty = property.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const matches = [...clause.matchAll(new RegExp(`(?:^|\\s)${escapedProperty}\\s*=\\s*(?:"([^"]*)"|([^\\s;]+))`, 'gi'))];
-  if (matches.length !== 1) return null;
-  return (matches[0][1] ?? matches[0][2] ?? '').trim().toLowerCase();
+type AuthenticationProperty = {
+  key: string;
+  value: string;
+};
+
+function parseAuthenticationClause(clause: string): AuthenticationProperty[] | null {
+  const value = stripAuthenticationComments(clause);
+  const properties: AuthenticationProperty[] = [];
+  let index = 0;
+
+  while (index < value.length) {
+    while (/\s/.test(value[index] ?? '')) index += 1;
+    if (index >= value.length) break;
+
+    const keyStart = index;
+    while (/[a-z0-9_.\/-]/i.test(value[index] ?? '')) index += 1;
+    if (keyStart === index) return null;
+    const key = value.slice(keyStart, index).toLowerCase();
+
+    while (/\s/.test(value[index] ?? '')) index += 1;
+    if (value[index] !== '=') return null;
+    index += 1;
+    while (/\s/.test(value[index] ?? '')) index += 1;
+    if (index >= value.length) return null;
+
+    let propertyValue = '';
+    if (value[index] === '"') {
+      index += 1;
+      let closed = false;
+      while (index < value.length) {
+        const character = value[index];
+        if (character === '\\') {
+          index += 1;
+          if (index >= value.length) return null;
+          propertyValue += value[index];
+          index += 1;
+          continue;
+        }
+        if (character === '"') {
+          index += 1;
+          closed = true;
+          break;
+        }
+        propertyValue += character;
+        index += 1;
+      }
+      if (!closed) return null;
+    } else {
+      const valueStart = index;
+      while (index < value.length && !/\s/.test(value[index])) index += 1;
+      propertyValue = value.slice(valueStart, index);
+    }
+
+    if (!propertyValue) return null;
+    properties.push({ key, value: propertyValue.toLowerCase() });
+  }
+
+  return properties.length > 0 ? properties : null;
 }
 
 function isCraigslistIdentity(value: string | null, mailbox = false): boolean {
@@ -88,11 +141,15 @@ function isCraigslistIdentity(value: string | null, mailbox = false): boolean {
 }
 
 function passingAlignedClause(clause: string, method: 'dmarc' | 'dkim' | 'spf'): boolean {
-  const cleaned = stripAuthenticationComments(clause).trim();
-  if (!new RegExp(`^${method}\\s*=\\s*pass(?:\\s|$)`, 'i').test(cleaned)) return false;
-  if (method === 'dmarc') return isCraigslistIdentity(authenticationIdentity(cleaned, 'header.from'));
-  if (method === 'dkim') return isCraigslistIdentity(authenticationIdentity(cleaned, 'header.d'));
-  return isCraigslistIdentity(authenticationIdentity(cleaned, 'smtp.mailfrom'), true);
+  const properties = parseAuthenticationClause(clause);
+  if (!properties || properties[0].key !== method || properties[0].value !== 'pass') return false;
+  const propertyName = method === 'dmarc'
+    ? 'header.from'
+    : method === 'dkim'
+      ? 'header.d'
+      : 'smtp.mailfrom';
+  const identities = properties.filter((property) => property.key === propertyName);
+  return identities.length === 1 && isCraigslistIdentity(identities[0].value, method === 'spf');
 }
 
 function authenticatedByFastmail(rawMime: Buffer): boolean {

@@ -129,3 +129,37 @@ test('Fastmail mailbox closes a hung provider operation at the route deadline', 
   await expect(mailbox.fetchAfter(null, Date.now() + 20)).rejects.toThrow('imap_deadline_exceeded');
   expect(closed).toBe(true);
 });
+
+for (const hungStage of ['lock', 'search', 'fetch', 'logout'] as const) {
+  test(`Fastmail mailbox bounds a hung ${hungStage} operation and releases acquired locks`, async () => {
+    let closed = false;
+    let released = false;
+    const never = async <T>() => new Promise<T>(() => {});
+    const client: ImapClientLike = {
+      connect: async () => {},
+      getMailboxLock: hungStage === 'lock'
+        ? () => never()
+        : async () => ({ uidValidity: 'deadline-generation', release: () => { released = true; } }),
+      search: hungStage === 'search'
+        ? () => never()
+        : async () => hungStage === 'fetch' ? [1] : [],
+      fetchOne: hungStage === 'fetch'
+        ? () => never()
+        : async () => false,
+      close: () => { closed = true; },
+      logout: hungStage === 'logout'
+        ? () => never()
+        : async () => {},
+    };
+    const mailbox = new FastmailCraigslistMailbox(readCraigslistImapConfig(completeEnvironment), () => client);
+
+    const result = mailbox.fetchAfter(null, Date.now() + 20);
+    if (hungStage === 'logout') {
+      await expect(result).resolves.toEqual({ generation: 'deadline-generation', messages: [] });
+    } else {
+      await expect(result).rejects.toThrow('imap_deadline_exceeded');
+    }
+    expect(closed).toBe(true);
+    expect(released).toBe(hungStage !== 'lock');
+  });
+}
