@@ -91,16 +91,19 @@ test('Craigslist MIME parser emits allowlisted sanitized listings without duplic
   const decomposedEmail = `e\u0301@example.com`;
   const devanagariEmail = 'उपयोगकर्ता@उदाहरण.भारत';
   const symbolEmail = '🚗@[IPv6:2001:db8::1]';
+  const quotedEmail = '"john doe"@example.com';
   const contactHeadline = multipartAlert
     .replace(
       '1985 Toyota Supra P-Type - $18,500',
-      `1985 Toyota Supra P-Type +44 20 7946 0958 ${devanagariEmail} ${symbolEmail} - $18,500`,
+      `1985 Toyota Supra P-Type +44 20 7946 0958 ${devanagariEmail} ${symbolEmail} ${quotedEmail} - $18,500`,
     )
     .replace('(Atlanta, GA)', `(${decomposedEmail})`);
   const contactSafe = await parseCraigslistAlertMime(Buffer.from(contactHeadline));
   expect(JSON.stringify(contactSafe)).not.toContain('+44 20 7946 0958');
   expect(JSON.stringify(contactSafe)).not.toContain(devanagariEmail);
   expect(JSON.stringify(contactSafe)).not.toContain(symbolEmail);
+  expect(JSON.stringify(contactSafe)).not.toContain(quotedEmail);
+  expect(JSON.stringify(contactSafe)).not.toContain('john');
   expect(JSON.stringify(contactSafe)).not.toContain(decomposedEmail);
   expect(JSON.stringify(contactSafe)).not.toContain(decomposedEmail.normalize('NFC'));
 });
@@ -245,6 +248,19 @@ test('Craigslist MIME parser rejects unauthenticated mail, non-Craigslist sender
     `From: craigslist alerts <${overlongUtf8LocalPart}@craigslist.org>`,
   );
   await expect(parseCraigslistAlertMime(Buffer.from(overlongFromMailbox))).rejects.toThrow('untrusted_sender');
+
+  const normalizationShrinkingLocalPart = 'e\u0301'.repeat(22);
+  const normalizationShrinkingAuthenticationMailbox = multipartAlert.replace(
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org; spf=pass smtp.mailfrom=noreply@craigslist.org',
+    `Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=fail header.d=evil.example; spf=pass smtp.mailfrom=${normalizationShrinkingLocalPart}@craigslist.org`,
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(normalizationShrinkingAuthenticationMailbox))).rejects.toThrow('unauthenticated_sender');
+
+  const normalizationShrinkingFromMailbox = multipartAlert.replace(
+    'From: craigslist alerts <noreply@craigslist.org>',
+    `From: craigslist alerts <${normalizationShrinkingLocalPart}@craigslist.org>`,
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(normalizationShrinkingFromMailbox))).rejects.toThrow('untrusted_sender');
 
   const forged = multipartAlert.replace(
     'From: craigslist alerts <noreply@craigslist.org>',

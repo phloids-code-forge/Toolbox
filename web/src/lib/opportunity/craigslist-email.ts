@@ -163,7 +163,12 @@ function normalizedDomain(value: string): string | null {
 
 function validLocalPart(value: string): boolean {
   const local = value.normalize('NFC');
-  if (local.length === 0 || Buffer.byteLength(local, 'utf8') > 64 || /[\r\n\x00]/.test(local)) return false;
+  if (
+    local.length === 0
+    || Buffer.byteLength(value, 'utf8') > 64
+    || Buffer.byteLength(local, 'utf8') > 64
+    || /[\r\n\x00]/.test(local)
+  ) return false;
   if (local.startsWith('"')) {
     if (!local.endsWith('"') || local.length < 2) return false;
     let escaped = false;
@@ -187,8 +192,13 @@ function validLocalPart(value: string): boolean {
 }
 
 function mailboxDomain(value: string): string | null {
-  const mailbox = value.normalize('NFC');
-  if (Buffer.byteLength(mailbox, 'utf8') > 254 || /[\r\n\x00]/.test(mailbox)) return null;
+  const mailbox = value;
+  const normalizedMailbox = value.normalize('NFC');
+  if (
+    Buffer.byteLength(mailbox, 'utf8') > 254
+    || Buffer.byteLength(normalizedMailbox, 'utf8') > 254
+    || /[\r\n\x00]/.test(mailbox)
+  ) return null;
   let quoted = false;
   let escaped = false;
   let separator = -1;
@@ -273,7 +283,7 @@ function trustedCraigslistAddress(address: string | undefined): boolean {
 function sanitizedText(value: string): string {
   return value
     .normalize('NFC')
-    .replace(/[^\s@]+@[^\s@]+/gu, '[contact redacted]')
+    .replace(/"(?:\\.|[^"\\\r\n])*"@[^\s@]+|[^\s@]+@[^\s@]+/gu, '[contact redacted]')
     .replace(/(?<!\w)\+(?:\d[\d().\s-]{6,}\d)(?!\w)/g, '[contact redacted]')
     .replace(/(?<!\d)(?:\+?1[-.\s]?)?\(?[2-9]\d{2}\)?[-.\s]\d{3}[-.\s]\d{4}(?!\d)/g, '[contact redacted]')
     .replace(/\s+/g, ' ')

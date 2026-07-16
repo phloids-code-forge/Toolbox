@@ -89,7 +89,7 @@ function stripContactText(value: string | null): string | null {
   if (value === null) return null;
   return value
     .normalize('NFC')
-    .replace(/[^\s@]+@[^\s@]+/gu, '[contact redacted]')
+    .replace(/"(?:\\.|[^"\\\r\n])*"@[^\s@]+|[^\s@]+@[^\s@]+/gu, '[contact redacted]')
     .replace(/(?<!\w)\+(?:\d[\d().\s-]{6,}\d)(?!\w)/g, '[contact redacted]')
     .replace(/(?<!\d)(?:\+?1[-.\s]?)?\(?[2-9]\d{2}\)?[-.\s]\d{3}[-.\s]\d{4}(?!\d)/g, '[contact redacted]')
     .replace(/\s+/g, ' ')
