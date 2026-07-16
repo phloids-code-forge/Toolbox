@@ -66,16 +66,89 @@ test('Craigslist MIME parser emits allowlisted sanitized listings without duplic
     'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org; spf=pass smtp.mailfrom=noreply@craigslist.org',
     'Authentication-Results: mx1.messagingengine.com; dmarc=pass (p=none) header.from="craigslist.org"; dkim=pass header.d="mail.craigslist.org"',
   );
-  await expect(parseCraigslistAlertMime(Buffer.from(quotedAuthentication))).resolves.toMatchObject({
-    messageKey: 'message-id:alert-42@craigslist.org',
-  });
+  await expect(parseCraigslistAlertMime(Buffer.from(quotedAuthentication))).rejects.toThrow('unauthenticated_sender');
 
+  const absoluteAndQuotedMailbox = multipartAlert.replace(
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org; spf=pass smtp.mailfrom=noreply@craigslist.org',
+    'Authentication-Results: mx1.messagingengine.com.; dmarc=pass header.from=craigslist.org.; dkim=fail header.d=evil.example; spf=pass smtp.mailfrom="\\"noreply alerts\\"@craigslist.org."',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(absoluteAndQuotedMailbox))).rejects.toThrow('unauthenticated_sender');
+
+  const unicodeMailboxAuthentication = multipartAlert
+    .replace(
+      'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org; spf=pass smtp.mailfrom=noreply@craigslist.org',
+      'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=fail header.d=evil.example; spf=pass smtp.mailfrom=e\u0301@craigslist.org',
+    )
+    .replace('noreply@craigslist.org', 'उपयोगकर्ता@craigslist.org');
+  await expect(parseCraigslistAlertMime(Buffer.from(unicodeMailboxAuthentication))).rejects.toThrow('unauthenticated_sender');
+
+  const decomposedEmail = `e\u0301@example.com`;
+  const devanagariEmail = 'उपयोगकर्ता@उदाहरण.भारत';
+  const symbolEmail = '🚗@[IPv6:2001:db8::1]';
+  const quotedEmail = '"john doe"@example.com';
+  const quotedCfwsEmails = [
+    '"jane doe" @example.com',
+    '"jim doe"@ example.com',
+    '"jill doe"(seller)@(domain)example.com',
+    'jack.doe (seller) @ (domain) example.com',
+    'jack(comment).doe@example.com',
+    'jack. (private seller) doe@example.com',
+    'jack.\r\n (a(b\\)c)) doe@example.com',
+    'jack(a(b\\)c)).doe@example.com',
+    'foo(comment)."bar baz".qux@example.com',
+    'foo.\r\n (a(b\\)c)) "bar baz" . qux@example.com',
+    'foo@example. (private domain) com',
+    'foo@example.\r\n (a(b\\)c)) com',
+    '"foldedprivate\r\n \tlocalword"@example.com',
+    'foo@[abc\\]private-fragment]',
+    '(PRIVATE-LEADING)foo@example.com',
+    '(a(b\\)c)) foo@example.com',
+    'foo@[opaque\\]PRIVATE-IN-LITERAL](PRIVATE-TRAILING)',
+    '"single private" (seller) @ (internal) localhost',
+    '"folded name"\r\n \t@example.com',
+    'punctseller@example.com,',
+    '<angleprivate@example.com>',
+    'उपयोगकर्ता@उदाहरण.भारत;',
+    '"quotedpunct"@localhost!',
+    'commentpunct(comment)@localhost:',
+    'foldedpunct\r\n @localhost,',
+    'repeatprivate@example.com..',
+    '<anglekeep@example.com>',
+    'commaone@example.com,commatwo@example.net',
+    'dashprivate@example.com--serious buyers',
+    'doublehyphenprivate@ab--cd.com,',
+  ];
   const contactHeadline = multipartAlert
-    .replace('1985 Toyota Supra P-Type - $18,500', '1985 Toyota Supra P-Type +44 20 7946 0958 - $18,500')
-    .replace('(Atlanta, GA)', '(sales+atl@example.co.uk)');
+    .replace(
+      '1985 Toyota Supra P-Type - $18,500',
+      `1985 Toyota Supra P-Type +44 20 7946 0958 ${devanagariEmail} ${symbolEmail} ${quotedEmail} ${quotedCfwsEmails.join(' ')} - $18,500`,
+    )
+    .replace('(Atlanta, GA)', `(${decomposedEmail})`);
   const contactSafe = await parseCraigslistAlertMime(Buffer.from(contactHeadline));
   expect(JSON.stringify(contactSafe)).not.toContain('+44 20 7946 0958');
-  expect(JSON.stringify(contactSafe)).not.toContain('sales+atl@example.co.uk');
+  expect(JSON.stringify(contactSafe)).not.toContain(devanagariEmail);
+  expect(JSON.stringify(contactSafe)).not.toContain(symbolEmail);
+  expect(JSON.stringify(contactSafe)).not.toContain(quotedEmail);
+  expect(JSON.stringify(contactSafe)).not.toContain('john');
+  for (const quotedCfwsEmail of quotedCfwsEmails) {
+    expect(JSON.stringify(contactSafe)).not.toContain(quotedCfwsEmail);
+  }
+  expect(JSON.stringify(contactSafe)).not.toMatch(/jane|jim|jill|jack|folded|private seller|private domain|private-fragment|private-leading|private-in-literal|private-trailing|single private|foldedprivate|localword|punctseller|angleprivate|quotedpunct|commentpunct|foldedpunct|repeatprivate|anglekeep|commaone|commatwo|dashprivate|doublehyphenprivate|foo|bar baz/i);
+  expect(JSON.stringify(contactSafe)).not.toContain(decomposedEmail);
+  expect(JSON.stringify(contactSafe)).not.toContain(decomposedEmail.normalize('NFC'));
+  expect(contactSafe.listings[0].title).toContain('[contact redacted]..');
+  expect(contactSafe.listings[0].title).toContain('<[contact redacted]>');
+  expect(contactSafe.listings[0].title).toContain('[contact redacted],[contact redacted]');
+  expect(contactSafe.listings[0].title).toContain('[contact redacted]--serious buyers');
+
+  const ordinaryAtSignHeadline = multipartAlert.replace(
+    '1985 Toyota Supra P-Type - $18,500',
+    '1985 Toyota Supra P-Type @ Meet@noon cars@home 2@3 Meet @ noon x @ y foo @ bar @ baz - $18,500',
+  );
+  const ordinaryAtSignParsed = await parseCraigslistAlertMime(Buffer.from(ordinaryAtSignHeadline));
+  expect(ordinaryAtSignParsed.listings[0].title).toBe(
+    '1985 Toyota Supra P-Type @ Meet@noon cars@home 2@3 Meet @ noon x @ y foo @ bar @ baz',
+  );
 });
 
 test('Craigslist MIME parser supports HTML-only saved-search alerts without trusting arbitrary links', async () => {
@@ -174,8 +247,115 @@ test('Craigslist MIME parser rejects unauthenticated mail, non-Craigslist sender
   );
   await expect(parseCraigslistAlertMime(Buffer.from(unbalancedQuote))).rejects.toThrow('unauthenticated_sender');
 
+  const unmatchedClosingComment = multipartAlert.replace(
+    'dmarc=pass header.from=craigslist.org',
+    'dmarc=pass reason=ok) header.from=craigslist.org',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(unmatchedClosingComment))).rejects.toThrow('unauthenticated_sender');
+
+  const escapedUnmatchedClosingComment = multipartAlert.replace(
+    'dmarc=pass header.from=craigslist.org',
+    'dmarc=pass reason=ok\\) header.from=craigslist.org',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(escapedUnmatchedClosingComment))).rejects.toThrow('unauthenticated_sender');
+
+  const bareBackslash = multipartAlert.replace(
+    'dmarc=pass header.from=craigslist.org',
+    'dmarc=pass reason=bad\\escape header.from=craigslist.org',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(bareBackslash))).rejects.toThrow('unauthenticated_sender');
+
+  const verticalTabSeparator = multipartAlert.replace(
+    'dmarc=pass header.from=craigslist.org',
+    'dmarc=pass\vheader.from=craigslist.org',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(verticalTabSeparator))).rejects.toThrow('unauthenticated_sender');
+
+  const nulInAuthentication = multipartAlert.replace(
+    'dmarc=pass header.from=craigslist.org',
+    'dmarc=pass\0header.from=craigslist.org',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(nulInAuthentication))).rejects.toThrow('unauthenticated_sender');
+
   const missingAuthentication = multipartAlert.replace(/^Authentication-Results:.*\r\n/m, '');
   await expect(parseCraigslistAlertMime(Buffer.from(missingAuthentication))).rejects.toThrow('unauthenticated_sender');
+
+  const orphanedAuthenticationValue = multipartAlert.replace(
+    /^Authentication-Results:.*\r\n/m,
+    'Authentication-Results:\r\nmx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org\r\n',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(orphanedAuthenticationValue))).rejects.toThrow('unauthenticated_sender');
+
+  const [missingAuthenticationHeaders, ...missingAuthenticationBody] = missingAuthentication.split('\r\n\r\n');
+  for (const mixedBoundary of ['\n\n', '\r\n\n', '\n\r\n', '\r\r']) {
+    const mixedLineEndingBodyInjection = [
+      missingAuthenticationHeaders,
+      mixedBoundary,
+      'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org\r\n\r\n',
+      missingAuthenticationBody.join('\r\n\r\n'),
+    ].join('');
+    await expect(parseCraigslistAlertMime(Buffer.from(mixedLineEndingBodyInjection))).rejects.toThrow('unauthenticated_sender');
+  }
+
+  const overlongUtf8LocalPart = 'उ'.repeat(30);
+  const overlongAuthenticationMailbox = multipartAlert.replace(
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org; spf=pass smtp.mailfrom=noreply@craigslist.org',
+    `Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=fail header.d=evil.example; spf=pass smtp.mailfrom=${overlongUtf8LocalPart}@craigslist.org`,
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(overlongAuthenticationMailbox))).rejects.toThrow('unauthenticated_sender');
+
+  const overlongFromMailbox = multipartAlert.replace(
+    'From: craigslist alerts <noreply@craigslist.org>',
+    `From: craigslist alerts <${overlongUtf8LocalPart}@craigslist.org>`,
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(overlongFromMailbox))).rejects.toThrow('untrusted_sender');
+
+  const normalizationShrinkingLocalPart = 'e\u0301'.repeat(22);
+  const normalizationShrinkingAuthenticationMailbox = multipartAlert.replace(
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org; spf=pass smtp.mailfrom=noreply@craigslist.org',
+    `Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=fail header.d=evil.example; spf=pass smtp.mailfrom=${normalizationShrinkingLocalPart}@craigslist.org`,
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(normalizationShrinkingAuthenticationMailbox))).rejects.toThrow('unauthenticated_sender');
+
+  const normalizationShrinkingFromMailbox = multipartAlert.replace(
+    'From: craigslist alerts <noreply@craigslist.org>',
+    `From: craigslist alerts <${normalizationShrinkingLocalPart}@craigslist.org>`,
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(normalizationShrinkingFromMailbox))).rejects.toThrow('untrusted_sender');
+
+  const caseFoldingShrinkingLocalPart = 'K'.repeat(22);
+  const caseFoldingAuthenticationMailbox = multipartAlert.replace(
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org; spf=pass smtp.mailfrom=noreply@craigslist.org',
+    `Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=fail header.d=evil.example; spf=pass smtp.mailfrom=${caseFoldingShrinkingLocalPart}@craigslist.org`,
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(caseFoldingAuthenticationMailbox))).rejects.toThrow('unauthenticated_sender');
+
+  const caseFoldingFromMailbox = multipartAlert.replace(
+    'From: craigslist alerts <noreply@craigslist.org>',
+    `From: craigslist alerts <${caseFoldingShrinkingLocalPart}@craigslist.org>`,
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(caseFoldingFromMailbox))).rejects.toThrow('untrusted_sender');
+
+  const fullwidthDomainLabel = 'ａ'.repeat(60);
+  const fullwidthAlignedDomains = multipartAlert.replace(
+    'dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org',
+    `dmarc=pass header.from=${fullwidthDomainLabel}.craigslist.org; dkim=pass header.d=${fullwidthDomainLabel}.craigslist.org`,
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(fullwidthAlignedDomains))).rejects.toThrow('unauthenticated_sender');
+
+  const escapedQuotedLocal = '\\A'.repeat(65);
+  const escapedOverlongAuthenticationMailbox = multipartAlert.replace(
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org; spf=pass smtp.mailfrom=noreply@craigslist.org',
+    `Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=fail header.d=evil.example; spf=pass smtp.mailfrom="${escapedQuotedLocal}@craigslist.org"`,
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(escapedOverlongAuthenticationMailbox))).rejects.toThrow('unauthenticated_sender');
+
+  const encodedWordLocal = `=?UTF-8?Q?${'A'.repeat(60)}?=`;
+  const encodedWordFromMailbox = multipartAlert.replace(
+    'From: craigslist alerts <noreply@craigslist.org>',
+    `From: craigslist alerts <${encodedWordLocal}@craigslist.org>`,
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(encodedWordFromMailbox))).rejects.toThrow('untrusted_sender');
 
   const forged = multipartAlert.replace(
     'From: craigslist alerts <noreply@craigslist.org>',

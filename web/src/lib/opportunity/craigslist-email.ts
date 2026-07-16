@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 
 import { simpleParser } from 'mailparser';
 
+import { redactContactMailboxes } from './contact-redaction';
 import type { ListingInput } from './repository';
 
 export type ParsedCraigslistAlert = {
@@ -22,13 +23,17 @@ function splitAuthenticationClauses(value: string): string[] | null {
       continue;
     }
     if (character === '\\') {
+      if (depth === 0 && !quoted) return null;
       current += character;
       escaped = true;
       continue;
     }
     if (character === '"' && depth === 0) quoted = !quoted;
     if (!quoted && character === '(') depth += 1;
-    if (!quoted && character === ')' && depth > 0) depth -= 1;
+    if (!quoted && character === ')') {
+      if (depth === 0) return null;
+      depth -= 1;
+    }
     if (character === ';' && depth === 0 && !quoted) {
       clauses.push(current);
       current = '';
@@ -53,6 +58,7 @@ function stripAuthenticationComments(value: string): string | null {
       continue;
     }
     if (character === '\\') {
+      if (depth === 0 && !quoted) return null;
       if (depth === 0) output += character;
       escaped = true;
       continue;
@@ -67,7 +73,8 @@ function stripAuthenticationComments(value: string): string | null {
       depth += 1;
       continue;
     }
-    if (!quoted && character === ')' && depth > 0) {
+    if (!quoted && character === ')') {
+      if (depth === 0) return null;
       depth -= 1;
       continue;
     }
@@ -80,6 +87,7 @@ function stripAuthenticationComments(value: string): string | null {
 type AuthenticationProperty = {
   key: string;
   value: string;
+  quoted: boolean;
 };
 
 function parseAuthenticationClause(clause: string): AuthenticationProperty[] | null {
@@ -90,7 +98,7 @@ function parseAuthenticationClause(clause: string): AuthenticationProperty[] | n
   let index = 0;
 
   while (index < value.length) {
-    while (/\s/.test(value[index] ?? '')) index += 1;
+    while (/[\t ]/.test(value[index] ?? '')) index += 1;
     if (index >= value.length) break;
 
     const keyStart = index;
@@ -98,14 +106,15 @@ function parseAuthenticationClause(clause: string): AuthenticationProperty[] | n
     if (keyStart === index) return null;
     const key = value.slice(keyStart, index).toLowerCase();
 
-    while (/\s/.test(value[index] ?? '')) index += 1;
+    while (/[\t ]/.test(value[index] ?? '')) index += 1;
     if (value[index] !== '=') return null;
     index += 1;
-    while (/\s/.test(value[index] ?? '')) index += 1;
+    while (/[\t ]/.test(value[index] ?? '')) index += 1;
     if (index >= value.length) return null;
 
     let propertyValue = '';
-    if (value[index] === '"') {
+    const quotedProperty = value[index] === '"';
+    if (quotedProperty) {
       index += 1;
       let closed = false;
       while (index < value.length) {
@@ -126,80 +135,136 @@ function parseAuthenticationClause(clause: string): AuthenticationProperty[] | n
         index += 1;
       }
       if (!closed) return null;
-      if (index < value.length && !/\s/.test(value[index])) return null;
+      if (index < value.length && !/[\t ]/.test(value[index])) return null;
     } else {
       const valueStart = index;
-      while (index < value.length && !/\s/.test(value[index])) index += 1;
+      while (index < value.length && !/[\t ]/.test(value[index])) index += 1;
       propertyValue = value.slice(valueStart, index);
     }
 
     if (!propertyValue) return null;
-    properties.push({ key, value: propertyValue.toLowerCase() });
+    properties.push({ key: key.toLowerCase(), value: propertyValue, quoted: quotedProperty });
   }
 
   return properties.length > 0 ? properties : null;
 }
 
-function validDomain(value: string): boolean {
-  if (value.length === 0 || value.length > 253 || value.includes('..')) return false;
-  const labels = value.split('.');
-  return labels.length >= 2 && labels.every((label) => (
+function normalizedDomain(value: string): string | null {
+  if (!/^[\x00-\x7f]+$/.test(value) || Buffer.byteLength(value, 'utf8') > 254) return null;
+  const lower = value.toLowerCase();
+  const domain = lower.endsWith('.') ? lower.slice(0, -1) : lower;
+  if (domain.length === 0 || domain.length > 253 || domain.includes('..')) return null;
+  const labels = domain.split('.');
+  if (labels.length < 2 || !labels.every((label) => (
     label.length >= 1
     && label.length <= 63
     && /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i.test(label)
-  ));
-}
-
-function mailboxDomain(value: string): string | null {
-  if (value.length > 254 || /[\s\x00-\x1f\x7f]/.test(value)) return null;
-  const firstSeparator = value.indexOf('@');
-  if (firstSeparator <= 0 || firstSeparator !== value.lastIndexOf('@')) return null;
-  const localPart = value.slice(0, firstSeparator);
-  const domain = value.slice(firstSeparator + 1).toLowerCase();
-  if (
-    localPart.length > 64
-    || localPart.startsWith('.')
-    || localPart.endsWith('.')
-    || localPart.includes('..')
-    || !/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+$/i.test(localPart)
-    || !validDomain(domain)
-  ) return null;
+  ))) return null;
   return domain;
 }
 
+function validLocalPart(value: string): boolean {
+  if (
+    value.length === 0
+    || !/^[\x21-\x7e]+$/.test(value)
+    || Buffer.byteLength(value, 'utf8') > 64
+  ) return false;
+  return !value.startsWith('.')
+    && !value.endsWith('.')
+    && !value.includes('..')
+    && /^[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+$/i.test(value);
+}
+
+function mailboxDomain(value: string): string | null {
+  const mailbox = value;
+  const normalizedMailbox = value.normalize('NFC');
+  if (
+    Buffer.byteLength(mailbox, 'utf8') > 254
+    || Buffer.byteLength(normalizedMailbox, 'utf8') > 254
+    || /[\r\n\x00]/.test(mailbox)
+  ) return null;
+  let quoted = false;
+  let escaped = false;
+  let separator = -1;
+  for (let index = 0; index < mailbox.length; index += 1) {
+    const character = mailbox[index];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (quoted && character === '\\') {
+      escaped = true;
+      continue;
+    }
+    if (character === '"') {
+      quoted = !quoted;
+      continue;
+    }
+    if (character === '@' && !quoted) {
+      if (separator !== -1) return null;
+      separator = index;
+    }
+  }
+  if (quoted || escaped || separator <= 0 || separator >= mailbox.length - 1) return null;
+  const localPart = mailbox.slice(0, separator);
+  if (!validLocalPart(localPart)) return null;
+  return normalizedDomain(mailbox.slice(separator + 1));
+}
+
 function isCraigslistDomain(domain: string | null): boolean {
-  return domain !== null
-    && validDomain(domain)
-    && (domain === 'craigslist.org' || domain.endsWith('.craigslist.org'));
+  if (domain === null) return false;
+  const normalized = normalizedDomain(domain);
+  return normalized !== null
+    && (normalized === 'craigslist.org' || normalized.endsWith('.craigslist.org'));
 }
 
 function passingAlignedClause(clause: string, method: 'dmarc' | 'dkim' | 'spf'): boolean {
   const properties = parseAuthenticationClause(clause);
-  if (!properties || properties[0].key !== method || properties[0].value !== 'pass') return false;
+  if (
+    !properties
+    || properties[0].key !== method
+    || properties[0].quoted
+    || properties[0].value.toLowerCase() !== 'pass'
+  ) return false;
   const propertyName = method === 'dmarc'
     ? 'header.from'
     : method === 'dkim'
       ? 'header.d'
       : 'smtp.mailfrom';
   const identities = properties.filter((property) => property.key === propertyName);
-  if (identities.length !== 1) return false;
+  if (identities.length !== 1 || identities[0].quoted) return false;
   return isCraigslistDomain(method === 'spf' ? mailboxDomain(identities[0].value) : identities[0].value);
 }
 
+function unfoldedHeaderLines(rawMime: Buffer): string[] | null {
+  const boundaryScan = rawMime
+    .subarray(0, Math.min(rawMime.length, 65_540))
+    .toString('latin1');
+  const boundary = boundaryScan.match(/(?:\r\n|(?<!\r)\n|\r(?!\n))(?:\r\n|(?<!\r)\n|\r(?!\n))/);
+  if (boundary?.index === undefined || boundary.index > 65_536) return null;
+  const headerText = rawMime.subarray(0, boundary.index).toString('utf8');
+  if (/\r(?!\n)/.test(headerText) || /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(headerText)) return null;
+  const headerLines = headerText
+    .replace(/\r?\n[\t ]+/g, ' ')
+    .split(/\r?\n/);
+  if (headerLines.some((line) => !/^[!#$%&'*+\-.^_`|~0-9A-Z]+:/i.test(line))) return null;
+  return headerLines;
+}
+
 function authenticatedByFastmail(rawMime: Buffer): boolean {
-  const headerBoundary = rawMime.indexOf(Buffer.from('\r\n\r\n'));
-  const fallbackBoundary = rawMime.indexOf(Buffer.from('\n\n'));
-  const end = headerBoundary >= 0 ? headerBoundary : fallbackBoundary >= 0 ? fallbackBoundary : Math.min(rawMime.length, 65_536);
-  const unfoldedHeaders = rawMime.subarray(0, Math.min(end, 65_536)).toString('utf8')
-    .replace(/\r?\n[\t ]+/g, ' ');
-  const firstAuthenticationResult = unfoldedHeaders.match(/^Authentication-Results:\s*(.+)$/im)?.[1];
+  const headerLines = unfoldedHeaderLines(rawMime);
+  if (!headerLines) return false;
+  const authenticationHeader = headerLines.find((line) => /^Authentication-Results:/i.test(line));
+  const firstAuthenticationResult = authenticationHeader
+    ?.match(/^Authentication-Results:[\t ]*([^\r\n]+)$/i)?.[1];
   if (!firstAuthenticationResult) return false;
 
   const splitClauses = splitAuthenticationClauses(firstAuthenticationResult);
   if (!splitClauses) return false;
   const clauses = splitClauses;
-  const authenticationServer = (clauses.shift()?.trim() ?? '').toLowerCase();
-  if (!validDomain(authenticationServer)) return false;
+  const rawAuthenticationServer = clauses.shift()?.trim() ?? '';
+  const authenticationServer = normalizedDomain(rawAuthenticationServer);
+  if (!authenticationServer) return false;
   if (!(authenticationServer === 'messagingengine.com' || authenticationServer.endsWith('.messagingengine.com'))) return false;
 
   const alignedDmarc = clauses.some((clause) => passingAlignedClause(clause, 'dmarc'));
@@ -209,14 +274,26 @@ function authenticatedByFastmail(rawMime: Buffer): boolean {
   return alignedDmarc && alignedDkimOrSpf;
 }
 
+function trustedCraigslistRawFrom(rawMime: Buffer): boolean {
+  const headerLines = unfoldedHeaderLines(rawMime);
+  if (!headerLines) return false;
+  const fromHeaders = headerLines.filter((line) => /^From:/i.test(line));
+  if (fromHeaders.length !== 1) return false;
+  const rawValue = fromHeaders[0].replace(/^From:[\t ]*/i, '');
+  if (!/^[\x00-\x7f]+$/.test(rawValue) || /=\?/.test(rawValue)) return false;
+
+  const angleAddress = rawValue.match(/^[^<>]*<([^<>]+)>[\t ]*$/)?.[1];
+  const address = (angleAddress ?? rawValue).trim();
+  return isCraigslistDomain(mailboxDomain(address));
+}
+
 function trustedCraigslistAddress(address: string | undefined): boolean {
   if (!address) return false;
-  return isCraigslistDomain(mailboxDomain(address.trim().toLowerCase()));
+  return isCraigslistDomain(mailboxDomain(address.trim()));
 }
 
 function sanitizedText(value: string): string {
-  return value
-    .replace(/(?:"[^"\r\n]{1,64}"|[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+)@[A-Z0-9](?:[A-Z0-9.-]{0,251}[A-Z0-9])?/gi, '[contact redacted]')
+  return redactContactMailboxes(value)
     .replace(/(?<!\w)\+(?:\d[\d().\s-]{6,}\d)(?!\w)/g, '[contact redacted]')
     .replace(/(?<!\d)(?:\+?1[-.\s]?)?\(?[2-9]\d{2}\)?[-.\s]\d{3}[-.\s]\d{4}(?!\d)/g, '[contact redacted]')
     .replace(/\s+/g, ' ')
@@ -317,13 +394,14 @@ function listingFromLines(lines: string[], urlIndex: number, sourceUrl: string, 
 
 export async function parseCraigslistAlertMime(rawMime: Buffer): Promise<ParsedCraigslistAlert> {
   if (!authenticatedByFastmail(rawMime)) throw new Error('unauthenticated_sender');
+  if (!trustedCraigslistRawFrom(rawMime)) throw new Error('untrusted_sender');
   const message = await simpleParser(rawMime, { skipImageLinks: true });
   const senders = message.from?.value.map((entry) => entry.address) ?? [];
   if (senders.length === 0 || !senders.every(trustedCraigslistAddress)) {
     throw new Error('untrusted_sender');
   }
 
-  const text = message.text ?? '';
+  const text = redactContactMailboxes(message.text ?? '');
   const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const seen = new Set<string>();
   const listings: ListingInput[] = [];

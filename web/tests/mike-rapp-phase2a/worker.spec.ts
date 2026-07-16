@@ -841,15 +841,29 @@ test('adapter persistence strips query data, contact text, raw identities, and u
   expect(databaseUrl).toContain('127.0.0.1:55432/mike_phase2a');
   const pool = new Pool({ connectionString: databaseUrl });
   const repository = new OpportunityRepository(pool);
-  const syntheticEmail = ['seller', 'private.invalid'].join('@');
+  const syntheticEmail = ['seller', 'ab--cd.com'].join('@');
+  const syntheticUnicodeEmail = ['उपयोगकर्ता', 'उदाहरण.भारत'].join('@');
+  const syntheticDecomposedEmail = [`e\u0301`, 'example.com'].join('@');
+  const syntheticSymbolEmail = ['🚗', '[IPv6:2001:db8::1]'].join('@');
+  const syntheticCfwsEmails = [
+    '"foldedprivate\r\n \tlocalword"@e.co,',
+    '(lead)x@e.co;',
+    'x@[a\\]priv](trail)!',
+    '"p n" (s) @ (i) localhost:',
+    'rep@e.co..',
+    '<ang@e.co>',
+    'one@e.co,two@e.net',
+    'dsh@e.co--buyers',
+  ];
   const syntheticPhone = ['404', '555', '0199'].join('-');
+  const syntheticInternationalPhone = ['+44', '20', '7946', '0958'].join(' ');
   const listing = {
     ...matchingListing,
     canonicalKey: 'fixture:sanitized-persistence',
     sourceItemId: 'sanitized-persistence',
     sourceUrl: 'https://example.test/item/42?token=synthetic-sensitive#contact',
-    title: `2011 Toyota Land Cruiser contact ${syntheticEmail}`,
-    locationText: `Atlanta ${syntheticPhone}`,
+    title: `2011 Toyota Land Cruiser contact <${syntheticEmail}> ${syntheticUnicodeEmail}, ${syntheticDecomposedEmail}; ${syntheticSymbolEmail}! ${syntheticCfwsEmails.join(' ')}`,
+    locationText: `Atlanta Meet@noon cars@home 2@3 Meet @ noon x @ y foo @ bar @ baz ${syntheticPhone} ${syntheticInternationalPhone}`,
     duplicateIdentity: { type: 'vin', value: 'synthetic-private-identity' },
     privateContact: 'synthetic-extra-secret',
   };
@@ -907,7 +921,27 @@ test('adapter persistence strips query data, contact text, raw identities, and u
     expect(serialized).not.toContain('synthetic-extra-secret');
     expect(serialized).not.toContain('synthetic-private-identity');
     expect(serialized).not.toContain(syntheticEmail);
+    expect(serialized).not.toContain(syntheticUnicodeEmail);
+    expect(serialized).not.toContain(syntheticDecomposedEmail);
+    expect(serialized).not.toContain(syntheticDecomposedEmail.normalize('NFC'));
+    expect(serialized).not.toContain(syntheticSymbolEmail);
+    for (const syntheticCfwsEmail of syntheticCfwsEmails) {
+      expect(serialized).not.toContain(syntheticCfwsEmail);
+    }
+    expect(serialized).not.toMatch(/jane|jim|jill|jack|folded/);
+    expect(serialized).not.toContain('foldedprivate');
+    expect(serialized).not.toContain('localword');
+    expect(serialized).not.toContain('(lead)');
+    expect(serialized).not.toContain('priv](trail)');
+    expect(serialized).not.toContain('"p n"');
+    expect(serialized).not.toMatch(/rep@|ang@|one@|two@|dsh@/);
+    expect(serialized).toContain('[contact redacted]..');
+    expect(serialized).toContain('<[contact redacted]>');
+    expect(serialized).toContain('[contact redacted],[contact redacted]');
+    expect(serialized).toContain('[contact redacted]--buyers');
+    expect(serialized).toContain('Meet@noon cars@home 2@3 Meet @ noon x @ y foo @ bar @ baz');
     expect(serialized).not.toContain(syntheticPhone);
+    expect(serialized).not.toContain(syntheticInternationalPhone);
     expect(persisted.rows[0].payload_hash).toMatch(/^[a-f0-9]{64}$/);
     expect(persisted.rows[0].payload_hash).not.toBe(
       createHash('sha256').update(JSON.stringify(listing)).digest('hex'),

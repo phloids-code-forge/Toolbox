@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 
 import { Pool, type PoolClient } from 'pg';
 
+import { redactContactMailboxes } from './contact-redaction';
 import type { MatchEvaluation, MatchWatch } from './matching';
 import type { ValidatedWatchInput, WatchStatus } from './validation';
 
@@ -87,8 +88,8 @@ export type ListingInput = {
 
 function stripContactText(value: string | null): string | null {
   if (value === null) return null;
-  return value
-    .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, '[contact redacted]')
+  return redactContactMailboxes(value)
+    .replace(/(?<!\w)\+(?:\d[\d().\s-]{6,}\d)(?!\w)/g, '[contact redacted]')
     .replace(/(?<!\d)(?:\+?1[-.\s]?)?\(?[2-9]\d{2}\)?[-.\s]\d{3}[-.\s]\d{4}(?!\d)/g, '[contact redacted]')
     .replace(/\s+/g, ' ')
     .trim();
