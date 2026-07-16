@@ -846,6 +846,11 @@ test('adapter persistence strips query data, contact text, raw identities, and u
   const syntheticDecomposedEmail = [`e\u0301`, 'example.com'].join('@');
   const syntheticSymbolEmail = ['🚗', '[IPv6:2001:db8::1]'].join('@');
   const syntheticQuotedEmail = '"john doe"@example.com';
+  const syntheticCfwsEmails = [
+    '"jane doe" @example.com',
+    '"jim doe"@ example.com',
+    '"jill doe"(seller)@(domain)example.com',
+  ];
   const syntheticPhone = ['404', '555', '0199'].join('-');
   const syntheticInternationalPhone = ['+44', '20', '7946', '0958'].join(' ');
   const listing = {
@@ -853,7 +858,7 @@ test('adapter persistence strips query data, contact text, raw identities, and u
     canonicalKey: 'fixture:sanitized-persistence',
     sourceItemId: 'sanitized-persistence',
     sourceUrl: 'https://example.test/item/42?token=synthetic-sensitive#contact',
-    title: `2011 Toyota Land Cruiser contact ${syntheticEmail} ${syntheticUnicodeEmail} ${syntheticDecomposedEmail} ${syntheticSymbolEmail} ${syntheticQuotedEmail}`,
+    title: `2011 Toyota Land Cruiser contact ${syntheticEmail} ${syntheticUnicodeEmail} ${syntheticDecomposedEmail} ${syntheticSymbolEmail} ${syntheticQuotedEmail} ${syntheticCfwsEmails.join(' ')}`,
     locationText: `Atlanta ${syntheticPhone} ${syntheticInternationalPhone}`,
     duplicateIdentity: { type: 'vin', value: 'synthetic-private-identity' },
     privateContact: 'synthetic-extra-secret',
@@ -918,6 +923,10 @@ test('adapter persistence strips query data, contact text, raw identities, and u
     expect(serialized).not.toContain(syntheticSymbolEmail);
     expect(serialized).not.toContain(syntheticQuotedEmail);
     expect(serialized).not.toContain('john');
+    for (const syntheticCfwsEmail of syntheticCfwsEmails) {
+      expect(serialized).not.toContain(syntheticCfwsEmail);
+    }
+    expect(serialized).not.toMatch(/jane|jim|jill/);
     expect(serialized).not.toContain(syntheticPhone);
     expect(serialized).not.toContain(syntheticInternationalPhone);
     expect(persisted.rows[0].payload_hash).toMatch(/^[a-f0-9]{64}$/);

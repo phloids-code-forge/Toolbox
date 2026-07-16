@@ -3,6 +3,7 @@ import { domainToASCII } from 'node:url';
 
 import { simpleParser } from 'mailparser';
 
+import { redactContactMailboxes } from './contact-redaction';
 import type { ListingInput } from './repository';
 
 export type ParsedCraigslistAlert = {
@@ -141,7 +142,7 @@ function parseAuthenticationClause(clause: string): AuthenticationProperty[] | n
     }
 
     if (!propertyValue) return null;
-    properties.push({ key, value: propertyValue.toLowerCase() });
+    properties.push({ key: key.toLowerCase(), value: propertyValue });
   }
 
   return properties.length > 0 ? properties : null;
@@ -236,7 +237,7 @@ function isCraigslistDomain(domain: string | null): boolean {
 
 function passingAlignedClause(clause: string, method: 'dmarc' | 'dkim' | 'spf'): boolean {
   const properties = parseAuthenticationClause(clause);
-  if (!properties || properties[0].key !== method || properties[0].value !== 'pass') return false;
+  if (!properties || properties[0].key !== method || properties[0].value.toLowerCase() !== 'pass') return false;
   const propertyName = method === 'dmarc'
     ? 'header.from'
     : method === 'dkim'
@@ -257,7 +258,11 @@ function authenticatedByFastmail(rawMime: Buffer): boolean {
   if (/\r(?!\n)/.test(headerText)) return false;
   const unfoldedHeaders = headerText
     .replace(/\r?\n[\t ]+/g, ' ');
-  const firstAuthenticationResult = unfoldedHeaders.match(/^Authentication-Results:\s*(.+)$/im)?.[1];
+  const headerLines = unfoldedHeaders.split(/\r?\n/);
+  if (headerLines.some((line) => !/^[!#$%&'*+\-.^_`|~0-9A-Z]+:/i.test(line))) return false;
+  const authenticationHeader = headerLines.find((line) => /^Authentication-Results:/i.test(line));
+  const firstAuthenticationResult = authenticationHeader
+    ?.match(/^Authentication-Results:[\t ]*([^\r\n]+)$/i)?.[1];
   if (!firstAuthenticationResult) return false;
 
   const splitClauses = splitAuthenticationClauses(firstAuthenticationResult);
@@ -277,13 +282,11 @@ function authenticatedByFastmail(rawMime: Buffer): boolean {
 
 function trustedCraigslistAddress(address: string | undefined): boolean {
   if (!address) return false;
-  return isCraigslistDomain(mailboxDomain(address.trim().toLowerCase()));
+  return isCraigslistDomain(mailboxDomain(address.trim()));
 }
 
 function sanitizedText(value: string): string {
-  return value
-    .normalize('NFC')
-    .replace(/"(?:\\.|[^"\\\r\n])*"@[^\s@]+|[^\s@]+@[^\s@]+/gu, '[contact redacted]')
+  return redactContactMailboxes(value)
     .replace(/(?<!\w)\+(?:\d[\d().\s-]{6,}\d)(?!\w)/g, '[contact redacted]')
     .replace(/(?<!\d)(?:\+?1[-.\s]?)?\(?[2-9]\d{2}\)?[-.\s]\d{3}[-.\s]\d{4}(?!\d)/g, '[contact redacted]')
     .replace(/\s+/g, ' ')
