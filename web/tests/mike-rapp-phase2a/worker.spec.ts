@@ -850,6 +850,7 @@ test('adapter persistence strips query data, contact text, raw identities, and u
     '"jane doe" @example.com',
     '"jim doe"@ example.com',
     '"jill doe"(seller)@(domain)example.com',
+    'jack.doe (seller) @ (domain) example.com',
   ];
   const syntheticPhone = ['404', '555', '0199'].join('-');
   const syntheticInternationalPhone = ['+44', '20', '7946', '0958'].join(' ');
@@ -926,7 +927,7 @@ test('adapter persistence strips query data, contact text, raw identities, and u
     for (const syntheticCfwsEmail of syntheticCfwsEmails) {
       expect(serialized).not.toContain(syntheticCfwsEmail);
     }
-    expect(serialized).not.toMatch(/jane|jim|jill/);
+    expect(serialized).not.toMatch(/jane|jim|jill|jack/);
     expect(serialized).not.toContain(syntheticPhone);
     expect(serialized).not.toContain(syntheticInternationalPhone);
     expect(persisted.rows[0].payload_hash).toMatch(/^[a-f0-9]{64}$/);

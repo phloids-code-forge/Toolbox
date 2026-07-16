@@ -33,28 +33,37 @@ function consumeCfws(value: string, start: number): number | null {
   return index;
 }
 
-function quotedMailboxEnd(value: string, start: number): number | null {
-  let index = start + 1;
-  let escaped = false;
-  let closed = false;
-  while (index < value.length) {
-    const character = value[index];
+function mailboxEnd(value: string, start: number): number | null {
+  let index = start;
+  if (value[start] === '"') {
     index += 1;
-    if (escaped) {
-      escaped = false;
-      continue;
+    let escaped = false;
+    let closed = false;
+    while (index < value.length) {
+      const character = value[index];
+      index += 1;
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (character === '\\') {
+        escaped = true;
+        continue;
+      }
+      if (character === '"') {
+        closed = true;
+        break;
+      }
+      if (character === '\r' || character === '\n') return null;
     }
-    if (character === '\\') {
-      escaped = true;
-      continue;
-    }
-    if (character === '"') {
-      closed = true;
-      break;
-    }
-    if (character === '\r' || character === '\n') return null;
+    if (!closed || escaped) return null;
+  } else {
+    while (
+      index < value.length
+      && !/[\s@()]/.test(value[index])
+    ) index += 1;
+    if (index === start) return null;
   }
-  if (!closed || escaped) return null;
 
   const atIndex = consumeCfws(value, index);
   if (atIndex === null || value[atIndex] !== '@') return null;
@@ -78,11 +87,7 @@ export function redactContactMailboxes(value: string): string {
   let index = 0;
 
   while (index < normalized.length) {
-    if (normalized[index] !== '"') {
-      index += 1;
-      continue;
-    }
-    const end = quotedMailboxEnd(normalized, index);
+    const end = mailboxEnd(normalized, index);
     if (end === null) {
       index += 1;
       continue;
