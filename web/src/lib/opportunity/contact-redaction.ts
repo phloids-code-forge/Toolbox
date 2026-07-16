@@ -33,6 +33,11 @@ function consumeCfws(value: string, start: number): number | null {
   return index;
 }
 
+function hasStrongCfws(value: string, start: number, end: number): boolean {
+  const segment = value.slice(start, end);
+  return segment.includes('(') || segment.includes('\r') || segment.includes('\n');
+}
+
 function consumeQuotedWord(value: string, start: number): number | null {
   if (value[start] !== '"') return null;
   let index = start + 1;
@@ -104,14 +109,14 @@ function mailboxEnd(value: string, start: number, hasLeadingCfws = false): numbe
     const wordEnd = index;
     const afterWordCfws = consumeCfws(value, wordEnd);
     if (afterWordCfws === null) return null;
-    if (afterWordCfws !== wordEnd) hasMailboxSyntax = true;
+    if (hasStrongCfws(value, wordEnd, afterWordCfws)) hasMailboxSyntax = true;
     index = afterWordCfws;
     if (value[index] !== '.') break;
 
     const dotEnd = index + 1;
     const afterDotCfws = consumeCfws(value, dotEnd);
     if (afterDotCfws === null) return null;
-    if (afterDotCfws !== dotEnd) hasMailboxSyntax = true;
+    if (hasStrongCfws(value, dotEnd, afterDotCfws)) hasMailboxSyntax = true;
     index = afterDotCfws;
   }
 
@@ -120,11 +125,11 @@ function mailboxEnd(value: string, start: number, hasLeadingCfws = false): numbe
   const beforeAt = index;
   const atIndex = consumeCfws(value, beforeAt);
   if (atIndex === null || value[atIndex] !== '@') return null;
-  if (atIndex !== beforeAt) hasMailboxSyntax = true;
+  if (hasStrongCfws(value, beforeAt, atIndex)) hasMailboxSyntax = true;
   const afterAt = atIndex + 1;
   const domainStart = consumeCfws(value, afterAt);
   if (domainStart === null || domainStart >= value.length || /\s/.test(value[domainStart])) return null;
-  if (domainStart !== afterAt) hasMailboxSyntax = true;
+  if (hasStrongCfws(value, afterAt, domainStart)) hasMailboxSyntax = true;
 
   if (value[domainStart] === '[') {
     const literalEnd = consumeDomainLiteral(value, domainStart);
@@ -144,18 +149,17 @@ function mailboxEnd(value: string, start: number, hasLeadingCfws = false): numbe
     const domainWordEnd = domainEnd;
     const afterDomainCfws = consumeCfws(value, domainWordEnd);
     if (afterDomainCfws === null) return null;
-    const domainCfws = value.slice(domainWordEnd, afterDomainCfws);
     domainEnd = afterDomainCfws;
     if (value[domainEnd] !== '.') {
-      if (domainCfws.includes('(')) hasMailboxSyntax = true;
+      if (hasStrongCfws(value, domainWordEnd, afterDomainCfws)) hasMailboxSyntax = true;
       break;
     }
-    if (afterDomainCfws !== domainWordEnd) hasMailboxSyntax = true;
+    if (hasStrongCfws(value, domainWordEnd, afterDomainCfws)) hasMailboxSyntax = true;
 
     const domainDotEnd = domainEnd + 1;
     const afterDomainDotCfws = consumeCfws(value, domainDotEnd);
     if (afterDomainDotCfws === null) return null;
-    if (afterDomainDotCfws !== domainDotEnd) hasMailboxSyntax = true;
+    if (hasStrongCfws(value, domainDotEnd, afterDomainDotCfws)) hasMailboxSyntax = true;
     domainEnd = afterDomainDotCfws;
   }
   if (value[domainEnd] === '@') return null;

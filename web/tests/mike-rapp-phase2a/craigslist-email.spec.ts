@@ -128,10 +128,12 @@ test('Craigslist MIME parser emits allowlisted sanitized listings without duplic
 
   const ordinaryAtSignHeadline = multipartAlert.replace(
     '1985 Toyota Supra P-Type - $18,500',
-    '1985 Toyota Supra P-Type @ Meet@noon cars@home 2@3 - $18,500',
+    '1985 Toyota Supra P-Type @ Meet@noon cars@home 2@3 Meet @ noon x @ y foo @ bar @ baz - $18,500',
   );
   const ordinaryAtSignParsed = await parseCraigslistAlertMime(Buffer.from(ordinaryAtSignHeadline));
-  expect(ordinaryAtSignParsed.listings[0].title).toBe('1985 Toyota Supra P-Type @ Meet@noon cars@home 2@3');
+  expect(ordinaryAtSignParsed.listings[0].title).toBe(
+    '1985 Toyota Supra P-Type @ Meet@noon cars@home 2@3 Meet @ noon x @ y foo @ bar @ baz',
+  );
 });
 
 test('Craigslist MIME parser supports HTML-only saved-search alerts without trusting arbitrary links', async () => {

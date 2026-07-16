@@ -863,7 +863,7 @@ test('adapter persistence strips query data, contact text, raw identities, and u
     sourceItemId: 'sanitized-persistence',
     sourceUrl: 'https://example.test/item/42?token=synthetic-sensitive#contact',
     title: `2011 Toyota Land Cruiser contact ${syntheticEmail} ${syntheticUnicodeEmail} ${syntheticDecomposedEmail} ${syntheticSymbolEmail} ${syntheticCfwsEmails.join(' ')}`,
-    locationText: `Atlanta Meet@noon cars@home 2@3 ${syntheticPhone} ${syntheticInternationalPhone}`,
+    locationText: `Atlanta Meet@noon cars@home 2@3 Meet @ noon x @ y foo @ bar @ baz ${syntheticPhone} ${syntheticInternationalPhone}`,
     duplicateIdentity: { type: 'vin', value: 'synthetic-private-identity' },
     privateContact: 'synthetic-extra-secret',
   };
@@ -938,7 +938,7 @@ test('adapter persistence strips query data, contact text, raw identities, and u
     expect(serialized).not.toContain('(lead)');
     expect(serialized).not.toContain('priv](trail)');
     expect(serialized).not.toContain('"p n"');
-    expect(serialized).toContain('Meet@noon cars@home 2@3');
+    expect(serialized).toContain('Meet@noon cars@home 2@3 Meet @ noon x @ y foo @ bar @ baz');
     expect(serialized).not.toContain(syntheticPhone);
     expect(serialized).not.toContain(syntheticInternationalPhone);
     expect(persisted.rows[0].payload_hash).toMatch(/^[a-f0-9]{64}$/);
