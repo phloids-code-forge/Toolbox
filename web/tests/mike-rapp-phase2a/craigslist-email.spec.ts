@@ -222,11 +222,16 @@ test('Craigslist MIME parser rejects unauthenticated mail, non-Craigslist sender
   const missingAuthentication = multipartAlert.replace(/^Authentication-Results:.*\r\n/m, '');
   await expect(parseCraigslistAlertMime(Buffer.from(missingAuthentication))).rejects.toThrow('unauthenticated_sender');
 
-  const mixedLineEndingBodyInjection = missingAuthentication.replace(
-    '\r\n\r\n',
-    '\n\nAuthentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org\r\n\r\n',
-  );
-  await expect(parseCraigslistAlertMime(Buffer.from(mixedLineEndingBodyInjection))).rejects.toThrow('unauthenticated_sender');
+  const [missingAuthenticationHeaders, ...missingAuthenticationBody] = missingAuthentication.split('\r\n\r\n');
+  for (const mixedBoundary of ['\n\n', '\r\n\n', '\n\r\n', '\r\r']) {
+    const mixedLineEndingBodyInjection = [
+      missingAuthenticationHeaders,
+      mixedBoundary,
+      'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org\r\n\r\n',
+      missingAuthenticationBody.join('\r\n\r\n'),
+    ].join('');
+    await expect(parseCraigslistAlertMime(Buffer.from(mixedLineEndingBodyInjection))).rejects.toThrow('unauthenticated_sender');
+  }
 
   const overlongUtf8LocalPart = 'उ'.repeat(30);
   const overlongAuthenticationMailbox = multipartAlert.replace(

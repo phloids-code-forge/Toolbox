@@ -238,14 +238,14 @@ function passingAlignedClause(clause: string, method: 'dmarc' | 'dkim' | 'spf'):
 }
 
 function authenticatedByFastmail(rawMime: Buffer): boolean {
-  const boundaries = [
-    rawMime.indexOf(Buffer.from('\r\n\r\n')),
-    rawMime.indexOf(Buffer.from('\n\n')),
-  ].filter((boundary) => boundary >= 0);
-  if (boundaries.length === 0) return false;
-  const end = Math.min(...boundaries);
-  if (end > 65_536) return false;
-  const unfoldedHeaders = rawMime.subarray(0, end).toString('utf8')
+  const boundaryScan = rawMime
+    .subarray(0, Math.min(rawMime.length, 65_540))
+    .toString('latin1');
+  const boundary = boundaryScan.match(/(?:\r\n|(?<!\r)\n|\r(?!\n))(?:\r\n|(?<!\r)\n|\r(?!\n))/);
+  if (boundary?.index === undefined || boundary.index > 65_536) return false;
+  const headerText = rawMime.subarray(0, boundary.index).toString('utf8');
+  if (/\r(?!\n)/.test(headerText)) return false;
+  const unfoldedHeaders = headerText
     .replace(/\r?\n[\t ]+/g, ' ');
   const firstAuthenticationResult = unfoldedHeaders.match(/^Authentication-Results:\s*(.+)$/im)?.[1];
   if (!firstAuthenticationResult) return false;
