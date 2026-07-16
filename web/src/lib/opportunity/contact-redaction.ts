@@ -49,6 +49,35 @@ function consumeQuotedWord(value: string, start: number): number | null {
       continue;
     }
     if (character === '"') return index;
+    if (character === '\r') {
+      if (value[index] !== '\n' || !/[\t ]/.test(value[index + 1] ?? '')) return null;
+      index += 2;
+      continue;
+    }
+    if (character === '\n') {
+      if (!/[\t ]/.test(value[index] ?? '')) return null;
+      index += 1;
+    }
+  }
+  return null;
+}
+
+function consumeDomainLiteral(value: string, start: number): number | null {
+  if (value[start] !== '[') return null;
+  let index = start + 1;
+  let escaped = false;
+  while (index < value.length) {
+    const character = value[index];
+    index += 1;
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (character === '\\') {
+      escaped = true;
+      continue;
+    }
+    if (character === ']') return index;
     if (character === '\r' || character === '\n') return null;
   }
   return null;
@@ -87,18 +116,17 @@ function mailboxEnd(value: string, start: number): number | null {
   const domainStart = consumeCfws(value, atIndex + 1);
   if (domainStart === null || domainStart >= value.length || /\s/.test(value[domainStart])) return null;
 
-  if (value[domainStart] === '[') {
-    const close = value.indexOf(']', domainStart + 1);
-    return close >= 0 ? close + 1 : null;
-  }
+  if (value[domainStart] === '[') return consumeDomainLiteral(value, domainStart);
 
   let domainEnd = domainStart;
-  let consumedDomainWord = false;
+  const domainLabels: string[] = [];
   while (domainEnd < value.length) {
     const atomStart = domainEnd;
     while (domainEnd < value.length && !/[\s@().]/.test(value[domainEnd])) domainEnd += 1;
     if (domainEnd === atomStart) return null;
-    consumedDomainWord = true;
+    const label = value.slice(atomStart, domainEnd);
+    if (!/^[\p{L}\p{N}\p{M}](?:[\p{L}\p{N}\p{M}-]*[\p{L}\p{N}\p{M}])?$/u.test(label)) return null;
+    domainLabels.push(label);
 
     const afterDomainCfws = consumeCfws(value, domainEnd);
     if (afterDomainCfws === null) return null;
@@ -109,7 +137,7 @@ function mailboxEnd(value: string, start: number): number | null {
     if (afterDomainDotCfws === null) return null;
     domainEnd = afterDomainDotCfws;
   }
-  return consumedDomainWord ? domainEnd : null;
+  return domainLabels.length >= 2 ? domainEnd : null;
 }
 
 export function redactContactMailboxes(value: string): string {
