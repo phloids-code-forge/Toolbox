@@ -163,7 +163,7 @@ function normalizedDomain(value: string): string | null {
 
 function validLocalPart(value: string): boolean {
   const local = value.normalize('NFC');
-  if (local.length === 0 || local.length > 64 || /[\r\n\x00]/.test(local)) return false;
+  if (local.length === 0 || Buffer.byteLength(local, 'utf8') > 64 || /[\r\n\x00]/.test(local)) return false;
   if (local.startsWith('"')) {
     if (!local.endsWith('"') || local.length < 2) return false;
     let escaped = false;
@@ -187,12 +187,13 @@ function validLocalPart(value: string): boolean {
 }
 
 function mailboxDomain(value: string): string | null {
-  if (value.length > 254 || /[\r\n\x00]/.test(value)) return null;
+  const mailbox = value.normalize('NFC');
+  if (Buffer.byteLength(mailbox, 'utf8') > 254 || /[\r\n\x00]/.test(mailbox)) return null;
   let quoted = false;
   let escaped = false;
   let separator = -1;
-  for (let index = 0; index < value.length; index += 1) {
-    const character = value[index];
+  for (let index = 0; index < mailbox.length; index += 1) {
+    const character = mailbox[index];
     if (escaped) {
       escaped = false;
       continue;
@@ -210,10 +211,10 @@ function mailboxDomain(value: string): string | null {
       separator = index;
     }
   }
-  if (quoted || escaped || separator <= 0 || separator >= value.length - 1) return null;
-  const localPart = value.slice(0, separator);
+  if (quoted || escaped || separator <= 0 || separator >= mailbox.length - 1) return null;
+  const localPart = mailbox.slice(0, separator);
   if (!validLocalPart(localPart)) return null;
-  return normalizedDomain(value.slice(separator + 1));
+  return normalizedDomain(mailbox.slice(separator + 1));
 }
 
 function isCraigslistDomain(domain: string | null): boolean {
@@ -237,10 +238,14 @@ function passingAlignedClause(clause: string, method: 'dmarc' | 'dkim' | 'spf'):
 }
 
 function authenticatedByFastmail(rawMime: Buffer): boolean {
-  const headerBoundary = rawMime.indexOf(Buffer.from('\r\n\r\n'));
-  const fallbackBoundary = rawMime.indexOf(Buffer.from('\n\n'));
-  const end = headerBoundary >= 0 ? headerBoundary : fallbackBoundary >= 0 ? fallbackBoundary : Math.min(rawMime.length, 65_536);
-  const unfoldedHeaders = rawMime.subarray(0, Math.min(end, 65_536)).toString('utf8')
+  const boundaries = [
+    rawMime.indexOf(Buffer.from('\r\n\r\n')),
+    rawMime.indexOf(Buffer.from('\n\n')),
+  ].filter((boundary) => boundary >= 0);
+  if (boundaries.length === 0) return false;
+  const end = Math.min(...boundaries);
+  if (end > 65_536) return false;
+  const unfoldedHeaders = rawMime.subarray(0, end).toString('utf8')
     .replace(/\r?\n[\t ]+/g, ' ');
   const firstAuthenticationResult = unfoldedHeaders.match(/^Authentication-Results:\s*(.+)$/im)?.[1];
   if (!firstAuthenticationResult) return false;

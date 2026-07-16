@@ -222,6 +222,25 @@ test('Craigslist MIME parser rejects unauthenticated mail, non-Craigslist sender
   const missingAuthentication = multipartAlert.replace(/^Authentication-Results:.*\r\n/m, '');
   await expect(parseCraigslistAlertMime(Buffer.from(missingAuthentication))).rejects.toThrow('unauthenticated_sender');
 
+  const mixedLineEndingBodyInjection = missingAuthentication.replace(
+    '\r\n\r\n',
+    '\n\nAuthentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org\r\n\r\n',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(mixedLineEndingBodyInjection))).rejects.toThrow('unauthenticated_sender');
+
+  const overlongUtf8LocalPart = 'उ'.repeat(30);
+  const overlongAuthenticationMailbox = multipartAlert.replace(
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org; spf=pass smtp.mailfrom=noreply@craigslist.org',
+    `Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=fail header.d=evil.example; spf=pass smtp.mailfrom=${overlongUtf8LocalPart}@craigslist.org`,
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(overlongAuthenticationMailbox))).rejects.toThrow('unauthenticated_sender');
+
+  const overlongFromMailbox = multipartAlert.replace(
+    'From: craigslist alerts <noreply@craigslist.org>',
+    `From: craigslist alerts <${overlongUtf8LocalPart}@craigslist.org>`,
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(overlongFromMailbox))).rejects.toThrow('untrusted_sender');
+
   const forged = multipartAlert.replace(
     'From: craigslist alerts <noreply@craigslist.org>',
     'From: craigslist alerts <noreply@example.com>',
