@@ -401,7 +401,7 @@ export async function parseCraigslistAlertMime(rawMime: Buffer): Promise<ParsedC
     throw new Error('untrusted_sender');
   }
 
-  const text = message.text ?? '';
+  const text = redactContactMailboxes(message.text ?? '');
   const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const seen = new Set<string>();
   const listings: ListingInput[] = [];

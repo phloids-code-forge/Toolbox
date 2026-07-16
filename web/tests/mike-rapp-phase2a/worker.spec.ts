@@ -848,14 +848,12 @@ test('adapter persistence strips query data, contact text, raw identities, and u
   const syntheticQuotedEmail = '"john doe"@example.com';
   const syntheticCfwsEmails = [
     '"j d" @e.co',
-    'j(c).d@e.co',
     'j. (p) d@e.co',
-    'j.\r\n (a(b\\)c)) d@e.co',
     'x(c)."y z".q@e.co',
     'x@e. (p) co',
-    '"foldedprivate\r\n \tidentity"@e.co',
-    'x@[a\\]p]',
-    '"f"\r\n \t@e.co',
+    '"foldedprivate\r\n \tlocalword"@e.co',
+    '(lead)x@e.co',
+    'x@[a\\]priv](trail)',
   ];
   const syntheticPhone = ['404', '555', '0199'].join('-');
   const syntheticInternationalPhone = ['+44', '20', '7946', '0958'].join(' ');
@@ -933,14 +931,14 @@ test('adapter persistence strips query data, contact text, raw identities, and u
       expect(serialized).not.toContain(syntheticCfwsEmail);
     }
     expect(serialized).not.toMatch(/jane|jim|jill|jack|folded/);
-    expect(serialized).not.toContain('j(c)');
     expect(serialized).not.toContain('j. (p)');
     expect(serialized).not.toContain('x(c)');
     expect(serialized).not.toContain('y z');
     expect(serialized).not.toContain('(p) co');
-    expect(serialized).not.toContain('a]p');
     expect(serialized).not.toContain('foldedprivate');
-    expect(serialized).not.toContain('"f"');
+    expect(serialized).not.toContain('localword');
+    expect(serialized).not.toContain('(lead)');
+    expect(serialized).not.toContain('priv](trail)');
     expect(serialized).not.toContain(syntheticPhone);
     expect(serialized).not.toContain(syntheticInternationalPhone);
     expect(persisted.rows[0].payload_hash).toMatch(/^[a-f0-9]{64}$/);

@@ -116,7 +116,10 @@ function mailboxEnd(value: string, start: number): number | null {
   const domainStart = consumeCfws(value, atIndex + 1);
   if (domainStart === null || domainStart >= value.length || /\s/.test(value[domainStart])) return null;
 
-  if (value[domainStart] === '[') return consumeDomainLiteral(value, domainStart);
+  if (value[domainStart] === '[') {
+    const literalEnd = consumeDomainLiteral(value, domainStart);
+    return literalEnd === null ? null : consumeCfws(value, literalEnd);
+  }
 
   let domainEnd = domainStart;
   const domainLabels: string[] = [];
@@ -147,7 +150,8 @@ export function redactContactMailboxes(value: string): string {
   let index = 0;
 
   while (index < normalized.length) {
-    const end = mailboxEnd(normalized, index);
+    const mailboxStart = consumeCfws(normalized, index);
+    const end = mailboxStart === null ? null : mailboxEnd(normalized, mailboxStart);
     if (end === null) {
       index += 1;
       continue;
