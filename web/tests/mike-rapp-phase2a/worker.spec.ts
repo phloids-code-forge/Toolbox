@@ -845,7 +845,6 @@ test('adapter persistence strips query data, contact text, raw identities, and u
   const syntheticUnicodeEmail = ['उपयोगकर्ता', 'उदाहरण.भारत'].join('@');
   const syntheticDecomposedEmail = [`e\u0301`, 'example.com'].join('@');
   const syntheticSymbolEmail = ['🚗', '[IPv6:2001:db8::1]'].join('@');
-  const syntheticQuotedEmail = '"john doe"@example.com';
   const syntheticCfwsEmails = [
     '"j d" @e.co',
     'j. (p) d@e.co',
@@ -854,6 +853,7 @@ test('adapter persistence strips query data, contact text, raw identities, and u
     '"foldedprivate\r\n \tlocalword"@e.co',
     '(lead)x@e.co',
     'x@[a\\]priv](trail)',
+    '"p n" (s) @ (i) localhost',
   ];
   const syntheticPhone = ['404', '555', '0199'].join('-');
   const syntheticInternationalPhone = ['+44', '20', '7946', '0958'].join(' ');
@@ -862,8 +862,8 @@ test('adapter persistence strips query data, contact text, raw identities, and u
     canonicalKey: 'fixture:sanitized-persistence',
     sourceItemId: 'sanitized-persistence',
     sourceUrl: 'https://example.test/item/42?token=synthetic-sensitive#contact',
-    title: `2011 Toyota Land Cruiser contact ${syntheticEmail} ${syntheticUnicodeEmail} ${syntheticDecomposedEmail} ${syntheticSymbolEmail} ${syntheticQuotedEmail} ${syntheticCfwsEmails.join(' ')}`,
-    locationText: `Atlanta ${syntheticPhone} ${syntheticInternationalPhone}`,
+    title: `2011 Toyota Land Cruiser contact ${syntheticEmail} ${syntheticUnicodeEmail} ${syntheticDecomposedEmail} ${syntheticSymbolEmail} ${syntheticCfwsEmails.join(' ')}`,
+    locationText: `Atlanta Meet@noon cars@home 2@3 ${syntheticPhone} ${syntheticInternationalPhone}`,
     duplicateIdentity: { type: 'vin', value: 'synthetic-private-identity' },
     privateContact: 'synthetic-extra-secret',
   };
@@ -925,8 +925,6 @@ test('adapter persistence strips query data, contact text, raw identities, and u
     expect(serialized).not.toContain(syntheticDecomposedEmail);
     expect(serialized).not.toContain(syntheticDecomposedEmail.normalize('NFC'));
     expect(serialized).not.toContain(syntheticSymbolEmail);
-    expect(serialized).not.toContain(syntheticQuotedEmail);
-    expect(serialized).not.toContain('john');
     for (const syntheticCfwsEmail of syntheticCfwsEmails) {
       expect(serialized).not.toContain(syntheticCfwsEmail);
     }
@@ -939,6 +937,8 @@ test('adapter persistence strips query data, contact text, raw identities, and u
     expect(serialized).not.toContain('localword');
     expect(serialized).not.toContain('(lead)');
     expect(serialized).not.toContain('priv](trail)');
+    expect(serialized).not.toContain('"p n"');
+    expect(serialized).toContain('Meet@noon cars@home 2@3');
     expect(serialized).not.toContain(syntheticPhone);
     expect(serialized).not.toContain(syntheticInternationalPhone);
     expect(persisted.rows[0].payload_hash).toMatch(/^[a-f0-9]{64}$/);

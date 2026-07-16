@@ -83,12 +83,14 @@ function consumeDomainLiteral(value: string, start: number): number | null {
   return null;
 }
 
-function mailboxEnd(value: string, start: number): number | null {
+function mailboxEnd(value: string, start: number, hasLeadingCfws = false): number | null {
   let index = start;
   let consumedWord = false;
+  let hasMailboxSyntax = hasLeadingCfws;
 
   while (index < value.length) {
     if (value[index] === '"') {
+      hasMailboxSyntax = true;
       const quotedEnd = consumeQuotedWord(value, index);
       if (quotedEnd === null) return null;
       index = quotedEnd;
@@ -99,22 +101,30 @@ function mailboxEnd(value: string, start: number): number | null {
     }
     consumedWord = true;
 
-    const afterWordCfws = consumeCfws(value, index);
+    const wordEnd = index;
+    const afterWordCfws = consumeCfws(value, wordEnd);
     if (afterWordCfws === null) return null;
+    if (afterWordCfws !== wordEnd) hasMailboxSyntax = true;
     index = afterWordCfws;
     if (value[index] !== '.') break;
 
-    const afterDotCfws = consumeCfws(value, index + 1);
+    const dotEnd = index + 1;
+    const afterDotCfws = consumeCfws(value, dotEnd);
     if (afterDotCfws === null) return null;
+    if (afterDotCfws !== dotEnd) hasMailboxSyntax = true;
     index = afterDotCfws;
   }
 
   if (!consumedWord) return null;
 
-  const atIndex = consumeCfws(value, index);
+  const beforeAt = index;
+  const atIndex = consumeCfws(value, beforeAt);
   if (atIndex === null || value[atIndex] !== '@') return null;
-  const domainStart = consumeCfws(value, atIndex + 1);
+  if (atIndex !== beforeAt) hasMailboxSyntax = true;
+  const afterAt = atIndex + 1;
+  const domainStart = consumeCfws(value, afterAt);
   if (domainStart === null || domainStart >= value.length || /\s/.test(value[domainStart])) return null;
+  if (domainStart !== afterAt) hasMailboxSyntax = true;
 
   if (value[domainStart] === '[') {
     const literalEnd = consumeDomainLiteral(value, domainStart);
@@ -131,16 +141,25 @@ function mailboxEnd(value: string, start: number): number | null {
     if (!/^[\p{L}\p{N}\p{M}](?:[\p{L}\p{N}\p{M}-]*[\p{L}\p{N}\p{M}])?$/u.test(label)) return null;
     domainLabels.push(label);
 
-    const afterDomainCfws = consumeCfws(value, domainEnd);
+    const domainWordEnd = domainEnd;
+    const afterDomainCfws = consumeCfws(value, domainWordEnd);
     if (afterDomainCfws === null) return null;
+    const domainCfws = value.slice(domainWordEnd, afterDomainCfws);
     domainEnd = afterDomainCfws;
-    if (value[domainEnd] !== '.') break;
+    if (value[domainEnd] !== '.') {
+      if (domainCfws.includes('(')) hasMailboxSyntax = true;
+      break;
+    }
+    if (afterDomainCfws !== domainWordEnd) hasMailboxSyntax = true;
 
-    const afterDomainDotCfws = consumeCfws(value, domainEnd + 1);
+    const domainDotEnd = domainEnd + 1;
+    const afterDomainDotCfws = consumeCfws(value, domainDotEnd);
     if (afterDomainDotCfws === null) return null;
+    if (afterDomainDotCfws !== domainDotEnd) hasMailboxSyntax = true;
     domainEnd = afterDomainDotCfws;
   }
-  return domainLabels.length >= 2 ? domainEnd : null;
+  if (value[domainEnd] === '@') return null;
+  return domainLabels.length >= 2 || hasMailboxSyntax ? domainEnd : null;
 }
 
 export function redactContactMailboxes(value: string): string {
@@ -151,7 +170,13 @@ export function redactContactMailboxes(value: string): string {
 
   while (index < normalized.length) {
     const mailboxStart = consumeCfws(normalized, index);
-    const end = mailboxStart === null ? null : mailboxEnd(normalized, mailboxStart);
+    const end = mailboxStart === null
+      ? null
+      : mailboxEnd(
+        normalized,
+        mailboxStart,
+        normalized.slice(index, mailboxStart).includes('('),
+      );
     if (end === null) {
       index += 1;
       continue;
@@ -163,5 +188,5 @@ export function redactContactMailboxes(value: string): string {
   }
 
   output += normalized.slice(copiedThrough);
-  return output.replace(/[^\s@]+@[^\s@]+/gu, REDACTED_CONTACT);
+  return output;
 }

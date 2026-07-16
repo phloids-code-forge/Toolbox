@@ -104,6 +104,7 @@ test('Craigslist MIME parser emits allowlisted sanitized listings without duplic
     '(PRIVATE-LEADING)foo@example.com',
     '(a(b\\)c)) foo@example.com',
     'foo@[opaque\\]PRIVATE-IN-LITERAL](PRIVATE-TRAILING)',
+    '"single private" (seller) @ (internal) localhost',
     '"folded name"\r\n \t@example.com',
   ];
   const contactHeadline = multipartAlert
@@ -121,16 +122,16 @@ test('Craigslist MIME parser emits allowlisted sanitized listings without duplic
   for (const quotedCfwsEmail of quotedCfwsEmails) {
     expect(JSON.stringify(contactSafe)).not.toContain(quotedCfwsEmail);
   }
-  expect(JSON.stringify(contactSafe)).not.toMatch(/jane|jim|jill|jack|folded|private seller|private domain|private-fragment|private-leading|private-in-literal|private-trailing|foldedprivate|localword|foo|bar baz/i);
+  expect(JSON.stringify(contactSafe)).not.toMatch(/jane|jim|jill|jack|folded|private seller|private domain|private-fragment|private-leading|private-in-literal|private-trailing|single private|foldedprivate|localword|foo|bar baz/i);
   expect(JSON.stringify(contactSafe)).not.toContain(decomposedEmail);
   expect(JSON.stringify(contactSafe)).not.toContain(decomposedEmail.normalize('NFC'));
 
   const ordinaryAtSignHeadline = multipartAlert.replace(
     '1985 Toyota Supra P-Type - $18,500',
-    '1985 Toyota Supra P-Type @ $18,500',
+    '1985 Toyota Supra P-Type @ Meet@noon cars@home 2@3 - $18,500',
   );
   const ordinaryAtSignParsed = await parseCraigslistAlertMime(Buffer.from(ordinaryAtSignHeadline));
-  expect(ordinaryAtSignParsed.listings[0].title).toBe('1985 Toyota Supra P-Type @ $18,500');
+  expect(ordinaryAtSignParsed.listings[0].title).toBe('1985 Toyota Supra P-Type @ Meet@noon cars@home 2@3');
 });
 
 test('Craigslist MIME parser supports HTML-only saved-search alerts without trusting arbitrary links', async () => {
