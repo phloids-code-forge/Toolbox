@@ -80,15 +80,17 @@ test('Craigslist MIME parser emits allowlisted sanitized listings without duplic
 
   const decomposedEmail = `e\u0301@example.com`;
   const devanagariEmail = 'उपयोगकर्ता@उदाहरण.भारत';
+  const symbolEmail = '🚗@[IPv6:2001:db8::1]';
   const contactHeadline = multipartAlert
     .replace(
       '1985 Toyota Supra P-Type - $18,500',
-      `1985 Toyota Supra P-Type +44 20 7946 0958 ${devanagariEmail} - $18,500`,
+      `1985 Toyota Supra P-Type +44 20 7946 0958 ${devanagariEmail} ${symbolEmail} - $18,500`,
     )
     .replace('(Atlanta, GA)', `(${decomposedEmail})`);
   const contactSafe = await parseCraigslistAlertMime(Buffer.from(contactHeadline));
   expect(JSON.stringify(contactSafe)).not.toContain('+44 20 7946 0958');
   expect(JSON.stringify(contactSafe)).not.toContain(devanagariEmail);
+  expect(JSON.stringify(contactSafe)).not.toContain(symbolEmail);
   expect(JSON.stringify(contactSafe)).not.toContain(decomposedEmail);
   expect(JSON.stringify(contactSafe)).not.toContain(decomposedEmail.normalize('NFC'));
 });

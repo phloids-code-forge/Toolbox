@@ -844,6 +844,7 @@ test('adapter persistence strips query data, contact text, raw identities, and u
   const syntheticEmail = ['seller', 'private.invalid'].join('@');
   const syntheticUnicodeEmail = ['उपयोगकर्ता', 'उदाहरण.भारत'].join('@');
   const syntheticDecomposedEmail = [`e\u0301`, 'example.com'].join('@');
+  const syntheticSymbolEmail = ['🚗', '[IPv6:2001:db8::1]'].join('@');
   const syntheticPhone = ['404', '555', '0199'].join('-');
   const syntheticInternationalPhone = ['+44', '20', '7946', '0958'].join(' ');
   const listing = {
@@ -851,7 +852,7 @@ test('adapter persistence strips query data, contact text, raw identities, and u
     canonicalKey: 'fixture:sanitized-persistence',
     sourceItemId: 'sanitized-persistence',
     sourceUrl: 'https://example.test/item/42?token=synthetic-sensitive#contact',
-    title: `2011 Toyota Land Cruiser contact ${syntheticEmail} ${syntheticUnicodeEmail} ${syntheticDecomposedEmail}`,
+    title: `2011 Toyota Land Cruiser contact ${syntheticEmail} ${syntheticUnicodeEmail} ${syntheticDecomposedEmail} ${syntheticSymbolEmail}`,
     locationText: `Atlanta ${syntheticPhone} ${syntheticInternationalPhone}`,
     duplicateIdentity: { type: 'vin', value: 'synthetic-private-identity' },
     privateContact: 'synthetic-extra-secret',
@@ -913,6 +914,7 @@ test('adapter persistence strips query data, contact text, raw identities, and u
     expect(serialized).not.toContain(syntheticUnicodeEmail);
     expect(serialized).not.toContain(syntheticDecomposedEmail);
     expect(serialized).not.toContain(syntheticDecomposedEmail.normalize('NFC'));
+    expect(serialized).not.toContain(syntheticSymbolEmail);
     expect(serialized).not.toContain(syntheticPhone);
     expect(serialized).not.toContain(syntheticInternationalPhone);
     expect(persisted.rows[0].payload_hash).toMatch(/^[a-f0-9]{64}$/);

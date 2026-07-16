@@ -263,7 +263,7 @@ function trustedCraigslistAddress(address: string | undefined): boolean {
 function sanitizedText(value: string): string {
   return value
     .normalize('NFC')
-    .replace(/(?:"[^"\r\n]{1,64}"|[\p{L}\p{N}\p{M}.!#$%&'*+/=?^_`{|}~-]+)@(?:[\p{L}\p{N}\p{M}](?:[\p{L}\p{N}\p{M}.-]{0,251}[\p{L}\p{N}\p{M}])?)/gu, '[contact redacted]')
+    .replace(/[^\s@]+@[^\s@]+/gu, '[contact redacted]')
     .replace(/(?<!\w)\+(?:\d[\d().\s-]{6,}\d)(?!\w)/g, '[contact redacted]')
     .replace(/(?<!\d)(?:\+?1[-.\s]?)?\(?[2-9]\d{2}\)?[-.\s]\d{3}[-.\s]\d{4}(?!\d)/g, '[contact redacted]')
     .replace(/\s+/g, ' ')
