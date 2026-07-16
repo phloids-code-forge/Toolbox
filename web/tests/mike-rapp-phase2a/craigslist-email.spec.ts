@@ -97,6 +97,8 @@ test('Craigslist MIME parser emits allowlisted sanitized listings without duplic
     'jack(a(b\\)c)).doe@example.com',
     'foo(comment)."bar baz".qux@example.com',
     'foo.\r\n (a(b\\)c)) "bar baz" . qux@example.com',
+    'foo@example. (private domain) com',
+    'foo@example.\r\n (a(b\\)c)) com',
     '"folded name"\r\n \t@example.com',
   ];
   const contactHeadline = multipartAlert
@@ -114,7 +116,7 @@ test('Craigslist MIME parser emits allowlisted sanitized listings without duplic
   for (const quotedCfwsEmail of quotedCfwsEmails) {
     expect(JSON.stringify(contactSafe)).not.toContain(quotedCfwsEmail);
   }
-  expect(JSON.stringify(contactSafe)).not.toMatch(/jane|jim|jill|jack|folded|private seller|foo|bar baz/);
+  expect(JSON.stringify(contactSafe)).not.toMatch(/jane|jim|jill|jack|folded|private seller|private domain|foo|bar baz/);
   expect(JSON.stringify(contactSafe)).not.toContain(decomposedEmail);
   expect(JSON.stringify(contactSafe)).not.toContain(decomposedEmail.normalize('NFC'));
 });

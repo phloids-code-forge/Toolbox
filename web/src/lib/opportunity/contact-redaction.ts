@@ -93,8 +93,23 @@ function mailboxEnd(value: string, start: number): number | null {
   }
 
   let domainEnd = domainStart;
-  while (domainEnd < value.length && !/\s/.test(value[domainEnd])) domainEnd += 1;
-  return domainEnd > domainStart ? domainEnd : null;
+  let consumedDomainWord = false;
+  while (domainEnd < value.length) {
+    const atomStart = domainEnd;
+    while (domainEnd < value.length && !/[\s@().]/.test(value[domainEnd])) domainEnd += 1;
+    if (domainEnd === atomStart) return null;
+    consumedDomainWord = true;
+
+    const afterDomainCfws = consumeCfws(value, domainEnd);
+    if (afterDomainCfws === null) return null;
+    domainEnd = afterDomainCfws;
+    if (value[domainEnd] !== '.') break;
+
+    const afterDomainDotCfws = consumeCfws(value, domainEnd + 1);
+    if (afterDomainDotCfws === null) return null;
+    domainEnd = afterDomainDotCfws;
+  }
+  return consumedDomainWord ? domainEnd : null;
 }
 
 export function redactContactMailboxes(value: string): string {

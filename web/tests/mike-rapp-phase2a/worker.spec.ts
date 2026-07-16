@@ -852,6 +852,7 @@ test('adapter persistence strips query data, contact text, raw identities, and u
     'j. (p) d@e.co',
     'j.\r\n (a(b\\)c)) d@e.co',
     'x(c)."y z".q@e.co',
+    'x@e. (p) co',
     '"f"\r\n \t@e.co',
   ];
   const syntheticPhone = ['404', '555', '0199'].join('-');
@@ -934,6 +935,7 @@ test('adapter persistence strips query data, contact text, raw identities, and u
     expect(serialized).not.toContain('j. (p)');
     expect(serialized).not.toContain('x(c)');
     expect(serialized).not.toContain('y z');
+    expect(serialized).not.toContain('(p) co');
     expect(serialized).not.toContain('"f"');
     expect(serialized).not.toContain(syntheticPhone);
     expect(serialized).not.toContain(syntheticInternationalPhone);
