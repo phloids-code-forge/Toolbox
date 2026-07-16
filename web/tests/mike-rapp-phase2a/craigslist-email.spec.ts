@@ -69,6 +69,13 @@ test('Craigslist MIME parser emits allowlisted sanitized listings without duplic
   await expect(parseCraigslistAlertMime(Buffer.from(quotedAuthentication))).resolves.toMatchObject({
     messageKey: 'message-id:alert-42@craigslist.org',
   });
+
+  const contactHeadline = multipartAlert
+    .replace('1985 Toyota Supra P-Type - $18,500', '1985 Toyota Supra P-Type +44 20 7946 0958 - $18,500')
+    .replace('(Atlanta, GA)', '(sales+atl@example.co.uk)');
+  const contactSafe = await parseCraigslistAlertMime(Buffer.from(contactHeadline));
+  expect(JSON.stringify(contactSafe)).not.toContain('+44 20 7946 0958');
+  expect(JSON.stringify(contactSafe)).not.toContain('sales+atl@example.co.uk');
 });
 
 test('Craigslist MIME parser supports HTML-only saved-search alerts without trusting arbitrary links', async () => {
@@ -137,6 +144,36 @@ test('Craigslist MIME parser rejects unauthenticated mail, non-Craigslist sender
   );
   await expect(parseCraigslistAlertMime(Buffer.from(quotedDkimInjection))).rejects.toThrow('unauthenticated_sender');
 
+  const adjacentQuotedProperty = multipartAlert.replace(
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org; spf=pass smtp.mailfrom=noreply@craigslist.org',
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass reason="unrelated"header.from=craigslist.org; dkim=pass header.d=craigslist.org',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(adjacentQuotedProperty))).rejects.toThrow('unauthenticated_sender');
+
+  const bareSpfDomain = multipartAlert.replace(
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org; spf=pass smtp.mailfrom=noreply@craigslist.org',
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=fail header.d=evil.example; spf=pass smtp.mailfrom=craigslist.org',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(bareSpfDomain))).rejects.toThrow('unauthenticated_sender');
+
+  const multipleAtSpf = multipartAlert.replace(
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org; spf=pass smtp.mailfrom=noreply@craigslist.org',
+    'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=fail header.d=evil.example; spf=pass smtp.mailfrom=attacker@evil.example@craigslist.org',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(multipleAtSpf))).rejects.toThrow('unauthenticated_sender');
+
+  const unbalancedComment = multipartAlert.replace(
+    'dmarc=pass header.from=craigslist.org',
+    'dmarc=pass header.from=craigslist.org (unterminated',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(unbalancedComment))).rejects.toThrow('unauthenticated_sender');
+
+  const unbalancedQuote = multipartAlert.replace(
+    'dmarc=pass header.from=craigslist.org',
+    'dmarc=pass reason="unterminated header.from=craigslist.org',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(unbalancedQuote))).rejects.toThrow('unauthenticated_sender');
+
   const missingAuthentication = multipartAlert.replace(/^Authentication-Results:.*\r\n/m, '');
   await expect(parseCraigslistAlertMime(Buffer.from(missingAuthentication))).rejects.toThrow('unauthenticated_sender');
 
@@ -145,6 +182,12 @@ test('Craigslist MIME parser rejects unauthenticated mail, non-Craigslist sender
     'From: craigslist alerts <noreply@example.com>',
   );
   await expect(parseCraigslistAlertMime(Buffer.from(forged))).rejects.toThrow('untrusted_sender');
+
+  const multipleAtSender = multipartAlert.replace(
+    'From: craigslist alerts <noreply@craigslist.org>',
+    'From: craigslist alerts <attacker@evil.example@craigslist.org>',
+  );
+  await expect(parseCraigslistAlertMime(Buffer.from(multipleAtSender))).rejects.toThrow('untrusted_sender');
 
   const empty = multipartAlert
     .replace('noreply@craigslist.org', 'robot@craigslist.org')
