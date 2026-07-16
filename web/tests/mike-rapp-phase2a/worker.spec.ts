@@ -841,7 +841,7 @@ test('adapter persistence strips query data, contact text, raw identities, and u
   expect(databaseUrl).toContain('127.0.0.1:55432/mike_phase2a');
   const pool = new Pool({ connectionString: databaseUrl });
   const repository = new OpportunityRepository(pool);
-  const syntheticEmail = ['seller', 'private.invalid'].join('@');
+  const syntheticEmail = ['seller', 'ab--cd.com'].join('@');
   const syntheticUnicodeEmail = ['उपयोगकर्ता', 'उदाहरण.भारत'].join('@');
   const syntheticDecomposedEmail = [`e\u0301`, 'example.com'].join('@');
   const syntheticSymbolEmail = ['🚗', '[IPv6:2001:db8::1]'].join('@');

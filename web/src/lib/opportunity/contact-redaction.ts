@@ -147,7 +147,14 @@ function mailboxEnd(value: string, start: number, hasLeadingCfws = false): numbe
       const doubleDash = value[domainEnd] === '-' && value[domainEnd + 1] === '-';
       const punycodePrefix = domainEnd - atomStart === 2
         && value.slice(atomStart, domainEnd).toLowerCase() === 'xn';
-      if (doubleDash && !punycodePrefix) break;
+      if (doubleDash && !punycodePrefix) {
+        let dashLookahead = domainEnd + 2;
+        while (/[\p{L}\p{N}\p{M}-]/u.test(value[dashLookahead] ?? '')) dashLookahead += 1;
+        const afterDashLabelCfws = consumeCfws(value, dashLookahead);
+        const hasLaterDomainLabel = afterDashLabelCfws !== null
+          && value[afterDashLabelCfws] === '.';
+        if (!hasLaterDomainLabel) break;
+      }
       domainEnd += 1;
     }
     while (domainEnd > atomStart && value[domainEnd - 1] === '-') domainEnd -= 1;

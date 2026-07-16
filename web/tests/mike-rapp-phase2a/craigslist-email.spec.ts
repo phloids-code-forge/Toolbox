@@ -116,6 +116,7 @@ test('Craigslist MIME parser emits allowlisted sanitized listings without duplic
     '<anglekeep@example.com>',
     'commaone@example.com,commatwo@example.net',
     'dashprivate@example.com--serious buyers',
+    'doublehyphenprivate@ab--cd.com,',
   ];
   const contactHeadline = multipartAlert
     .replace(
@@ -132,7 +133,7 @@ test('Craigslist MIME parser emits allowlisted sanitized listings without duplic
   for (const quotedCfwsEmail of quotedCfwsEmails) {
     expect(JSON.stringify(contactSafe)).not.toContain(quotedCfwsEmail);
   }
-  expect(JSON.stringify(contactSafe)).not.toMatch(/jane|jim|jill|jack|folded|private seller|private domain|private-fragment|private-leading|private-in-literal|private-trailing|single private|foldedprivate|localword|punctseller|angleprivate|quotedpunct|commentpunct|foldedpunct|repeatprivate|anglekeep|commaone|commatwo|dashprivate|foo|bar baz/i);
+  expect(JSON.stringify(contactSafe)).not.toMatch(/jane|jim|jill|jack|folded|private seller|private domain|private-fragment|private-leading|private-in-literal|private-trailing|single private|foldedprivate|localword|punctseller|angleprivate|quotedpunct|commentpunct|foldedpunct|repeatprivate|anglekeep|commaone|commatwo|dashprivate|doublehyphenprivate|foo|bar baz/i);
   expect(JSON.stringify(contactSafe)).not.toContain(decomposedEmail);
   expect(JSON.stringify(contactSafe)).not.toContain(decomposedEmail.normalize('NFC'));
   expect(contactSafe.listings[0].title).toContain('[contact redacted]..');
