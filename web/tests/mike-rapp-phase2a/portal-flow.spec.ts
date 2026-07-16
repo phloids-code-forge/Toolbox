@@ -54,6 +54,8 @@ test('protected Mike navigation binds ownership and logout clears access', async
   await expect(page).toHaveURL(/\/portal\/mike-rapp$/);
   await expect(page.getByRole('heading', { name: "Mike's opportunity workspace" })).toBeVisible();
   await expect(page.getByText('Authenticated for Mike Rapp')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Hosted Craigslist intake' })).toBeVisible();
+  await expect(page.getByText('Craigslist saved-search intake only · alert provider disabled · nothing queued, sent, or delivered')).toBeVisible();
 
   await page.goto('/portal/synthetic-other-client');
   await expect(page).toHaveURL(/\/portal\/login\?next=%2Fportal%2Fsynthetic-other-client$/);
@@ -71,11 +73,27 @@ test('protected Mike navigation binds ownership and logout clears access', async
 test('fixture run renders durable decisions, duplicate history, and truthful alert state', async ({ page }) => {
   await page.goto('/portal/mike-rapp');
   await page.getByLabel('Password').fill('local-preview-only');
-  await page.getByRole('button', { name: 'Sign in securely' }).click();
-  await page.getByRole('button', { name: 'Run checked-in fixture' }).click();
+  await Promise.all([
+    page.waitForURL(/\/portal\/mike-rapp$/),
+    page.getByRole('button', { name: 'Sign in securely' }).click(),
+  ]);
+  const fixtureButton = page.getByRole('button', { name: 'Run checked-in fixture' });
+  if (await fixtureButton.isVisible()) {
+    await fixtureButton.click();
+  } else {
+    const cookieHeader = (await page.context().cookies())
+      .map((cookie) => `${cookie.name}=${cookie.value}`)
+      .join('; ');
+    const response = await page.request.post('/api/opportunity/mike-rapp/fixture', {
+      headers: { origin: new URL(page.url()).origin, cookie: cookieHeader },
+      maxRedirects: 0,
+    });
+    expect(response.status()).toBe(303);
+    await page.goto(response.headers().location ?? '/portal/mike-rapp?run=failed');
+  }
 
   await expect(page).toHaveURL(/\/portal\/mike-rapp\?run=complete$/);
-  await expect(page.getByRole('heading', { name: 'Durable fixture decisions' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Durable opportunity decisions' })).toBeVisible();
   await expect(page.getByText('2011 Toyota Land Cruiser · clean Georgia title')).toBeVisible();
   await expect(page.getByText('2 source records share this identity')).toBeVisible();
   await expect(page.getByText('Skipped — provider disabled').first()).toBeVisible();

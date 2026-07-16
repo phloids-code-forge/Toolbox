@@ -39,10 +39,13 @@ test('portal metadata and two-tone focus tokens meet WCAG contrast floors', asyn
   const metadata = cssColor(css, '--metadata-text');
   const focusDark = cssColor(css, '--focus-dark');
   const focusLight = cssColor(css, '--focus-light');
+  const warningText = cssColor(css, '--warning-text');
+  const warningBackground = cssColor(css, '--warning-background');
 
   expect(contrast(metadata, card)).toBeGreaterThanOrEqual(4.5);
   expect(contrast(focusDark, card)).toBeGreaterThanOrEqual(3);
   expect(contrast(focusLight, navy)).toBeGreaterThanOrEqual(3);
+  expect(contrast(warningText, warningBackground)).toBeGreaterThanOrEqual(4.5);
   expect(css).toMatch(/\.watchCard dt\s*\{[^}]*color:\s*var\(--metadata-text\)/);
   expect(css).toMatch(/\.factGrid span,[^}]*color:\s*var\(--metadata-text\)/);
   expect(css).toMatch(/\.runStatusCard dt\s*\{[^}]*color:\s*var\(--metadata-text\)/);

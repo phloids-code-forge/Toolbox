@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
+import { isFixtureControlVisible } from '@/lib/opportunity/fixture-policy';
 import { initializeOpportunityCore } from '@/lib/opportunity/runtime';
 import { readAuthorizedClientSession } from '@/lib/opportunity/session';
 
@@ -38,6 +39,7 @@ async function loadWorkspace(clientSlug: string) {
     repository.listWatches(clientSlug),
     repository.listLeadDecisions(clientSlug),
     repository.listRecentWorkerRuns(clientSlug),
+    repository.getSourceCursor(clientSlug, 'craigslist_email'),
   ]);
 }
 
@@ -63,8 +65,16 @@ export default async function OpportunityWorkspacePage({ params, searchParams }:
       </main>
     );
   }
-  const [watches, decisions, runs] = workspaceData;
+  const [watches, decisions, runs, intakeCursor] = workspaceData;
   const latestRun = runs[0] ?? null;
+  const fixtureControlVisible = isFixtureControlVisible();
+  const intakeConfigured = [
+    process.env.OPPORTUNITY_IMAP_HOST,
+    process.env.OPPORTUNITY_IMAP_PORT,
+    process.env.OPPORTUNITY_IMAP_USER,
+    process.env.OPPORTUNITY_IMAP_PASSWORD,
+    process.env.OPPORTUNITY_INTAKE_ADDRESS,
+  ].every((value) => Boolean(value));
 
   return (
     <main id="opportunity-portal" className={styles.shell}>
@@ -81,10 +91,10 @@ export default async function OpportunityWorkspacePage({ params, searchParams }:
 
       <section className={styles.hero}>
         <div>
-          <p className={styles.eyebrow}>Phase 2A · protected fixture core</p>
+          <p className={styles.eyebrow}>Phase 2B · protected hosted intake</p>
           <h1>Mike&apos;s opportunity workspace</h1>
           <p className={styles.lede}>
-            Durable watches and deterministic fixture runs, isolated from the public sample demo.
+            Durable watches, hosted Craigslist saved-search monitoring, and provider-disabled alert previews.
           </p>
         </div>
         <div className={styles.authBadge}>
@@ -95,16 +105,29 @@ export default async function OpportunityWorkspacePage({ params, searchParams }:
 
       <section className={styles.runPanel} aria-labelledby="run-heading">
         <div>
-          <p className={styles.eyebrow}>Bounded deterministic intake</p>
-          <h2 id="run-heading">Checked-in fixture worker</h2>
-          <p>Exercises durable records, matching, dedupe, run status, and skipped-alert truth without network access.</p>
+          <p className={styles.eyebrow}>Hourly · provider-authenticated · non-mutating adapter</p>
+          <h2 id="run-heading">Hosted Craigslist intake</h2>
+          <p>
+            Saved-search email is parsed into sanitized durable listings. The adapter issues no delete, move, or flag commands; raw MIME and contact details are not stored.
+          </p>
+          <p className={`${styles.intakeStatus} ${intakeConfigured && intakeCursor ? styles.intakeReady : styles.intakeWaiting}`}>
+            {!intakeConfigured
+              ? 'Craigslist intake is awaiting protected mailbox configuration in this environment.'
+              : intakeCursor
+                ? 'Protected configuration is present; at least one successful authenticated mailbox poll has recorded durable progress.'
+                : 'Protected configuration is present; awaiting the first successful authenticated mailbox poll.'}
+          </p>
         </div>
-        <form action={`/api/opportunity/${clientSlug}/fixture`} method="post">
-          <button type="submit">Run checked-in fixture</button>
-        </form>
-        {query.run === 'complete' ? <p className={styles.successMessage} role="status">Fixture run completed.</p> : null}
-        {query.run === 'failed' ? <p className={styles.formError} role="alert">Fixture run failed safely. No delivery was attempted.</p> : null}
-        {query.run === 'disabled' ? <p className={styles.formError} role="alert">Fixture runs are disabled in production.</p> : null}
+        {fixtureControlVisible ? (
+          <>
+            <form action={`/api/opportunity/${clientSlug}/fixture`} method="post">
+              <button type="submit">Run checked-in fixture</button>
+            </form>
+            {query.run === 'complete' ? <p className={styles.successMessage} role="status">Fixture QA run completed.</p> : null}
+            {query.run === 'failed' ? <p className={styles.formError} role="alert">Fixture QA run failed safely. No delivery was attempted.</p> : null}
+            {query.run === 'disabled' ? <p className={styles.formError} role="alert">Fixture QA runs are disabled in production.</p> : null}
+          </>
+        ) : null}
       </section>
 
       <section className={styles.section} aria-labelledby="watches-heading">
@@ -202,7 +225,7 @@ export default async function OpportunityWorkspacePage({ params, searchParams }:
         <div className={styles.sectionHeading}>
           <div>
             <p className={styles.eyebrow}>Repository-backed results</p>
-            <h2 id="decisions-heading">Durable fixture decisions</h2>
+            <h2 id="decisions-heading">Durable opportunity decisions</h2>
           </div>
           <p>{decisions.length} deduplicated records shown</p>
         </div>
@@ -260,7 +283,9 @@ export default async function OpportunityWorkspacePage({ params, searchParams }:
             })}
           </div>
         ) : (
-          <p className={styles.emptyState}>Run the checked-in fixture to create durable, reviewable decisions.</p>
+          <p className={styles.emptyState}>
+            {fixtureControlVisible ? 'Waiting for hosted Craigslist intake or a local fixture QA run.' : 'Waiting for hosted Craigslist intake.'}
+          </p>
         )}
       </section>
 
@@ -270,7 +295,7 @@ export default async function OpportunityWorkspacePage({ params, searchParams }:
             <p className={styles.eyebrow}>Observable worker state</p>
             <h2 id="runs-heading">Latest run</h2>
           </div>
-          <p>Fixture-only · bounded · no retries or providers</p>
+          <p>{fixtureControlVisible ? 'Hosted Craigslist + local fixture QA · alert provider disabled' : 'Hosted Craigslist · alert provider disabled'}</p>
         </div>
         {latestRun ? (
           <div className={styles.runStatusCard}>
@@ -288,7 +313,11 @@ export default async function OpportunityWorkspacePage({ params, searchParams }:
               {latestRun.sourceResults.map((source) => (
                 <li key={source.sourceType}>
                   <span>
-                    {source.sourceType === 'fixture' ? 'Fixture source' : source.sourceType}{' '}
+                    {source.sourceType === 'fixture'
+                      ? 'Fixture source'
+                      : source.sourceType === 'craigslist_email'
+                        ? 'Craigslist email source'
+                        : source.sourceType}{' '}
                     {source.status === 'ok' ? 'completed' : source.status}
                   </span>
                 </li>
@@ -299,8 +328,8 @@ export default async function OpportunityWorkspacePage({ params, searchParams }:
       </section>
 
       <section className={styles.truthStrip}>
-        <strong>Preview truth boundary</strong>
-        <span>Checked-in fixtures only · provider disabled · nothing queued, sent, or delivered</span>
+        <strong>Operational truth boundary</strong>
+        <span>Craigslist saved-search intake only · alert provider disabled · nothing queued, sent, or delivered</span>
       </section>
     </main>
   );

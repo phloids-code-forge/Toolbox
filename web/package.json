@@ -19,7 +19,9 @@
     "date-fns": "^4.1.0",
     "framer-motion": "^12.26.1",
     "howler": "^2.2.4",
+    "imapflow": "^1.4.7",
     "lucide-react": "^0.562.0",
+    "mailparser": "^3.9.14",
     "next": "16.2.10",
     "pg": "^8.16.3",
     "react": "19.2.3",
@@ -30,6 +32,7 @@
   "devDependencies": {
     "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4.1.18",
+    "@types/mailparser": "^3.4.6",
     "@types/node": "^20",
     "@types/pg": "^8.15.6",
     "@types/react": "^19",
