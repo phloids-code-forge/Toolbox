@@ -1,6 +1,7 @@
 type FixtureEnvironment = {
   [key: string]: string | undefined;
   NODE_ENV?: string;
+  VERCEL?: string;
   VERCEL_ENV?: string;
   OPPORTUNITY_LOCAL_FIXTURE_TEST?: string;
 };
@@ -10,9 +11,7 @@ function isLoopbackHost(hostname: string): boolean {
 }
 
 export function isFixtureControlVisible(environment: FixtureEnvironment = process.env): boolean {
-  if (environment.NODE_ENV !== 'production') return true;
-  return environment.VERCEL_ENV === undefined
-    && environment.OPPORTUNITY_LOCAL_FIXTURE_TEST === 'enabled';
+  return environment.NODE_ENV !== 'production';
 }
 
 export function isFixtureExecutionAllowed(

@@ -39,6 +39,7 @@ async function loadWorkspace(clientSlug: string) {
     repository.listWatches(clientSlug),
     repository.listLeadDecisions(clientSlug),
     repository.listRecentWorkerRuns(clientSlug),
+    repository.getSourceCursor(clientSlug, 'craigslist_email'),
   ]);
 }
 
@@ -64,7 +65,7 @@ export default async function OpportunityWorkspacePage({ params, searchParams }:
       </main>
     );
   }
-  const [watches, decisions, runs] = workspaceData;
+  const [watches, decisions, runs, intakeCursor] = workspaceData;
   const latestRun = runs[0] ?? null;
   const fixtureControlVisible = isFixtureControlVisible();
   const intakeConfigured = [
@@ -104,15 +105,17 @@ export default async function OpportunityWorkspacePage({ params, searchParams }:
 
       <section className={styles.runPanel} aria-labelledby="run-heading">
         <div>
-          <p className={styles.eyebrow}>Hourly · allowlisted · read-only mailbox</p>
+          <p className={styles.eyebrow}>Hourly · provider-authenticated · non-mutating adapter</p>
           <h2 id="run-heading">Hosted Craigslist intake</h2>
           <p>
-            Saved-search email is parsed into sanitized durable listings. Raw MIME and contact details are not stored.
+            Saved-search email is parsed into sanitized durable listings. The adapter issues no delete, move, or flag commands; raw MIME and contact details are not stored.
           </p>
-          <p className={`${styles.intakeStatus} ${intakeConfigured ? styles.intakeReady : styles.intakeWaiting}`}>
-            {intakeConfigured
-              ? 'Protected mailbox configuration is present; the hourly poller is ready.'
-              : 'Craigslist intake is awaiting protected mailbox configuration in this environment.'}
+          <p className={`${styles.intakeStatus} ${intakeConfigured && intakeCursor ? styles.intakeReady : styles.intakeWaiting}`}>
+            {!intakeConfigured
+              ? 'Craigslist intake is awaiting protected mailbox configuration in this environment.'
+              : intakeCursor
+                ? 'Protected configuration is present; at least one successful authenticated mailbox poll has recorded durable progress.'
+                : 'Protected configuration is present; awaiting the first successful authenticated mailbox poll.'}
           </p>
         </div>
         {fixtureControlVisible ? (

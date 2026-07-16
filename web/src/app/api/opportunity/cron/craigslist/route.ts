@@ -7,7 +7,7 @@ import { initializeOpportunityCore } from '@/lib/opportunity/runtime';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-export const maxDuration = 45;
+export const maxDuration = 60;
 
 export async function GET(request: Request) {
   if (!authorizeOpportunityCron(request.headers.get('authorization'))) {
@@ -21,13 +21,20 @@ export async function GET(request: Request) {
       repository,
       mailbox,
       clientSlug: process.env.OPPORTUNITY_CLIENT_SLUG ?? 'mike-rapp',
+      deadlineAt: Date.now() + 35_000,
     });
-    const status = result.status === 'failed' ? 503 : result.status === 'partial' ? 207 : 200;
+    const status = result.status === 'failed'
+      ? 503
+      : result.status === 'partial'
+        ? 207
+        : result.status === 'busy' ? 202 : 200;
     return NextResponse.json({
-      success: result.status === 'ok',
+      success: result.status === 'ok' || result.status === 'busy',
       status: result.status,
       processedMessages: result.processedMessages,
       failedMessages: result.failedMessages,
+      quarantinedMessages: result.quarantinedMessages,
+      deferredMessages: result.deferredMessages,
       listings: result.listings,
       cursor: result.cursor,
       alertsSent: 0,

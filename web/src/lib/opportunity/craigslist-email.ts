@@ -9,6 +9,27 @@ export type ParsedCraigslistAlert = {
   listings: ListingInput[];
 };
 
+function authenticatedByFastmail(rawMime: Buffer): boolean {
+  const headerBoundary = rawMime.indexOf(Buffer.from('\r\n\r\n'));
+  const fallbackBoundary = rawMime.indexOf(Buffer.from('\n\n'));
+  const end = headerBoundary >= 0 ? headerBoundary : fallbackBoundary >= 0 ? fallbackBoundary : Math.min(rawMime.length, 65_536);
+  const unfoldedHeaders = rawMime.subarray(0, Math.min(end, 65_536)).toString('utf8')
+    .replace(/\r?\n[\t ]+/g, ' ');
+  const firstAuthenticationResult = unfoldedHeaders.match(/^Authentication-Results:\s*(.+)$/im)?.[1];
+  if (!firstAuthenticationResult) return false;
+
+  const [authenticationServer = ''] = firstAuthenticationResult.split(';', 1);
+  if (!/(^|\.)messagingengine\.com$/i.test(authenticationServer.trim())) return false;
+
+  const alignedDmarc = /\bdmarc=pass\b/i.test(firstAuthenticationResult)
+    && /\bheader\.from=(?:[a-z0-9-]+\.)*craigslist\.org\b/i.test(firstAuthenticationResult);
+  const alignedDkim = /\bdkim=pass\b/i.test(firstAuthenticationResult)
+    && /\bheader\.d=(?:[a-z0-9-]+\.)*craigslist\.org\b/i.test(firstAuthenticationResult);
+  const alignedSpf = /\bspf=pass\b/i.test(firstAuthenticationResult)
+    && /\bsmtp\.mailfrom=(?:[^;\s@]+@)?(?:[a-z0-9-]+\.)*craigslist\.org\b/i.test(firstAuthenticationResult);
+  return alignedDmarc && (alignedDkim || alignedSpf);
+}
+
 function trustedCraigslistAddress(address: string | undefined): boolean {
   if (!address) return false;
   const domain = address.trim().toLowerCase().split('@').at(-1) ?? '';
@@ -32,11 +53,7 @@ function canonicalCraigslistUrl(candidate: string): { url: string; id: string } 
     }
     const match = url.pathname.match(/\/(\d{8,20})\.html$/);
     if (!match) return null;
-    url.username = '';
-    url.password = '';
-    url.search = '';
-    url.hash = '';
-    return { url: url.toString(), id: match[1] };
+    return { url: `https://${host}/listing/${match[1]}`, id: match[1] };
   } catch {
     return null;
   }
@@ -120,6 +137,7 @@ function listingFromLines(lines: string[], urlIndex: number, sourceUrl: string, 
 }
 
 export async function parseCraigslistAlertMime(rawMime: Buffer): Promise<ParsedCraigslistAlert> {
+  if (!authenticatedByFastmail(rawMime)) throw new Error('unauthenticated_sender');
   const message = await simpleParser(rawMime, { skipImageLinks: true });
   const senders = message.from?.value.map((entry) => entry.address) ?? [];
   if (senders.length === 0 || !senders.every(trustedCraigslistAddress)) {
@@ -138,6 +156,8 @@ export async function parseCraigslistAlertMime(rawMime: Buffer): Promise<ParsedC
       listings.push(listingFromLines(lines, index, canonical.url, canonical.id));
     }
   }
+
+  if (listings.length === 0) throw new Error('unparseable_alert');
 
   const normalizedMessageId = message.messageId?.replace(/[<>]/g, '').trim().toLowerCase();
   const messageKey = normalizedMessageId

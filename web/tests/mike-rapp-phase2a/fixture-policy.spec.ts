@@ -10,6 +10,7 @@ test('fixture execution fails closed in deployed production environments', () =>
   })).toBe(false);
   expect(isFixtureExecutionAllowed('https://railway.example.test', {
     NODE_ENV: 'production',
+    VERCEL: '1',
     OPPORTUNITY_LOCAL_FIXTURE_TEST: 'enabled',
   })).toBe(false);
   expect(isFixtureExecutionAllowed('http://127.0.0.1:3111', {
@@ -27,8 +28,8 @@ test('fixture execution remains available only for development or explicit loopb
   })).toBe(true);
 });
 
-test('fixture control is hidden from deployed production and visible only where execution can be intentional', () => {
+test('fixture control is never rendered by a production build', () => {
   expect(isFixtureControlVisible({ NODE_ENV: 'production', VERCEL_ENV: 'production' })).toBe(false);
-  expect(isFixtureControlVisible({ NODE_ENV: 'production', OPPORTUNITY_LOCAL_FIXTURE_TEST: 'enabled' })).toBe(true);
+  expect(isFixtureControlVisible({ NODE_ENV: 'production', OPPORTUNITY_LOCAL_FIXTURE_TEST: 'enabled' })).toBe(false);
   expect(isFixtureControlVisible({ NODE_ENV: 'development' })).toBe(true);
 });

@@ -4,6 +4,7 @@ import { parseCraigslistAlertMime } from '../../src/lib/opportunity/craigslist-e
 
 const multipartAlert = [
   'From: craigslist alerts <noreply@craigslist.org>',
+  'Authentication-Results: mx1.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org; spf=pass smtp.mailfrom=noreply@craigslist.org',
   'To: babs@phloid.com',
   'Subject: craigslist saved search: Mike vehicles',
   'Message-ID: <alert-42@craigslist.org>',
@@ -16,7 +17,7 @@ const multipartAlert = [
   '',
   '1985 Toyota Supra P-Type - $18,500 (Atlanta, GA)',
   '142,000 miles, clean title',
-  'https://atlanta.craigslist.org/atl/cto/d/atlanta-supra/1234567890.html?lang=en#photo',
+  'https://atlanta.craigslist.org/atl/cto/d/atlanta-call-404-555-0111/1234567890.html?lang=en#photo',
   '',
   '2011 Toyota Land Cruiser - $34,000 (Dallas, TX)',
   '168,000 miles, clean title',
@@ -39,7 +40,7 @@ test('Craigslist MIME parser emits allowlisted sanitized listings without duplic
     canonicalKey: 'craigslist:1234567890',
     sourceType: 'craigslist_email',
     sourceItemId: '1234567890',
-    sourceUrl: 'https://atlanta.craigslist.org/atl/cto/d/atlanta-supra/1234567890.html',
+    sourceUrl: 'https://atlanta.craigslist.org/listing/1234567890',
     title: '1985 Toyota Supra P-Type',
     year: 1985,
     make: 'Toyota',
@@ -65,6 +66,7 @@ test('Craigslist MIME parser emits allowlisted sanitized listings without duplic
 test('Craigslist MIME parser supports HTML-only saved-search alerts without trusting arbitrary links', async () => {
   const htmlOnly = Buffer.from([
     'From: craigslist alerts <robot@craigslist.org>',
+    'Authentication-Results: mx2.messagingengine.com; dmarc=pass header.from=craigslist.org; dkim=pass header.d=craigslist.org',
     'To: babs@phloid.com',
     'Subject: craigslist saved search',
     'Message-ID: <html-only@craigslist.org>',
@@ -78,7 +80,7 @@ test('Craigslist MIME parser supports HTML-only saved-search alerts without trus
   expect(parsed.listings).toHaveLength(1);
   expect(parsed.listings[0]).toMatchObject({
     sourceItemId: '3030303030',
-    sourceUrl: 'https://sfbay.craigslist.org/sfc/cto/d/san-francisco-supra/3030303030.html',
+    sourceUrl: 'https://sfbay.craigslist.org/listing/3030303030',
     title: '1985 Toyota Supra P-Type',
     priceAmount: 18500,
     mileage: 142000,
@@ -87,7 +89,16 @@ test('Craigslist MIME parser supports HTML-only saved-search alerts without trus
   });
 });
 
-test('Craigslist MIME parser rejects non-Craigslist senders and empty alerts', async () => {
+test('Craigslist MIME parser rejects unauthenticated mail, non-Craigslist senders, and empty alerts', async () => {
+  const forgedAuthentication = multipartAlert.replace('mx1.messagingengine.com', 'attacker.example');
+  await expect(parseCraigslistAlertMime(Buffer.from(forgedAuthentication))).rejects.toThrow('unauthenticated_sender');
+
+  const misleadingDomain = multipartAlert.replace(/craigslist\.org/g, 'evilcraigslist.org');
+  await expect(parseCraigslistAlertMime(Buffer.from(misleadingDomain))).rejects.toThrow('unauthenticated_sender');
+
+  const missingAuthentication = multipartAlert.replace(/^Authentication-Results:.*\r\n/m, '');
+  await expect(parseCraigslistAlertMime(Buffer.from(missingAuthentication))).rejects.toThrow('unauthenticated_sender');
+
   const forged = multipartAlert.replace('noreply@craigslist.org', 'noreply@example.com');
   await expect(parseCraigslistAlertMime(Buffer.from(forged))).rejects.toThrow('untrusted_sender');
 
@@ -95,6 +106,5 @@ test('Craigslist MIME parser rejects non-Craigslist senders and empty alerts', a
     .replace('noreply@craigslist.org', 'robot@craigslist.org')
     .replace(/https:\/\/atlanta\.craigslist\.org[^\r\n]+/g, 'https://example.com/not-craigslist')
     .replace(/https:\/\/dallas\.craigslist\.org[^\r\n]+/g, 'https://example.com/not-craigslist');
-  const parsed = await parseCraigslistAlertMime(Buffer.from(empty));
-  expect(parsed.listings).toEqual([]);
+  await expect(parseCraigslistAlertMime(Buffer.from(empty))).rejects.toThrow('unparseable_alert');
 });

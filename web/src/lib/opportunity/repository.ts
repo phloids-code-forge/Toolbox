@@ -184,6 +184,17 @@ function mapListing(row: ListingRow): ListingRecord {
   };
 }
 
+export type SourceCursor = {
+  generation: string;
+  value: number;
+};
+
+export type SourceFailureRecord = {
+  attempts: number;
+  quarantined: boolean;
+};
+
+export type WorkerRunType = 'fixture' | 'scheduled';
 export type WorkerRunStatus = 'started' | 'ok' | 'partial' | 'failed';
 export type SourceRunStatus = 'ok' | 'failed' | 'skipped';
 const WORKER_LEASE_MS = 15 * 60 * 1000;
@@ -280,6 +291,7 @@ type LeadDecisionRow = {
 };
 
 export type WorkerRunSummary = {
+  runType: WorkerRunType;
   status: WorkerRunStatus;
   counts: Record<string, number>;
   startedAt: Date;
@@ -289,6 +301,7 @@ export type WorkerRunSummary = {
 };
 
 type WorkerRunSummaryRow = WorkerRunRow & {
+  run_type: WorkerRunType;
   started_at: Date;
   finished_at: Date | null;
   error_summary: string | null;
@@ -310,44 +323,126 @@ export class OpportunityRepository {
     return this.pool;
   }
 
-  async getSourceCursor(clientSlug: string, sourceType: string): Promise<number> {
-    const result = await this.pool.query<{ cursor_value: string }>(
-      `SELECT cursor_value::text
+  async getSourceCursor(clientSlug: string, sourceType: string): Promise<SourceCursor | null> {
+    const result = await this.pool.query<{ cursor_generation: string; cursor_value: string }>(
+      `SELECT cursor_generation, cursor_value::text
        FROM opportunity_source_cursors cursor
        JOIN opportunity_clients client ON client.id = cursor.client_id
        WHERE client.slug = $1 AND cursor.source_type = $2`,
       [clientSlug, sourceType],
     );
-    const value = result.rows[0]?.cursor_value;
-    return value === undefined ? 0 : Number(value);
+    const row = result.rows[0];
+    return row ? { generation: row.cursor_generation, value: Number(row.cursor_value) } : null;
   }
 
   async advanceSourceCursor(
     clientSlug: string,
     sourceType: string,
-    cursorValue: number,
+    cursor: SourceCursor,
     now = new Date(),
-  ): Promise<number> {
-    if (!Number.isSafeInteger(cursorValue) || cursorValue < 0) {
+  ): Promise<SourceCursor> {
+    if (!cursor.generation.trim() || cursor.generation.length > 200) {
+      throw new Error('Source cursor generation is invalid.');
+    }
+    if (!Number.isSafeInteger(cursor.value) || cursor.value < 0) {
       throw new Error('Source cursor must be a non-negative safe integer.');
     }
-    const result = await this.pool.query<{ cursor_value: string }>(
-      `INSERT INTO opportunity_source_cursors (client_id, source_type, cursor_value, updated_at)
-       SELECT client.id, $2, $3, $4
+    const result = await this.pool.query<{ cursor_generation: string; cursor_value: string }>(
+      `INSERT INTO opportunity_source_cursors (
+         client_id, source_type, cursor_generation, cursor_value, updated_at
+       )
+       SELECT client.id, $2, $3, $4, $5
        FROM opportunity_clients client
        WHERE client.slug = $1
        ON CONFLICT (client_id, source_type) DO UPDATE SET
-         cursor_value = GREATEST(opportunity_source_cursors.cursor_value, EXCLUDED.cursor_value),
+         cursor_generation = EXCLUDED.cursor_generation,
+         cursor_value = CASE
+           WHEN opportunity_source_cursors.cursor_generation = EXCLUDED.cursor_generation
+             THEN GREATEST(opportunity_source_cursors.cursor_value, EXCLUDED.cursor_value)
+           ELSE EXCLUDED.cursor_value
+         END,
          updated_at = CASE
-           WHEN EXCLUDED.cursor_value > opportunity_source_cursors.cursor_value THEN EXCLUDED.updated_at
+           WHEN opportunity_source_cursors.cursor_generation <> EXCLUDED.cursor_generation
+             OR EXCLUDED.cursor_value > opportunity_source_cursors.cursor_value
+             THEN EXCLUDED.updated_at
            ELSE opportunity_source_cursors.updated_at
          END
-       RETURNING cursor_value::text`,
-      [clientSlug, sourceType, cursorValue, now],
+       RETURNING cursor_generation, cursor_value::text`,
+      [clientSlug, sourceType, cursor.generation, cursor.value, now],
     );
-    const value = result.rows[0]?.cursor_value;
-    if (value === undefined) throw new Error('Client not found.');
-    return Number(value);
+    const row = result.rows[0];
+    if (!row) throw new Error('Client not found.');
+    return { generation: row.cursor_generation, value: Number(row.cursor_value) };
+  }
+
+  async recordSourceFailure(
+    clientSlug: string,
+    sourceType: string,
+    cursor: SourceCursor,
+    errorCode: string,
+    now = new Date(),
+  ): Promise<SourceFailureRecord> {
+    if (!/^[a-z0-9_]{1,80}$/.test(errorCode)) throw new Error('Invalid source failure code.');
+    const result = await this.pool.query<{ attempt_count: number; quarantined_at: Date | null }>(
+      `INSERT INTO opportunity_source_failures (
+         client_id, source_type, cursor_generation, cursor_value,
+         attempt_count, error_code, first_failed_at, last_failed_at, quarantined_at
+       )
+       SELECT client.id, $2, $3, $4, 1, $5, $6, $6, NULL
+       FROM opportunity_clients client
+       WHERE client.slug = $1
+       ON CONFLICT (client_id, source_type, cursor_generation, cursor_value) DO UPDATE SET
+         attempt_count = LEAST(3, opportunity_source_failures.attempt_count + 1),
+         error_code = EXCLUDED.error_code,
+         last_failed_at = EXCLUDED.last_failed_at,
+         quarantined_at = CASE
+           WHEN opportunity_source_failures.attempt_count + 1 >= 3 THEN EXCLUDED.last_failed_at
+           ELSE opportunity_source_failures.quarantined_at
+         END
+       RETURNING attempt_count, quarantined_at`,
+      [clientSlug, sourceType, cursor.generation, cursor.value, errorCode, now],
+    );
+    const row = result.rows[0];
+    if (!row) throw new Error('Client not found.');
+    return { attempts: row.attempt_count, quarantined: row.quarantined_at !== null };
+  }
+
+  async clearSourceFailure(clientSlug: string, sourceType: string, cursor: SourceCursor): Promise<void> {
+    await this.pool.query(
+      `DELETE FROM opportunity_source_failures failure
+       USING opportunity_clients client
+       WHERE failure.client_id = client.id
+         AND client.slug = $1
+         AND failure.source_type = $2
+         AND failure.cursor_generation = $3
+         AND failure.cursor_value = $4`,
+      [clientSlug, sourceType, cursor.generation, cursor.value],
+    );
+  }
+
+  async tryAcquireSourceLease(clientSlug: string, sourceType: string): Promise<(() => Promise<void>) | null> {
+    const client = await this.connectionPool().connect();
+    const key = `opportunity-source:${clientSlug}:${sourceType}`;
+    try {
+      const result = await client.query<{ acquired: boolean }>(
+        'SELECT pg_try_advisory_lock(hashtextextended($1, 0)) AS acquired',
+        [key],
+      );
+      if (!result.rows[0]?.acquired) {
+        client.release();
+        return null;
+      }
+      return async () => {
+        try {
+          await client.query('SELECT pg_advisory_unlock(hashtextextended($1, 0))', [key]);
+        } finally {
+          client.release();
+        }
+      };
+    } catch (error) {
+      client.release();
+      throw error;
+    }
   }
 
   async getWatch(clientSlug: string, watchId: string): Promise<WatchRecord | null> {
@@ -1371,7 +1466,7 @@ export class OpportunityRepository {
 
   async listRecentWorkerRuns(clientSlug: string, limit = 5): Promise<WorkerRunSummary[]> {
     const result = await this.pool.query<WorkerRunSummaryRow>(
-      `SELECT r.id, r.status, r.counts, r.started_at, r.finished_at, r.error_summary
+      `SELECT r.id, r.run_type, r.status, r.counts, r.started_at, r.finished_at, r.error_summary
        FROM opportunity_worker_runs r
        JOIN opportunity_clients c ON c.id = r.client_id
        WHERE c.slug = $1
@@ -1381,6 +1476,7 @@ export class OpportunityRepository {
     );
     return Promise.all(
       result.rows.map(async (row) => ({
+        runType: row.run_type,
         status: row.status,
         counts: row.counts,
         startedAt: row.started_at,
