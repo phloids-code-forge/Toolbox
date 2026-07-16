@@ -61,7 +61,7 @@ function mailboxEnd(value: string, start: number): number | null {
     let consumedAtom = false;
     while (index < value.length) {
       const segmentStart = index;
-      while (index < value.length && !/[\s@()]/.test(value[index])) index += 1;
+      while (index < value.length && !/[\s@().]/.test(value[index])) index += 1;
       if (index > segmentStart) consumedAtom = true;
       const afterCfws = consumeCfws(value, index);
       if (afterCfws === null) return null;

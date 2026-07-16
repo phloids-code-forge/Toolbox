@@ -849,6 +849,8 @@ test('adapter persistence strips query data, contact text, raw identities, and u
   const syntheticCfwsEmails = [
     '"j d" @e.co',
     'j(c).d@e.co',
+    'j. (p) d@e.co',
+    'j.\r\n (a(b\\)c)) d@e.co',
     '"f"\r\n \t@e.co',
   ];
   const syntheticPhone = ['404', '555', '0199'].join('-');
@@ -928,6 +930,7 @@ test('adapter persistence strips query data, contact text, raw identities, and u
     }
     expect(serialized).not.toMatch(/jane|jim|jill|jack|folded/);
     expect(serialized).not.toContain('j(c)');
+    expect(serialized).not.toContain('j. (p)');
     expect(serialized).not.toContain('"f"');
     expect(serialized).not.toContain(syntheticPhone);
     expect(serialized).not.toContain(syntheticInternationalPhone);
