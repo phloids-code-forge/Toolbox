@@ -78,12 +78,19 @@ test('Craigslist MIME parser emits allowlisted sanitized listings without duplic
     messageKey: 'message-id:alert-42@craigslist.org',
   });
 
+  const decomposedEmail = `e\u0301@example.com`;
+  const devanagariEmail = 'उपयोगकर्ता@उदाहरण.भारत';
   const contactHeadline = multipartAlert
-    .replace('1985 Toyota Supra P-Type - $18,500', '1985 Toyota Supra P-Type +44 20 7946 0958 - $18,500')
-    .replace('(Atlanta, GA)', '(josé@example.com)');
+    .replace(
+      '1985 Toyota Supra P-Type - $18,500',
+      `1985 Toyota Supra P-Type +44 20 7946 0958 ${devanagariEmail} - $18,500`,
+    )
+    .replace('(Atlanta, GA)', `(${decomposedEmail})`);
   const contactSafe = await parseCraigslistAlertMime(Buffer.from(contactHeadline));
   expect(JSON.stringify(contactSafe)).not.toContain('+44 20 7946 0958');
-  expect(JSON.stringify(contactSafe)).not.toContain('josé@example.com');
+  expect(JSON.stringify(contactSafe)).not.toContain(devanagariEmail);
+  expect(JSON.stringify(contactSafe)).not.toContain(decomposedEmail);
+  expect(JSON.stringify(contactSafe)).not.toContain(decomposedEmail.normalize('NFC'));
 });
 
 test('Craigslist MIME parser supports HTML-only saved-search alerts without trusting arbitrary links', async () => {
