@@ -170,8 +170,8 @@ test('pending claims recover once and concurrent delivery cannot resend', async 
     await pool.query(
       `DELETE FROM opportunity_worker_runs
        WHERE client_id = (SELECT id FROM opportunity_clients WHERE slug = $1)
-         AND run_key = $2`,
-      ['mike-rapp', 'phase2c-email-sent-run'],
+         AND run_key = ANY($2::text[])`,
+      ['mike-rapp', ['phase2c-email-sent-run', 'phase2c-email-abandoned-run']],
     );
     const worker = await runOpportunityWorker({
       repository,
@@ -193,6 +193,25 @@ test('pending claims recover once and concurrent delivery cannot resend', async 
       orphaned[0].eventId,
       '<forged-cross-client@phloid.com>',
     )).toBe(false);
+    const releaseDeliveryLease = await repository.tryAcquireEmailDeliveryLease('mike-rapp');
+    expect(releaseDeliveryLease).not.toBeNull();
+    const persistedListing = await repository.findListingByCanonicalKey('mike-rapp', listing.canonicalKey);
+    expect(persistedListing).not.toBeNull();
+    let duplicateMutationCompleted = false;
+    const duplicateMutation = repository.linkDuplicateIdentity(
+      'mike-rapp',
+      persistedListing!.id,
+      'delivery-lock-test',
+      'locked-identity',
+      new Date('2026-07-22T18:01:30Z'),
+    ).then(() => {
+      duplicateMutationCompleted = true;
+    });
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    expect(duplicateMutationCompleted).toBe(false);
+    await releaseDeliveryLease?.();
+    await duplicateMutation;
+    expect(duplicateMutationCompleted).toBe(true);
     const deliveryInput = {
       repository,
       clientSlug: 'mike-rapp',
@@ -237,12 +256,51 @@ test('pending claims recover once and concurrent delivery cannot resend', async 
     });
     expect(JSON.stringify(audit.rows[0])).not.toContain('dave@phloid.com');
     expect(JSON.stringify(audit.rows[0])).not.toContain('synthetic-app-password');
+
+    const crashed = await runOpportunityWorker({
+      repository,
+      clientSlug: 'mike-rapp',
+      runKey: 'phase2c-email-abandoned-run',
+      runType: 'scheduled',
+      adapters: [{
+        sourceType: 'craigslist_email',
+        poll: async () => [{
+          ...listing,
+          canonicalKey: 'unit-email-crash:accepted-1',
+          sourceItemId: 'accepted-crash-1',
+          sourceUrl: 'https://example.com/listing/accepted-crash-1',
+          priceAmount: 23_123,
+          mileage: 99_123,
+        }],
+      }],
+      now: new Date('2026-07-22T18:04:00Z'),
+    });
+    const abandoned = await repository.claimEmailAlertsForRun(
+      'mike-rapp',
+      crashed.runId,
+      new Date('2026-07-22T18:04:00Z'),
+    );
+    expect(abandoned).toHaveLength(1);
+    expect(await repository.beginEmailAlertDelivery(
+      'mike-rapp',
+      abandoned[0].eventId,
+      `<opportunity-${abandoned[0].eventId}@phloid.com>`,
+    )).toBe(true);
+
+    const recoveredCrash = await sendOpportunityEmailsForRun({ ...deliveryInput, runId: crashed.runId });
+    expect(recoveredCrash).toEqual({ queued: 0, sent: 0, failed: 0, unknown: 1 });
+    const abandonedAudit = await pool.query<{ state: string; reason: string }>(
+      'SELECT state, reason FROM opportunity_alert_events WHERE id = $1',
+      [abandoned[0].eventId],
+    );
+    expect(abandonedAudit.rows).toEqual([{ state: 'queued', reason: 'provider_outcome_unknown' }]);
+    expect(sentMessages).toHaveLength(1);
   } finally {
     await pool.query(
       `DELETE FROM opportunity_listings
        WHERE client_id = (SELECT id FROM opportunity_clients WHERE slug = $1)
-         AND canonical_key = $2`,
-      ['mike-rapp', listing.canonicalKey],
+         AND canonical_key = ANY($2::text[])`,
+      ['mike-rapp', [listing.canonicalKey, 'unit-email-crash:accepted-1']],
     );
     await pool.end();
   }
@@ -334,6 +392,8 @@ test('provider rejection persists a failed event without exception or recipient 
 test('provider acceptance is never relabeled failed when the sent audit update errors', async () => {
   const transitions: string[] = [];
   const repository = {
+    tryAcquireEmailDeliveryLease: async () => async () => {},
+    reconcileStartedEmailAlerts: async () => 0,
     claimEmailAlertsForRun: async () => [{
       eventId: 'synthetic-event-id',
       title: '1985 Toyota Supra',
@@ -371,6 +431,8 @@ test('provider acceptance is never relabeled failed when the sent audit update e
 test('provider acceptance without a safe audit identifier is recorded as unknown instead of failed', async () => {
   const transitions: string[] = [];
   const repository = {
+    tryAcquireEmailDeliveryLease: async () => async () => {},
+    reconcileStartedEmailAlerts: async () => 0,
     claimEmailAlertsForRun: async () => [{
       eventId: 'synthetic-event-id',
       title: '1985 Toyota Supra',
@@ -409,6 +471,8 @@ test('provider acceptance without a safe audit identifier is recorded as unknown
 test('ambiguous SMTP transport errors remain queued unknown and are never labeled rejected', async () => {
   const transitions: string[] = [];
   const repository = {
+    tryAcquireEmailDeliveryLease: async () => async () => {},
+    reconcileStartedEmailAlerts: async () => 0,
     claimEmailAlertsForRun: async () => [{
       eventId: 'ambiguous-event-id',
       title: '1985 Toyota Supra',

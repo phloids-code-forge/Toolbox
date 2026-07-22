@@ -466,6 +466,38 @@ export class OpportunityRepository {
     }
   }
 
+  async tryAcquireEmailDeliveryLease(clientSlug: string): Promise<(() => Promise<void>) | null> {
+    const client = await this.connectionPool().connect();
+    const key = `opportunity-email-delivery:${clientSlug}`;
+    try {
+      const result = await client.query<{ acquired: boolean }>(
+        'SELECT pg_try_advisory_lock(hashtextextended($1, 0)) AS acquired',
+        [key],
+      );
+      if (!result.rows[0]?.acquired) {
+        client.release();
+        return null;
+      }
+      return async () => {
+        try {
+          await client.query('SELECT pg_advisory_unlock(hashtextextended($1, 0))', [key]);
+        } finally {
+          client.release();
+        }
+      };
+    } catch (error) {
+      client.release();
+      throw error;
+    }
+  }
+
+  private async lockEmailDeliveryReconciliation(clientSlug: string): Promise<void> {
+    await this.pool.query(
+      'SELECT pg_advisory_xact_lock(hashtextextended($1, 0))',
+      [`opportunity-email-delivery:${clientSlug}`],
+    );
+  }
+
   async getWatch(clientSlug: string, watchId: string): Promise<WatchRecord | null> {
     const result = await this.pool.query<WatchRow>(
       `SELECT w.id, c.slug AS client_slug, w.slug, w.status, w.title, w.query,
@@ -880,6 +912,8 @@ export class OpportunityRepository {
         repository.linkDuplicateIdentity(clientSlug, listingId, normalizedType, normalizedValue, seenAt),
       );
     }
+
+    await this.lockEmailDeliveryReconciliation(clientSlug);
 
     const listing = await this.pool.query<{ id: string; duplicate_group_id: string | null }>(
       `SELECT l.id, l.duplicate_group_id
@@ -1546,6 +1580,22 @@ export class OpportunityRepository {
       [clientSlug, eventId, providerMessageId],
     );
     return result.rowCount === 1;
+  }
+
+  async reconcileStartedEmailAlerts(clientSlug: string): Promise<number> {
+    const result = await this.pool.query(
+      `UPDATE opportunity_alert_events event
+       SET reason = 'provider_outcome_unknown'
+       FROM opportunity_clients client
+       WHERE event.client_id = client.id
+         AND client.slug = $1
+         AND event.channel = 'email'
+         AND event.state = 'queued'
+         AND event.reason = 'provider_attempt_started'
+         AND event.provider_message_id IS NOT NULL`,
+      [clientSlug],
+    );
+    return result.rowCount ?? 0;
   }
 
   async finishEmailAlert(

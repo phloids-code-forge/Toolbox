@@ -192,55 +192,61 @@ export async function sendOpportunityEmailsForRun({
   transport: OpportunityEmailTransport;
   now?: Date;
 }): Promise<{ queued: number; sent: number; failed: number; unknown: number }> {
-  const claims = await repository.claimEmailAlertsForRun(clientSlug, runId, now);
-  let queued = 0;
-  let sent = 0;
-  let failed = 0;
-  let unknown = 0;
-  for (const claim of claims) {
-    const providerMessageId = providerMessageIdForEvent(claim.eventId);
-    const began = await repository.beginEmailAlertDelivery(clientSlug, claim.eventId, providerMessageId);
-    if (!began) continue;
-    queued += 1;
-    try {
-      await deliverOpportunityEmail({
-        config,
-        transport,
-        opportunity: claim,
-        providerMessageId,
-      });
-    } catch (error) {
-      if (isDefinitiveProviderRejection(error)) {
-        const recorded = await repository.finishEmailAlert(
-          clientSlug,
-          claim.eventId,
-          'failed',
+  const releaseLease = await repository.tryAcquireEmailDeliveryLease(clientSlug);
+  if (!releaseLease) return { queued: 0, sent: 0, failed: 0, unknown: 0 };
+  try {
+    let unknown = await repository.reconcileStartedEmailAlerts(clientSlug);
+    const claims = await repository.claimEmailAlertsForRun(clientSlug, runId, now);
+    let queued = 0;
+    let sent = 0;
+    let failed = 0;
+    for (const claim of claims) {
+      const providerMessageId = providerMessageIdForEvent(claim.eventId);
+      const began = await repository.beginEmailAlertDelivery(clientSlug, claim.eventId, providerMessageId);
+      if (!began) continue;
+      queued += 1;
+      try {
+        await deliverOpportunityEmail({
+          config,
+          transport,
+          opportunity: claim,
           providerMessageId,
-          now,
-        );
-        if (!recorded) throw new Error('Email audit state changed before rejection was recorded.');
-        failed += 1;
-      } else {
-        const recorded = await repository.markEmailAlertOutcomeUnknown(
-          clientSlug,
-          claim.eventId,
-          providerMessageId,
-        );
-        if (!recorded) throw new Error('Email audit state changed before unknown outcome was recorded.');
-        unknown += 1;
+        });
+      } catch (error) {
+        if (isDefinitiveProviderRejection(error)) {
+          const recorded = await repository.finishEmailAlert(
+            clientSlug,
+            claim.eventId,
+            'failed',
+            providerMessageId,
+            now,
+          );
+          if (!recorded) throw new Error('Email audit state changed before rejection was recorded.');
+          failed += 1;
+        } else {
+          const recorded = await repository.markEmailAlertOutcomeUnknown(
+            clientSlug,
+            claim.eventId,
+            providerMessageId,
+          );
+          if (!recorded) throw new Error('Email audit state changed before unknown outcome was recorded.');
+          unknown += 1;
+        }
+        continue;
       }
-      continue;
-    }
 
-    const recorded = await repository.finishEmailAlert(
-      clientSlug,
-      claim.eventId,
-      'sent',
-      providerMessageId,
-      now,
-    );
-    if (!recorded) throw new Error('Email audit state changed before completion.');
-    sent += 1;
+      const recorded = await repository.finishEmailAlert(
+        clientSlug,
+        claim.eventId,
+        'sent',
+        providerMessageId,
+        now,
+      );
+      if (!recorded) throw new Error('Email audit state changed before completion.');
+      sent += 1;
+    }
+    return { queued, sent, failed, unknown };
+  } finally {
+    await releaseLease();
   }
-  return { queued, sent, failed, unknown };
 }
