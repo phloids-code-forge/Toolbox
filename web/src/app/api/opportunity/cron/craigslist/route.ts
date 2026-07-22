@@ -3,6 +3,10 @@ import { NextResponse } from 'next/server';
 import { FastmailCraigslistMailbox, readCraigslistImapConfig } from '@/lib/opportunity/craigslist-mailbox';
 import { runCraigslistEmailIntake } from '@/lib/opportunity/craigslist-intake';
 import { authorizeOpportunityCron } from '@/lib/opportunity/cron-auth';
+import {
+  createFastmailEmailTransport,
+  readOpportunityEmailConfig,
+} from '@/lib/opportunity/email-delivery';
 import { initializeOpportunityCore } from '@/lib/opportunity/runtime';
 
 export const dynamic = 'force-dynamic';
@@ -17,11 +21,16 @@ export async function GET(request: Request) {
   try {
     const repository = await initializeOpportunityCore();
     const mailbox = new FastmailCraigslistMailbox(readCraigslistImapConfig());
+    const emailConfig = readOpportunityEmailConfig();
     const result = await runCraigslistEmailIntake({
       repository,
       mailbox,
       clientSlug: process.env.OPPORTUNITY_CLIENT_SLUG ?? 'mike-rapp',
       deadlineAt: Date.now() + 35_000,
+      emailDelivery: {
+        config: emailConfig,
+        transport: createFastmailEmailTransport(emailConfig),
+      },
     });
     const status = result.status === 'failed'
       ? 503
@@ -37,14 +46,18 @@ export async function GET(request: Request) {
       deferredMessages: result.deferredMessages,
       listings: result.listings,
       cursor: result.cursor,
-      alertsSent: 0,
+      alertsQueued: result.alertsQueued,
+      alertsSent: result.alertsSent,
+      alertsFailed: result.alertsFailed,
     }, { status });
   } catch {
     return NextResponse.json({
       success: false,
       status: 'failed',
       error: 'intake_unavailable',
+      alertsQueued: 0,
       alertsSent: 0,
+      alertsFailed: 0,
     }, { status: 503 });
   }
 }

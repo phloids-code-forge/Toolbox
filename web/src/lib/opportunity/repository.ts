@@ -235,6 +235,26 @@ export type AlertEventRecord = {
   createdAt: Date;
 };
 
+export type EmailAlertClaim = {
+  eventId: string;
+  title: string;
+  watchTitle: string;
+  sourceUrl: string | null;
+  priceAmount: number | null;
+  mileage: number | null;
+  locationText: string | null;
+};
+
+type EmailAlertClaimRow = {
+  event_id: string;
+  title: string;
+  watch_title: string;
+  source_url: string | null;
+  price_amount: string | null;
+  mileage: number | null;
+  location_text: string | null;
+};
+
 type AlertEventRow = {
   canonical_key: string;
   channel: AlertEventRecord['channel'];
@@ -1374,6 +1394,111 @@ export class OpportunityRepository {
        ON CONFLICT DO NOTHING
        RETURNING id`,
       [clientSlug, targetListingId, watchId],
+    );
+    return result.rowCount === 1;
+  }
+
+  async claimEmailAlertsForRun(clientSlug: string, runId: string, now = new Date()): Promise<EmailAlertClaim[]> {
+    if (this.pool instanceof Pool) {
+      return this.withTransaction((repository) => repository.claimEmailAlertsForRun(clientSlug, runId, now));
+    }
+    const result = await this.pool.query<EmailAlertClaimRow>(
+      `WITH candidates AS (
+         SELECT DISTINCT ON (target.id, match.watch_id)
+                target.id AS listing_id,
+                match.watch_id,
+                target.title,
+                watch.title AS watch_title,
+                target.source_url,
+                target.price_amount,
+                target.mileage,
+                target.location_text
+         FROM opportunity_worker_runs run
+         JOIN opportunity_clients client ON client.id = run.client_id
+         JOIN opportunity_listing_sightings sighting ON sighting.worker_run_id = run.id
+         JOIN opportunity_listings observed
+           ON observed.id = sighting.listing_id AND observed.client_id = client.id
+         LEFT JOIN opportunity_duplicate_groups duplicate_group
+           ON duplicate_group.id = observed.duplicate_group_id
+          AND duplicate_group.client_id = client.id
+         JOIN opportunity_listings target
+           ON target.id = COALESCE(duplicate_group.representative_listing_id, observed.id)
+          AND target.client_id = client.id
+         JOIN opportunity_matches match
+           ON match.client_id = client.id
+          AND match.listing_id = target.id
+          AND match.accepted
+         JOIN opportunity_watches watch
+           ON watch.id = match.watch_id AND watch.client_id = client.id
+         WHERE client.slug = $1
+           AND run.id = $2
+           AND run.run_type = 'scheduled'
+           AND run.status = 'ok'
+         ORDER BY target.id, match.watch_id
+       ), inserted AS (
+         INSERT INTO opportunity_alert_events (
+           client_id, listing_id, watch_id, channel, state, reason,
+           idempotency_key, created_at
+         )
+         SELECT client.id, candidate.listing_id, candidate.watch_id,
+                'email', 'queued', 'provider_pending',
+                candidate.listing_id::text || ':' || candidate.watch_id::text || ':email', $3
+         FROM candidates candidate
+         JOIN opportunity_clients client ON client.slug = $1
+         ON CONFLICT DO NOTHING
+         RETURNING id, listing_id, watch_id
+       )
+       SELECT inserted.id AS event_id,
+              candidate.title,
+              candidate.watch_title,
+              candidate.source_url,
+              candidate.price_amount,
+              candidate.mileage,
+              candidate.location_text
+       FROM inserted
+       JOIN candidates candidate
+         ON candidate.listing_id = inserted.listing_id
+        AND candidate.watch_id = inserted.watch_id
+       ORDER BY inserted.id`,
+      [clientSlug, runId, now],
+    );
+    return result.rows.map((row) => ({
+      eventId: row.event_id,
+      title: row.title,
+      watchTitle: row.watch_title,
+      sourceUrl: row.source_url,
+      priceAmount: row.price_amount === null ? null : Number(row.price_amount),
+      mileage: row.mileage,
+      locationText: row.location_text,
+    }));
+  }
+
+  async finishEmailAlert(
+    clientSlug: string,
+    eventId: string,
+    state: 'sent' | 'failed',
+    providerMessageId: string | null,
+    now = new Date(),
+  ): Promise<boolean> {
+    if (
+      (state === 'sent' && (!providerMessageId || providerMessageId.length > 500 || /[\r\n]/.test(providerMessageId)))
+      || (state === 'failed' && providerMessageId !== null)
+    ) {
+      throw new Error('Email provider result is invalid.');
+    }
+    const result = await this.pool.query(
+      `UPDATE opportunity_alert_events event
+       SET state = $3,
+           reason = CASE WHEN $3 = 'sent' THEN 'provider_accepted' ELSE 'provider_send_failed' END,
+           provider_message_id = $4,
+           sent_at = CASE WHEN $3 = 'sent' THEN $5::timestamptz ELSE NULL END
+       FROM opportunity_clients client
+       WHERE event.client_id = client.id
+         AND client.slug = $1
+         AND event.id = $2
+         AND event.channel = 'email'
+         AND event.state = 'queued'`,
+      [clientSlug, eventId, state, providerMessageId, now],
     );
     return result.rowCount === 1;
   }

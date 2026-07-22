@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { isFixtureControlVisible } from '@/lib/opportunity/fixture-policy';
+import { readOpportunityEmailConfig } from '@/lib/opportunity/email-delivery';
 import { initializeOpportunityCore } from '@/lib/opportunity/runtime';
 import { readAuthorizedClientSession } from '@/lib/opportunity/session';
 
@@ -31,6 +32,16 @@ function formatStamp(value: Date): string {
     timeZone: 'UTC',
     timeZoneName: 'short',
   }).format(value);
+}
+
+function formatAlertState(state: string | null, accepted: boolean): string {
+  if (state === 'sent') return 'Sent — provider accepted';
+  if (state === 'delivered') return 'Delivered — provider confirmed';
+  if (state === 'queued') return 'Queued — awaiting provider';
+  if (state === 'failed') return 'Failed — provider send rejected';
+  if (state === 'skipped') return 'Skipped — fixture runs never deliver';
+  if (state === 'preview') return 'Preview only — nothing sent';
+  return accepted ? 'No delivery event recorded' : 'Not alert-worthy';
 }
 
 async function loadWorkspace(clientSlug: string) {
@@ -75,6 +86,13 @@ export default async function OpportunityWorkspacePage({ params, searchParams }:
     process.env.OPPORTUNITY_IMAP_PASSWORD,
     process.env.OPPORTUNITY_INTAKE_ADDRESS,
   ].every((value) => Boolean(value));
+  let deliveryConfigured = false;
+  try {
+    readOpportunityEmailConfig();
+    deliveryConfigured = true;
+  } catch {
+    deliveryConfigured = false;
+  }
 
   return (
     <main id="opportunity-portal" className={styles.shell}>
@@ -91,10 +109,10 @@ export default async function OpportunityWorkspacePage({ params, searchParams }:
 
       <section className={styles.hero}>
         <div>
-          <p className={styles.eyebrow}>Phase 2B · protected hosted intake</p>
+          <p className={styles.eyebrow}>Phase 2C · protected intake and delivery</p>
           <h1>Mike&apos;s opportunity workspace</h1>
           <p className={styles.lede}>
-            Durable watches, hosted Craigslist saved-search monitoring, and provider-disabled alert previews.
+            Durable watches, hosted Craigslist saved-search monitoring, and audited Dave-only email alerts.
           </p>
         </div>
         <div className={styles.authBadge}>
@@ -271,11 +289,7 @@ export default async function OpportunityWorkspacePage({ params, searchParams }:
                   <div className={styles.alertState}>
                     <strong>Alert event</strong>
                     <span>
-                      {decision.alertState === 'skipped'
-                        ? 'Skipped — provider disabled'
-                        : decision.accepted
-                          ? 'No delivery event recorded'
-                          : 'Not alert-worthy'}
+                      {formatAlertState(decision.alertState, decision.accepted)}
                     </span>
                   </div>
                 </article>
@@ -295,7 +309,11 @@ export default async function OpportunityWorkspacePage({ params, searchParams }:
             <p className={styles.eyebrow}>Observable worker state</p>
             <h2 id="runs-heading">Latest run</h2>
           </div>
-          <p>{fixtureControlVisible ? 'Hosted Craigslist + local fixture QA · alert provider disabled' : 'Hosted Craigslist · alert provider disabled'}</p>
+          <p>
+            {fixtureControlVisible ? 'Hosted Craigslist + local fixture QA' : 'Hosted Craigslist'}
+            {' · '}
+            {deliveryConfigured ? 'Dave-only email enabled' : 'email delivery awaiting protected configuration'}
+          </p>
         </div>
         {latestRun ? (
           <div className={styles.runStatusCard}>
@@ -329,7 +347,11 @@ export default async function OpportunityWorkspacePage({ params, searchParams }:
 
       <section className={styles.truthStrip}>
         <strong>Operational truth boundary</strong>
-        <span>Craigslist saved-search intake only · alert provider disabled · nothing queued, sent, or delivered</span>
+        <span>
+          {deliveryConfigured
+            ? 'Craigslist saved-search intake · Dave-only email delivery enabled · every attempt records queued, sent, or failed state'
+            : 'Craigslist saved-search intake · email delivery awaits protected configuration · nothing is sent'}
+        </span>
       </section>
     </main>
   );
