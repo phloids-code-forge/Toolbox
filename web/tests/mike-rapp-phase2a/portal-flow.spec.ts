@@ -55,7 +55,7 @@ test('protected Mike navigation binds ownership and logout clears access', async
   await expect(page.getByRole('heading', { name: "Mike's opportunity workspace" })).toBeVisible();
   await expect(page.getByText('Authenticated for Mike Rapp')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Hosted Craigslist intake' })).toBeVisible();
-  await expect(page.getByText('Craigslist saved-search intake · Dave-only email delivery enabled · every attempt records queued, sent, or failed state')).toBeVisible();
+  await expect(page.getByText('Craigslist saved-search intake · Dave-only email delivery enabled · every attempt records sent, rejected, or queued/unresolved state')).toBeVisible();
 
   await page.goto('/portal/synthetic-other-client');
   await expect(page).toHaveURL(/\/portal\/login\?next=%2Fportal%2Fsynthetic-other-client$/);

@@ -18,19 +18,26 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
   }
 
+  let emailDelivery: Parameters<typeof runCraigslistEmailIntake>[0]['emailDelivery'];
+  try {
+    const config = readOpportunityEmailConfig();
+    emailDelivery = {
+      config,
+      transport: createFastmailEmailTransport(config),
+    };
+  } catch {
+    return NextResponse.json({ error: 'delivery_unavailable' }, { status: 503 });
+  }
+
   try {
     const repository = await initializeOpportunityCore();
     const mailbox = new FastmailCraigslistMailbox(readCraigslistImapConfig());
-    const emailConfig = readOpportunityEmailConfig();
     const result = await runCraigslistEmailIntake({
       repository,
       mailbox,
       clientSlug: process.env.OPPORTUNITY_CLIENT_SLUG ?? 'mike-rapp',
       deadlineAt: Date.now() + 35_000,
-      emailDelivery: {
-        config: emailConfig,
-        transport: createFastmailEmailTransport(emailConfig),
-      },
+      emailDelivery,
     });
     const status = result.status === 'failed'
       ? 503
@@ -49,6 +56,7 @@ export async function GET(request: Request) {
       alertsQueued: result.alertsQueued,
       alertsSent: result.alertsSent,
       alertsFailed: result.alertsFailed,
+      alertsUnknown: result.alertsUnknown,
     }, { status });
   } catch {
     return NextResponse.json({
@@ -58,6 +66,7 @@ export async function GET(request: Request) {
       alertsQueued: 0,
       alertsSent: 0,
       alertsFailed: 0,
+      alertsUnknown: 0,
     }, { status: 503 });
   }
 }

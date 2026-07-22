@@ -224,7 +224,7 @@ test('Craigslist intake sends an accepted listing once and reports truthful deli
   const transport: OpportunityEmailTransport = {
     sendMail: async (email) => {
       deliveries.push(email);
-      return { messageId: '<phase2c-intake-provider@example.test>' };
+      return { messageId: String(email.messageId) };
     },
   };
 
@@ -264,8 +264,9 @@ test('Craigslist intake sends an accepted listing once and reports truthful deli
       alertsQueued: 1,
       alertsSent: 1,
       alertsFailed: 0,
+      alertsUnknown: 0,
     });
-    expect(repeated).toMatchObject({ alertsQueued: 0, alertsSent: 0, alertsFailed: 0 });
+    expect(repeated).toMatchObject({ alertsQueued: 0, alertsSent: 0, alertsFailed: 0, alertsUnknown: 0 });
     expect(deliveries).toHaveLength(1);
   } finally {
     await resetCraigslistState(pool);

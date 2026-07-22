@@ -47,6 +47,7 @@ export type CraigslistIntakeResult = {
   alertsQueued: number;
   alertsSent: number;
   alertsFailed: number;
+  alertsUnknown: number;
 };
 
 function failureCode(error: unknown): string {
@@ -81,6 +82,7 @@ export async function runCraigslistEmailIntake({
     alertsQueued: 0,
     alertsSent: 0,
     alertsFailed: 0,
+    alertsUnknown: 0,
   };
   const releaseLease = await repository.tryAcquireSourceLease(clientSlug, 'craigslist_email');
   if (!releaseLease) return { status: 'busy', ...emptyResult };
@@ -95,6 +97,7 @@ export async function runCraigslistEmailIntake({
     let alertsQueued = 0;
     let alertsSent = 0;
     let alertsFailed = 0;
+    let alertsUnknown = 0;
     let batch: CraigslistMailboxBatch;
     try {
       batch = await mailbox.fetchAfter(cursor, deadlineAt);
@@ -102,7 +105,7 @@ export async function runCraigslistEmailIntake({
       return {
         status: 'failed', processedMessages, failedMessages: 1, quarantinedMessages,
         deferredMessages, listings, cursor: cursor?.value ?? 0,
-        alertsQueued, alertsSent, alertsFailed,
+        alertsQueued, alertsSent, alertsFailed, alertsUnknown,
       };
     }
 
@@ -110,7 +113,7 @@ export async function runCraigslistEmailIntake({
       return {
         status: 'failed', processedMessages, failedMessages: 1, quarantinedMessages,
         deferredMessages, listings, cursor: cursor?.value ?? 0,
-        alertsQueued, alertsSent, alertsFailed,
+        alertsQueued, alertsSent, alertsFailed, alertsUnknown,
       };
     }
     if (cursor?.generation !== batch.generation) {
@@ -164,6 +167,7 @@ export async function runCraigslistEmailIntake({
           alertsQueued += delivery.queued;
           alertsSent += delivery.sent;
           alertsFailed += delivery.failed;
+          alertsUnknown += delivery.unknown;
         }
         cursor = await repository.advanceSourceCursor(clientSlug, 'craigslist_email', messageCursor, now);
         await repository.clearSourceFailure(clientSlug, 'craigslist_email', messageCursor);
@@ -184,7 +188,7 @@ export async function runCraigslistEmailIntake({
       }
     }
 
-    const status = failedMessages > 0 || alertsFailed > 0
+    const status = failedMessages > 0 || alertsFailed > 0 || alertsUnknown > 0
       ? processedMessages > 0 || quarantinedMessages > 0 ? 'partial' : 'failed'
       : deferredMessages > 0 ? 'partial' : 'ok';
     return {
@@ -198,6 +202,7 @@ export async function runCraigslistEmailIntake({
       alertsQueued,
       alertsSent,
       alertsFailed,
+      alertsUnknown,
     };
   } finally {
     await releaseLease();

@@ -6,6 +6,7 @@ import {
   deliverOpportunityEmail,
   readOpportunityEmailConfig,
   sendOpportunityEmailsForRun,
+  type OpportunityEmailMessage,
   type OpportunityEmailTransport,
 } from '../../src/lib/opportunity/email-delivery';
 import { applyOpportunityMigrations } from '../../src/lib/opportunity/migrations';
@@ -102,7 +103,34 @@ test('email delivery uses the fixed Dave-only envelope and returns only the prov
   expect(JSON.stringify(result)).not.toContain('dave@phloid.com');
 });
 
-test('accepted scheduled matches persist one sent email event and cannot resend', async () => {
+test('final send boundary rejects a runtime-forged recipient before transport use', async () => {
+  let calls = 0;
+  const forged = {
+    ...readOpportunityEmailConfig(validEnvironment),
+    recipient: 'other@example.test',
+  } as unknown as ReturnType<typeof readOpportunityEmailConfig>;
+
+  await expect(deliverOpportunityEmail({
+    config: forged,
+    transport: {
+      sendMail: async () => {
+        calls += 1;
+        return { messageId: '<should-not-send@example.test>' };
+      },
+    },
+    opportunity: {
+      title: '1985 Toyota Supra',
+      watchTitle: '1983–1986 Toyota Supra',
+      sourceUrl: null,
+      priceAmount: null,
+      mileage: null,
+      locationText: null,
+    },
+  })).rejects.toThrow('Dave-only email boundary rejected');
+  expect(calls).toBe(0);
+});
+
+test('pending claims recover once and concurrent delivery cannot resend', async () => {
   expect(databaseUrl).toContain('127.0.0.1:55432/mike_phase2a');
   const pool = new Pool({ connectionString: databaseUrl });
   const repository = new OpportunityRepository(pool);
@@ -126,7 +154,7 @@ test('accepted scheduled matches persist one sent email event and cannot resend'
   const transport: OpportunityEmailTransport = {
     sendMail: async (message) => {
       sentMessages.push(message);
-      return { messageId: '<phase2c-provider-id@example.test>' };
+      return { messageId: String(message.messageId) };
     },
   };
 
@@ -154,25 +182,38 @@ test('accepted scheduled matches persist one sent email event and cannot resend'
       now: new Date('2026-07-22T18:00:00Z'),
     });
 
-    const first = await sendOpportunityEmailsForRun({
-      repository,
-      clientSlug: 'mike-rapp',
-      runId: worker.runId,
-      config: readOpportunityEmailConfig(validEnvironment),
-      transport,
-      now: new Date('2026-07-22T18:01:00Z'),
-    });
-    const repeated = await sendOpportunityEmailsForRun({
+    const orphaned = await repository.claimEmailAlertsForRun(
+      'mike-rapp',
+      worker.runId,
+      new Date('2026-07-22T18:01:00Z'),
+    );
+    expect(orphaned).toHaveLength(1);
+    expect(await repository.beginEmailAlertDelivery(
+      'not-mike-rapp',
+      orphaned[0].eventId,
+      '<forged-cross-client@phloid.com>',
+    )).toBe(false);
+    const deliveryInput = {
       repository,
       clientSlug: 'mike-rapp',
       runId: worker.runId,
       config: readOpportunityEmailConfig(validEnvironment),
       transport,
       now: new Date('2026-07-22T18:02:00Z'),
+    };
+    const [first, competing] = await Promise.all([
+      sendOpportunityEmailsForRun(deliveryInput),
+      sendOpportunityEmailsForRun(deliveryInput),
+    ]);
+    const repeated = await sendOpportunityEmailsForRun({
+      ...deliveryInput,
+      now: new Date('2026-07-22T18:03:00Z'),
     });
 
-    expect(first).toEqual({ queued: 1, sent: 1, failed: 0 });
-    expect(repeated).toEqual({ queued: 0, sent: 0, failed: 0 });
+    expect(first.queued + competing.queued).toBeGreaterThanOrEqual(1);
+    expect(first.sent + competing.sent).toBe(1);
+    expect(first.failed + competing.failed).toBe(0);
+    expect(repeated).toEqual({ queued: 0, sent: 0, failed: 0, unknown: 0 });
     expect(sentMessages).toHaveLength(1);
     const audit = await pool.query<{
       channel: string;
@@ -192,7 +233,7 @@ test('accepted scheduled matches persist one sent email event and cannot resend'
       channel: 'email',
       state: 'sent',
       reason: 'provider_accepted',
-      provider_message_id: '<phase2c-provider-id@example.test>',
+      provider_message_id: sentMessages[0]?.messageId,
     });
     expect(JSON.stringify(audit.rows[0])).not.toContain('dave@phloid.com');
     expect(JSON.stringify(audit.rows[0])).not.toContain('synthetic-app-password');
@@ -257,12 +298,16 @@ test('provider rejection persists a failed event without exception or recipient 
       config: readOpportunityEmailConfig(validEnvironment),
       transport: {
         sendMail: async () => {
-          throw new Error('SMTP rejected dave@phloid.com password=synthetic-app-password');
+          const error = new Error('SMTP rejected dave@phloid.com password=synthetic-app-password') as Error & {
+            responseCode: number;
+          };
+          error.responseCode = 550;
+          throw error;
         },
       },
     });
 
-    expect(result).toEqual({ queued: 1, sent: 0, failed: 1 });
+    expect(result).toEqual({ queued: 1, sent: 0, failed: 1, unknown: 0 });
     const audit = await pool.query<{ state: string; reason: string | null; provider_message_id: string | null }>(
       `SELECT event.state, event.reason, event.provider_message_id
        FROM opportunity_alert_events event
@@ -270,7 +315,9 @@ test('provider rejection persists a failed event without exception or recipient 
        WHERE listing.canonical_key = $1 AND event.channel = 'email'`,
       [listing.canonicalKey],
     );
-    expect(audit.rows).toEqual([{ state: 'failed', reason: 'provider_send_failed', provider_message_id: null }]);
+    expect(audit.rows).toHaveLength(1);
+    expect(audit.rows[0]).toMatchObject({ state: 'failed', reason: 'provider_rejected' });
+    expect(audit.rows[0]?.provider_message_id).toMatch(/^<opportunity-[a-f0-9]{40}@phloid\.com>$/);
     expect(JSON.stringify(audit.rows)).not.toContain('dave@phloid.com');
     expect(JSON.stringify(audit.rows)).not.toContain('synthetic-app-password');
   } finally {
@@ -296,6 +343,7 @@ test('provider acceptance is never relabeled failed when the sent audit update e
       mileage: 88_000,
       locationText: 'Atlanta, GA',
     }],
+    beginEmailAlertDelivery: async () => true,
     finishEmailAlert: async (
       _clientSlug: string,
       _eventId: string,
@@ -311,12 +359,16 @@ test('provider acceptance is never relabeled failed when the sent audit update e
     clientSlug: 'mike-rapp',
     runId: 'synthetic-run-id',
     config: readOpportunityEmailConfig(validEnvironment),
-    transport: { sendMail: async () => ({ messageId: '<accepted@example.test>' }) },
+    transport: {
+      sendMail: async (message: OpportunityEmailMessage) => ({
+        messageId: String(message.messageId),
+      }),
+    },
   })).rejects.toThrow('synthetic audit failure');
   expect(transitions).toEqual(['sent']);
 });
 
-test('provider acceptance without a safe audit identifier remains queued instead of failed', async () => {
+test('provider acceptance without a safe audit identifier is recorded as unknown instead of failed', async () => {
   const transitions: string[] = [];
   const repository = {
     claimEmailAlertsForRun: async () => [{
@@ -328,6 +380,7 @@ test('provider acceptance without a safe audit identifier remains queued instead
       mileage: null,
       locationText: null,
     }],
+    beginEmailAlertDelivery: async () => true,
     finishEmailAlert: async (
       _clientSlug: string,
       _eventId: string,
@@ -336,14 +389,58 @@ test('provider acceptance without a safe audit identifier remains queued instead
       transitions.push(state);
       return true;
     },
+    markEmailAlertOutcomeUnknown: async () => {
+      transitions.push('unknown');
+      return true;
+    },
   } as unknown as OpportunityRepository;
 
-  await expect(sendOpportunityEmailsForRun({
+  const result = await sendOpportunityEmailsForRun({
     repository,
     clientSlug: 'mike-rapp',
     runId: 'synthetic-run-id',
     config: readOpportunityEmailConfig(validEnvironment),
     transport: { sendMail: async () => ({ messageId: '' }) },
-  })).rejects.toThrow('valid message identifier');
-  expect(transitions).toEqual([]);
+  });
+  expect(result).toEqual({ queued: 1, sent: 0, failed: 0, unknown: 1 });
+  expect(transitions).toEqual(['unknown']);
+});
+
+test('ambiguous SMTP transport errors remain queued unknown and are never labeled rejected', async () => {
+  const transitions: string[] = [];
+  const repository = {
+    claimEmailAlertsForRun: async () => [{
+      eventId: 'ambiguous-event-id',
+      title: '1985 Toyota Supra',
+      watchTitle: '1983–1986 Toyota Supra',
+      sourceUrl: null,
+      priceAmount: null,
+      mileage: null,
+      locationText: null,
+    }],
+    beginEmailAlertDelivery: async () => true,
+    finishEmailAlert: async () => {
+      transitions.push('terminal');
+      return true;
+    },
+    markEmailAlertOutcomeUnknown: async () => {
+      transitions.push('unknown');
+      return true;
+    },
+  } as unknown as OpportunityRepository;
+
+  const result = await sendOpportunityEmailsForRun({
+    repository,
+    clientSlug: 'mike-rapp',
+    runId: 'synthetic-run-id',
+    config: readOpportunityEmailConfig(validEnvironment),
+    transport: {
+      sendMail: async () => {
+        throw new Error('socket timeout after DATA');
+      },
+    },
+  });
+
+  expect(result).toEqual({ queued: 1, sent: 0, failed: 0, unknown: 1 });
+  expect(transitions).toEqual(['unknown']);
 });

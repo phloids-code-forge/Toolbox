@@ -34,11 +34,15 @@ function formatStamp(value: Date): string {
   }).format(value);
 }
 
-function formatAlertState(state: string | null, accepted: boolean): string {
+function formatAlertState(state: string | null, reason: string | null, accepted: boolean): string {
   if (state === 'sent') return 'Sent — provider accepted';
   if (state === 'delivered') return 'Delivered — provider confirmed';
-  if (state === 'queued') return 'Queued — awaiting provider';
-  if (state === 'failed') return 'Failed — provider send rejected';
+  if (state === 'queued') {
+    return reason === 'provider_pending'
+      ? 'Queued — awaiting provider'
+      : 'Queued — provider outcome unresolved';
+  }
+  if (state === 'failed') return 'Failed — provider rejected';
   if (state === 'skipped') return 'Skipped — fixture runs never deliver';
   if (state === 'preview') return 'Preview only — nothing sent';
   return accepted ? 'No delivery event recorded' : 'Not alert-worthy';
@@ -289,7 +293,7 @@ export default async function OpportunityWorkspacePage({ params, searchParams }:
                   <div className={styles.alertState}>
                     <strong>Alert event</strong>
                     <span>
-                      {formatAlertState(decision.alertState, decision.accepted)}
+                      {formatAlertState(decision.alertState, decision.alertReason, decision.accepted)}
                     </span>
                   </div>
                 </article>
@@ -349,7 +353,7 @@ export default async function OpportunityWorkspacePage({ params, searchParams }:
         <strong>Operational truth boundary</strong>
         <span>
           {deliveryConfigured
-            ? 'Craigslist saved-search intake · Dave-only email delivery enabled · every attempt records queued, sent, or failed state'
+            ? 'Craigslist saved-search intake · Dave-only email delivery enabled · every attempt records sent, rejected, or queued/unresolved state'
             : 'Craigslist saved-search intake · email delivery awaits protected configuration · nothing is sent'}
         </span>
       </section>
