@@ -295,12 +295,75 @@ test('pending claims recover once and concurrent delivery cannot resend', async 
     );
     expect(abandonedAudit.rows).toEqual([{ state: 'queued', reason: 'provider_outcome_unknown' }]);
     expect(sentMessages).toHaveLength(1);
+
+    const abandonedListing = await repository.findListingByCanonicalKey(
+      'mike-rapp',
+      'unit-email-crash:accepted-1',
+    );
+    expect(abandonedListing).not.toBeNull();
+    await repository.linkDuplicateIdentity(
+      'mike-rapp',
+      abandonedListing!.id,
+      'email-monotonic-test',
+      'same-opportunity',
+      new Date('2026-07-22T18:05:00Z'),
+    );
+    const pendingDuplicate = await repository.upsertListing(
+      'mike-rapp',
+      {
+        ...listing,
+        canonicalKey: 'unit-email-crash:pending-duplicate',
+        sourceItemId: 'pending-duplicate',
+        sourceUrl: 'https://example.com/listing/pending-duplicate',
+        priceAmount: 23_124,
+        mileage: 99_124,
+      },
+      new Date('2026-07-22T18:06:00Z'),
+    );
+    await pool.query(
+      `INSERT INTO opportunity_alert_events (
+         client_id, listing_id, watch_id, channel, state, reason, idempotency_key, created_at
+       )
+       SELECT client.id, $2, watch.id, 'email', 'queued', 'provider_pending', $3, $4
+       FROM opportunity_clients client
+       JOIN opportunity_watches watch ON watch.client_id = client.id
+       WHERE client.slug = $1 AND watch.slug = 'supra-1983-1986'`,
+      [
+        'mike-rapp',
+        pendingDuplicate.id,
+        `${pendingDuplicate.id}:pending-monotonic-test:email`,
+        new Date('2026-07-22T18:07:00Z'),
+      ],
+    );
+    await repository.linkDuplicateIdentity(
+      'mike-rapp',
+      pendingDuplicate.id,
+      'email-monotonic-test',
+      'same-opportunity',
+      new Date('2026-07-22T18:08:00Z'),
+    );
+    const mergedAudit = await pool.query<{ reason: string; provider_message_id: string | null }>(
+      `SELECT reason, provider_message_id FROM opportunity_alert_events
+       WHERE listing_id = $1 AND channel = 'email'`,
+      [abandonedListing!.id],
+    );
+    expect(mergedAudit.rows).toEqual([{
+      reason: 'provider_outcome_unknown',
+      provider_message_id: `<opportunity-${abandoned[0].eventId}@phloid.com>`,
+    }]);
+    const afterMerge = await sendOpportunityEmailsForRun({ ...deliveryInput, runId: crashed.runId });
+    expect(afterMerge).toEqual({ queued: 0, sent: 0, failed: 0, unknown: 0 });
+    expect(sentMessages).toHaveLength(1);
   } finally {
     await pool.query(
       `DELETE FROM opportunity_listings
        WHERE client_id = (SELECT id FROM opportunity_clients WHERE slug = $1)
          AND canonical_key = ANY($2::text[])`,
-      ['mike-rapp', [listing.canonicalKey, 'unit-email-crash:accepted-1']],
+      ['mike-rapp', [
+        listing.canonicalKey,
+        'unit-email-crash:accepted-1',
+        'unit-email-crash:pending-duplicate',
+      ]],
     );
     await pool.end();
   }

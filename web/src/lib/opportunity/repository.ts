@@ -1086,8 +1086,9 @@ export class OpportunityRepository {
            ELSE 1
          END DESC,
          CASE
-           WHEN a.state = 'queued' AND a.provider_message_id IS NOT NULL THEN 2
-           WHEN a.state = 'queued' THEN 1
+           WHEN a.state = 'queued' AND a.reason = 'provider_outcome_unknown' THEN 3
+           WHEN a.state = 'queued' AND a.reason = 'provider_attempt_started' THEN 2
+           WHEN a.state = 'queued' AND a.reason = 'provider_pending' THEN 1
            ELSE 0
          END DESC,
          COALESCE(a.sent_at, a.created_at) DESC,
@@ -1098,35 +1099,34 @@ export class OpportunityRepository {
          provider_message_id = EXCLUDED.provider_message_id,
          created_at = LEAST(opportunity_alert_events.created_at, EXCLUDED.created_at),
          sent_at = EXCLUDED.sent_at
-       WHERE
-         (
-           EXCLUDED.state = 'queued'
-           AND EXCLUDED.provider_message_id IS NOT NULL
-           AND opportunity_alert_events.provider_message_id IS NULL
-         )
-         OR
+       WHERE ROW(
          CASE EXCLUDED.state
-           WHEN 'delivered' THEN 6
-           WHEN 'sent' THEN 5
-           WHEN 'queued' THEN 4
-           WHEN 'failed' THEN 3
-           WHEN 'preview' THEN 2
-           ELSE 1
-         END
-         >
+           WHEN 'delivered' THEN 6 WHEN 'sent' THEN 5 WHEN 'queued' THEN 4
+           WHEN 'failed' THEN 3 WHEN 'preview' THEN 2 ELSE 1
+         END,
+         CASE
+           WHEN EXCLUDED.state = 'queued' AND EXCLUDED.reason = 'provider_outcome_unknown' THEN 3
+           WHEN EXCLUDED.state = 'queued' AND EXCLUDED.reason = 'provider_attempt_started' THEN 2
+           WHEN EXCLUDED.state = 'queued' AND EXCLUDED.reason = 'provider_pending' THEN 1
+           ELSE 0
+         END,
+         COALESCE(EXCLUDED.sent_at, EXCLUDED.created_at)
+       ) > ROW(
          CASE opportunity_alert_events.state
-           WHEN 'delivered' THEN 6
-           WHEN 'sent' THEN 5
-           WHEN 'queued' THEN 4
-           WHEN 'failed' THEN 3
-           WHEN 'preview' THEN 2
-           ELSE 1
-         END
-         OR (
-           EXCLUDED.state = opportunity_alert_events.state
-           AND COALESCE(EXCLUDED.sent_at, EXCLUDED.created_at)
-             > COALESCE(opportunity_alert_events.sent_at, opportunity_alert_events.created_at)
-         )`,
+           WHEN 'delivered' THEN 6 WHEN 'sent' THEN 5 WHEN 'queued' THEN 4
+           WHEN 'failed' THEN 3 WHEN 'preview' THEN 2 ELSE 1
+         END,
+         CASE
+           WHEN opportunity_alert_events.state = 'queued'
+             AND opportunity_alert_events.reason = 'provider_outcome_unknown' THEN 3
+           WHEN opportunity_alert_events.state = 'queued'
+             AND opportunity_alert_events.reason = 'provider_attempt_started' THEN 2
+           WHEN opportunity_alert_events.state = 'queued'
+             AND opportunity_alert_events.reason = 'provider_pending' THEN 1
+           ELSE 0
+         END,
+         COALESCE(opportunity_alert_events.sent_at, opportunity_alert_events.created_at)
+       )`,
       [clientSlug, groupId, representativeListingId],
     );
     await this.pool.query(
