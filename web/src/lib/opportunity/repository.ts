@@ -235,6 +235,26 @@ export type AlertEventRecord = {
   createdAt: Date;
 };
 
+export type EmailAlertClaim = {
+  eventId: string;
+  title: string;
+  watchTitle: string;
+  sourceUrl: string | null;
+  priceAmount: number | null;
+  mileage: number | null;
+  locationText: string | null;
+};
+
+type EmailAlertClaimRow = {
+  event_id: string;
+  title: string;
+  watch_title: string;
+  source_url: string | null;
+  price_amount: string | null;
+  mileage: number | null;
+  location_text: string | null;
+};
+
 type AlertEventRow = {
   canonical_key: string;
   channel: AlertEventRecord['channel'];
@@ -444,6 +464,38 @@ export class OpportunityRepository {
       client.release();
       throw error;
     }
+  }
+
+  async tryAcquireEmailDeliveryLease(clientSlug: string): Promise<(() => Promise<void>) | null> {
+    const client = await this.connectionPool().connect();
+    const key = `opportunity-email-delivery:${clientSlug}`;
+    try {
+      const result = await client.query<{ acquired: boolean }>(
+        'SELECT pg_try_advisory_lock(hashtextextended($1, 0)) AS acquired',
+        [key],
+      );
+      if (!result.rows[0]?.acquired) {
+        client.release();
+        return null;
+      }
+      return async () => {
+        try {
+          await client.query('SELECT pg_advisory_unlock(hashtextextended($1, 0))', [key]);
+        } finally {
+          client.release();
+        }
+      };
+    } catch (error) {
+      client.release();
+      throw error;
+    }
+  }
+
+  private async lockEmailDeliveryReconciliation(clientSlug: string): Promise<void> {
+    await this.pool.query(
+      'SELECT pg_advisory_xact_lock(hashtextextended($1, 0))',
+      [`opportunity-email-delivery:${clientSlug}`],
+    );
   }
 
   async getWatch(clientSlug: string, watchId: string): Promise<WatchRecord | null> {
@@ -861,6 +913,8 @@ export class OpportunityRepository {
       );
     }
 
+    await this.lockEmailDeliveryReconciliation(clientSlug);
+
     const listing = await this.pool.query<{ id: string; duplicate_group_id: string | null }>(
       `SELECT l.id, l.duplicate_group_id
        FROM opportunity_listings l
@@ -1031,6 +1085,12 @@ export class OpportunityRepository {
            WHEN 'preview' THEN 2
            ELSE 1
          END DESC,
+         CASE
+           WHEN a.state = 'queued' AND a.reason = 'provider_outcome_unknown' THEN 3
+           WHEN a.state = 'queued' AND a.reason = 'provider_attempt_started' THEN 2
+           WHEN a.state = 'queued' AND a.reason = 'provider_pending' THEN 1
+           ELSE 0
+         END DESC,
          COALESCE(a.sent_at, a.created_at) DESC,
          a.id
        ON CONFLICT (client_id, listing_id, watch_id, channel) DO UPDATE SET
@@ -1039,29 +1099,34 @@ export class OpportunityRepository {
          provider_message_id = EXCLUDED.provider_message_id,
          created_at = LEAST(opportunity_alert_events.created_at, EXCLUDED.created_at),
          sent_at = EXCLUDED.sent_at
-       WHERE
+       WHERE ROW(
          CASE EXCLUDED.state
-           WHEN 'delivered' THEN 6
-           WHEN 'sent' THEN 5
-           WHEN 'queued' THEN 4
-           WHEN 'failed' THEN 3
-           WHEN 'preview' THEN 2
-           ELSE 1
-         END
-         >
+           WHEN 'delivered' THEN 6 WHEN 'sent' THEN 5 WHEN 'queued' THEN 4
+           WHEN 'failed' THEN 3 WHEN 'preview' THEN 2 ELSE 1
+         END,
+         CASE
+           WHEN EXCLUDED.state = 'queued' AND EXCLUDED.reason = 'provider_outcome_unknown' THEN 3
+           WHEN EXCLUDED.state = 'queued' AND EXCLUDED.reason = 'provider_attempt_started' THEN 2
+           WHEN EXCLUDED.state = 'queued' AND EXCLUDED.reason = 'provider_pending' THEN 1
+           ELSE 0
+         END,
+         COALESCE(EXCLUDED.sent_at, EXCLUDED.created_at)
+       ) > ROW(
          CASE opportunity_alert_events.state
-           WHEN 'delivered' THEN 6
-           WHEN 'sent' THEN 5
-           WHEN 'queued' THEN 4
-           WHEN 'failed' THEN 3
-           WHEN 'preview' THEN 2
-           ELSE 1
-         END
-         OR (
-           EXCLUDED.state = opportunity_alert_events.state
-           AND COALESCE(EXCLUDED.sent_at, EXCLUDED.created_at)
-             > COALESCE(opportunity_alert_events.sent_at, opportunity_alert_events.created_at)
-         )`,
+           WHEN 'delivered' THEN 6 WHEN 'sent' THEN 5 WHEN 'queued' THEN 4
+           WHEN 'failed' THEN 3 WHEN 'preview' THEN 2 ELSE 1
+         END,
+         CASE
+           WHEN opportunity_alert_events.state = 'queued'
+             AND opportunity_alert_events.reason = 'provider_outcome_unknown' THEN 3
+           WHEN opportunity_alert_events.state = 'queued'
+             AND opportunity_alert_events.reason = 'provider_attempt_started' THEN 2
+           WHEN opportunity_alert_events.state = 'queued'
+             AND opportunity_alert_events.reason = 'provider_pending' THEN 1
+           ELSE 0
+         END,
+         COALESCE(opportunity_alert_events.sent_at, opportunity_alert_events.created_at)
+       )`,
       [clientSlug, groupId, representativeListingId],
     );
     await this.pool.query(
@@ -1374,6 +1439,210 @@ export class OpportunityRepository {
        ON CONFLICT DO NOTHING
        RETURNING id`,
       [clientSlug, targetListingId, watchId],
+    );
+    return result.rowCount === 1;
+  }
+
+  async claimEmailAlertsForRun(clientSlug: string, runId: string, now = new Date()): Promise<EmailAlertClaim[]> {
+    if (this.pool instanceof Pool) {
+      return this.withTransaction((repository) => repository.claimEmailAlertsForRun(clientSlug, runId, now));
+    }
+    await this.pool.query(
+      `WITH candidates AS (
+         SELECT DISTINCT ON (target.id, match.watch_id)
+                target.id AS listing_id,
+                match.watch_id,
+                target.title,
+                watch.title AS watch_title,
+                target.source_url,
+                target.price_amount,
+                target.mileage,
+                target.location_text
+         FROM opportunity_worker_runs run
+         JOIN opportunity_clients client ON client.id = run.client_id
+         JOIN opportunity_listing_sightings sighting ON sighting.worker_run_id = run.id
+         JOIN opportunity_listings observed
+           ON observed.id = sighting.listing_id AND observed.client_id = client.id
+         LEFT JOIN opportunity_duplicate_groups duplicate_group
+           ON duplicate_group.id = observed.duplicate_group_id
+          AND duplicate_group.client_id = client.id
+         JOIN opportunity_listings target
+           ON target.id = COALESCE(duplicate_group.representative_listing_id, observed.id)
+          AND target.client_id = client.id
+         JOIN opportunity_matches match
+           ON match.client_id = client.id
+          AND match.listing_id = target.id
+          AND match.accepted
+         JOIN opportunity_watches watch
+           ON watch.id = match.watch_id AND watch.client_id = client.id
+         WHERE client.slug = $1
+           AND run.id = $2
+           AND run.run_type = 'scheduled'
+           AND run.status = 'ok'
+         ORDER BY target.id, match.watch_id
+       )
+       INSERT INTO opportunity_alert_events (
+         client_id, listing_id, watch_id, channel, state, reason,
+         idempotency_key, created_at
+       )
+       SELECT client.id, candidate.listing_id, candidate.watch_id,
+              'email', 'queued', 'provider_pending',
+              candidate.listing_id::text || ':' || candidate.watch_id::text || ':email', $3
+       FROM candidates candidate
+       JOIN opportunity_clients client ON client.slug = $1
+       ON CONFLICT DO NOTHING`,
+      [clientSlug, runId, now],
+    );
+    const result = await this.pool.query<EmailAlertClaimRow>(
+      `WITH candidates AS (
+         SELECT DISTINCT ON (target.id, match.watch_id)
+                target.id AS listing_id,
+                match.watch_id,
+                target.title,
+                watch.title AS watch_title,
+                target.source_url,
+                target.price_amount,
+                target.mileage,
+                target.location_text
+         FROM opportunity_worker_runs run
+         JOIN opportunity_clients client ON client.id = run.client_id
+         JOIN opportunity_listing_sightings sighting ON sighting.worker_run_id = run.id
+         JOIN opportunity_listings observed
+           ON observed.id = sighting.listing_id AND observed.client_id = client.id
+         LEFT JOIN opportunity_duplicate_groups duplicate_group
+           ON duplicate_group.id = observed.duplicate_group_id
+          AND duplicate_group.client_id = client.id
+         JOIN opportunity_listings target
+           ON target.id = COALESCE(duplicate_group.representative_listing_id, observed.id)
+          AND target.client_id = client.id
+         JOIN opportunity_matches match
+           ON match.client_id = client.id
+          AND match.listing_id = target.id
+          AND match.accepted
+         JOIN opportunity_watches watch
+           ON watch.id = match.watch_id AND watch.client_id = client.id
+         WHERE client.slug = $1
+           AND run.id = $2
+           AND run.run_type = 'scheduled'
+           AND run.status = 'ok'
+         ORDER BY target.id, match.watch_id
+       )
+       SELECT event.id AS event_id,
+              candidate.title,
+              candidate.watch_title,
+              candidate.source_url,
+              candidate.price_amount,
+              candidate.mileage,
+              candidate.location_text
+       FROM candidates candidate
+       JOIN opportunity_clients client ON client.slug = $1
+       JOIN opportunity_alert_events event
+         ON event.client_id = client.id
+        AND event.listing_id = candidate.listing_id
+        AND event.watch_id = candidate.watch_id
+        AND event.channel = 'email'
+        AND event.state = 'queued'
+        AND event.reason = 'provider_pending'
+        AND event.provider_message_id IS NULL
+       ORDER BY event.id`,
+      [clientSlug, runId],
+    );
+    return result.rows.map((row) => ({
+      eventId: row.event_id,
+      title: row.title,
+      watchTitle: row.watch_title,
+      sourceUrl: row.source_url,
+      priceAmount: row.price_amount === null ? null : Number(row.price_amount),
+      mileage: row.mileage,
+      locationText: row.location_text,
+    }));
+  }
+
+  async beginEmailAlertDelivery(
+    clientSlug: string,
+    eventId: string,
+    providerMessageId: string,
+  ): Promise<boolean> {
+    if (!providerMessageId || providerMessageId.length > 500 || /[\r\n]/.test(providerMessageId)) {
+      throw new Error('Email provider result is invalid.');
+    }
+    const result = await this.pool.query(
+      `UPDATE opportunity_alert_events event
+       SET reason = 'provider_attempt_started', provider_message_id = $3
+       FROM opportunity_clients client
+       WHERE event.client_id = client.id
+         AND client.slug = $1
+         AND event.id = $2
+         AND event.channel = 'email'
+         AND event.state = 'queued'
+         AND event.reason = 'provider_pending'
+         AND event.provider_message_id IS NULL`,
+      [clientSlug, eventId, providerMessageId],
+    );
+    return result.rowCount === 1;
+  }
+
+  async reconcileStartedEmailAlerts(clientSlug: string): Promise<number> {
+    const result = await this.pool.query(
+      `UPDATE opportunity_alert_events event
+       SET reason = 'provider_outcome_unknown'
+       FROM opportunity_clients client
+       WHERE event.client_id = client.id
+         AND client.slug = $1
+         AND event.channel = 'email'
+         AND event.state = 'queued'
+         AND event.reason = 'provider_attempt_started'
+         AND event.provider_message_id IS NOT NULL`,
+      [clientSlug],
+    );
+    return result.rowCount ?? 0;
+  }
+
+  async finishEmailAlert(
+    clientSlug: string,
+    eventId: string,
+    state: 'sent' | 'failed',
+    providerMessageId: string,
+    now = new Date(),
+  ): Promise<boolean> {
+    if (!providerMessageId || providerMessageId.length > 500 || /[\r\n]/.test(providerMessageId)) {
+      throw new Error('Email provider result is invalid.');
+    }
+    const result = await this.pool.query(
+      `UPDATE opportunity_alert_events event
+       SET state = $3,
+           reason = CASE WHEN $3 = 'sent' THEN 'provider_accepted' ELSE 'provider_rejected' END,
+           provider_message_id = $4,
+           sent_at = CASE WHEN $3 = 'sent' THEN $5::timestamptz ELSE NULL END
+       FROM opportunity_clients client
+       WHERE event.client_id = client.id
+         AND client.slug = $1
+         AND (event.id = $2 OR event.provider_message_id = $4)
+         AND event.channel = 'email'
+         AND event.state = 'queued'`,
+      [clientSlug, eventId, state, providerMessageId, now],
+    );
+    return result.rowCount === 1;
+  }
+
+  async markEmailAlertOutcomeUnknown(
+    clientSlug: string,
+    eventId: string,
+    providerMessageId: string,
+  ): Promise<boolean> {
+    if (!providerMessageId || providerMessageId.length > 500 || /[\r\n]/.test(providerMessageId)) {
+      throw new Error('Email provider result is invalid.');
+    }
+    const result = await this.pool.query(
+      `UPDATE opportunity_alert_events event
+       SET reason = 'provider_outcome_unknown'
+       FROM opportunity_clients client
+       WHERE event.client_id = client.id
+         AND client.slug = $1
+         AND (event.id = $2 OR event.provider_message_id = $3)
+         AND event.channel = 'email'
+         AND event.state = 'queued'`,
+      [clientSlug, eventId, providerMessageId],
     );
     return result.rowCount === 1;
   }

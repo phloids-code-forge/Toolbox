@@ -1,6 +1,11 @@
 import { createHash } from 'node:crypto';
 
 import { parseCraigslistAlertMime } from './craigslist-email';
+import {
+  sendOpportunityEmailsForRun,
+  type OpportunityEmailConfig,
+  type OpportunityEmailTransport,
+} from './email-delivery';
 import type { OpportunityRepository, SourceCursor } from './repository';
 import { runOpportunityWorker } from './worker';
 
@@ -25,6 +30,10 @@ type RunCraigslistEmailIntakeInput = {
   clientSlug: string;
   now?: Date;
   deadlineAt?: number;
+  emailDelivery?: {
+    config: OpportunityEmailConfig;
+    transport: OpportunityEmailTransport;
+  };
 };
 
 export type CraigslistIntakeResult = {
@@ -35,6 +44,10 @@ export type CraigslistIntakeResult = {
   deferredMessages: number;
   listings: number;
   cursor: number;
+  alertsQueued: number;
+  alertsSent: number;
+  alertsFailed: number;
+  alertsUnknown: number;
 };
 
 function failureCode(error: unknown): string {
@@ -57,6 +70,7 @@ export async function runCraigslistEmailIntake({
   clientSlug,
   now = new Date(),
   deadlineAt = Date.now() + 35_000,
+  emailDelivery,
 }: RunCraigslistEmailIntakeInput): Promise<CraigslistIntakeResult> {
   const emptyResult = {
     processedMessages: 0,
@@ -65,6 +79,10 @@ export async function runCraigslistEmailIntake({
     deferredMessages: 0,
     listings: 0,
     cursor: 0,
+    alertsQueued: 0,
+    alertsSent: 0,
+    alertsFailed: 0,
+    alertsUnknown: 0,
   };
   const releaseLease = await repository.tryAcquireSourceLease(clientSlug, 'craigslist_email');
   if (!releaseLease) return { status: 'busy', ...emptyResult };
@@ -76,6 +94,10 @@ export async function runCraigslistEmailIntake({
     let quarantinedMessages = 0;
     let deferredMessages = 0;
     let listings = 0;
+    let alertsQueued = 0;
+    let alertsSent = 0;
+    let alertsFailed = 0;
+    let alertsUnknown = 0;
     let batch: CraigslistMailboxBatch;
     try {
       batch = await mailbox.fetchAfter(cursor, deadlineAt);
@@ -83,6 +105,7 @@ export async function runCraigslistEmailIntake({
       return {
         status: 'failed', processedMessages, failedMessages: 1, quarantinedMessages,
         deferredMessages, listings, cursor: cursor?.value ?? 0,
+        alertsQueued, alertsSent, alertsFailed, alertsUnknown,
       };
     }
 
@@ -90,6 +113,7 @@ export async function runCraigslistEmailIntake({
       return {
         status: 'failed', processedMessages, failedMessages: 1, quarantinedMessages,
         deferredMessages, listings, cursor: cursor?.value ?? 0,
+        alertsQueued, alertsSent, alertsFailed, alertsUnknown,
       };
     }
     if (cursor?.generation !== batch.generation) {
@@ -131,6 +155,20 @@ export async function runCraigslistEmailIntake({
           now,
         });
         if (worker.status !== 'ok') throw new Error('worker_not_ok');
+        if (emailDelivery) {
+          const delivery = await sendOpportunityEmailsForRun({
+            repository,
+            clientSlug,
+            runId: worker.runId,
+            config: emailDelivery.config,
+            transport: emailDelivery.transport,
+            now,
+          });
+          alertsQueued += delivery.queued;
+          alertsSent += delivery.sent;
+          alertsFailed += delivery.failed;
+          alertsUnknown += delivery.unknown;
+        }
         cursor = await repository.advanceSourceCursor(clientSlug, 'craigslist_email', messageCursor, now);
         await repository.clearSourceFailure(clientSlug, 'craigslist_email', messageCursor);
         processedMessages += 1;
@@ -150,7 +188,7 @@ export async function runCraigslistEmailIntake({
       }
     }
 
-    const status = failedMessages > 0
+    const status = failedMessages > 0 || alertsFailed > 0 || alertsUnknown > 0
       ? processedMessages > 0 || quarantinedMessages > 0 ? 'partial' : 'failed'
       : deferredMessages > 0 ? 'partial' : 'ok';
     return {
@@ -161,6 +199,10 @@ export async function runCraigslistEmailIntake({
       deferredMessages,
       listings,
       cursor: cursor?.value ?? 0,
+      alertsQueued,
+      alertsSent,
+      alertsFailed,
+      alertsUnknown,
     };
   } finally {
     await releaseLease();

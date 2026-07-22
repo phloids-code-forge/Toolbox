@@ -2,6 +2,10 @@ import { expect, test } from '@playwright/test';
 import { Pool } from 'pg';
 
 import { runCraigslistEmailIntake, type CraigslistMailbox } from '../../src/lib/opportunity/craigslist-intake';
+import {
+  readOpportunityEmailConfig,
+  type OpportunityEmailTransport,
+} from '../../src/lib/opportunity/email-delivery';
 import { applyOpportunityMigrations } from '../../src/lib/opportunity/migrations';
 import { OpportunityRepository, type SourceCursor } from '../../src/lib/opportunity/repository';
 import { seedMikeStarterWatches } from '../../src/lib/opportunity/seed';
@@ -205,6 +209,67 @@ test('Craigslist intake returns busy without polling when another source lease i
     expect(polled).toBe(false);
     await release?.();
   } finally {
+    await pool.end();
+  }
+});
+
+test('Craigslist intake sends an accepted listing once and reports truthful delivery counts', async () => {
+  const pool = new Pool({ connectionString: databaseUrl });
+  const repository = new OpportunityRepository(pool);
+  const message = {
+    uid: 401,
+    rawMime: alertMime('phase2c-delivery', '1985 Toyota Supra', '6060606060'),
+  };
+  const deliveries: Array<Record<string, unknown>> = [];
+  const transport: OpportunityEmailTransport = {
+    sendMail: async (email) => {
+      deliveries.push(email);
+      return { messageId: String(email.messageId) };
+    },
+  };
+
+  try {
+    await applyOpportunityMigrations(pool);
+    await seedMikeStarterWatches(pool);
+    await resetCraigslistState(pool);
+    const emailDelivery = {
+      config: readOpportunityEmailConfig({
+        OPPORTUNITY_SMTP_HOST: 'smtp.fastmail.com',
+        OPPORTUNITY_SMTP_PORT: '465',
+        OPPORTUNITY_SMTP_USER: 'operator@example.test',
+        OPPORTUNITY_SMTP_PASSWORD: 'synthetic-app-password',
+        OPPORTUNITY_EMAIL_FROM: 'babs@phloid.com',
+        OPPORTUNITY_EMAIL_RECIPIENT: 'dave@phloid.com',
+      }),
+      transport,
+    };
+    const first = await runCraigslistEmailIntake({
+      repository,
+      mailbox: mailboxFor([message]),
+      clientSlug: 'mike-rapp',
+      emailDelivery,
+      now: new Date('2026-07-22T18:05:00Z'),
+    });
+    const repeated = await runCraigslistEmailIntake({
+      repository,
+      mailbox: mailboxFor([message]),
+      clientSlug: 'mike-rapp',
+      emailDelivery,
+      now: new Date('2026-07-22T19:05:00Z'),
+    });
+
+    expect(first).toMatchObject({
+      status: 'ok',
+      processedMessages: 1,
+      alertsQueued: 1,
+      alertsSent: 1,
+      alertsFailed: 0,
+      alertsUnknown: 0,
+    });
+    expect(repeated).toMatchObject({ alertsQueued: 0, alertsSent: 0, alertsFailed: 0, alertsUnknown: 0 });
+    expect(deliveries).toHaveLength(1);
+  } finally {
+    await resetCraigslistState(pool);
     await pool.end();
   }
 });
